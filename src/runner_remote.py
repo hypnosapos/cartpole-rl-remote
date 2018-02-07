@@ -9,7 +9,7 @@ register(
         )
 
 import gym
-class GymRunner:
+class GymRunnerRemote:
     def __init__(self, env_id, max_timesteps=100000):
 
         self.env = gym.make('CartPoleExtra-v0')
@@ -22,6 +22,7 @@ class GymRunner:
         return self.run(agent, num_episodes, do_train=True)
 
     def run(self, agent, num_episodes, do_train=False):
+        print("KAKAS")
         for episode in range(num_episodes):
             state = self.env.reset().reshape(1, self.env.observation_space.shape[0])
             total_reward = 0
@@ -50,7 +51,10 @@ class GymRunner:
 
             print("episode: {}/{} | score: {} | e: {:.3f}".format(
                 episode + 1, num_episodes, total_reward, agent.epsilon))
-
+        print("********************************************************* DONE")
+        if do_train:
+            print("Saving model...")
+            agent.save_model()
 
 
 

@@ -26,7 +26,14 @@ class QLearningAgent:
     def select_action(self, state, do_train=True):
         if do_train and np.random.rand() <= self.epsilon:
             return random.randrange(self.action_size)
-        return np.argmax(self.model.predict(state)[0])
+        elif do_train and np.random.rand() > self.epsilon:
+            return np.argmax(self.model.predict(state)[0])
+        else:
+            print('Calling remote model...')
+
+            ## TODO Change to call remote model
+            return np.argmax(self.model.predict(state)[0])
+
 
     def record(self, state, action, reward, next_state, done):
         self.memory.append((state, action, reward, next_state, done))
