@@ -17,6 +17,9 @@ class Agent(QLearningAgent):
         model.add(Dense(2))
         model.compile(Adam(lr=0.001), 'mse')
 
+        # load the weights of the model if reusing previous training session
+        # model.load_weights("Cartpole-rl-remote.h5")
+
         return model
 
     def save_model(self):
@@ -27,5 +30,8 @@ if __name__ == '__main__':
     gym = GymRunnerRemote('CartPole-v0')
     agent = Agent()
 
-    gym.train(agent, 100)
+    #print("Training...")
+    #gym.train(agent, 100000)
+
+    print("Running...")
     gym.run(agent, 50)

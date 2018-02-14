@@ -3,3 +3,5 @@ __pycache__
 .venv
 *.h5
 seldon/build
+seldon/proto
+src/proto

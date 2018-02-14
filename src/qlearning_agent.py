@@ -3,6 +3,8 @@ import numpy as np
 import random
 import abc
 
+from client import rest_request, grpc_request
+
 class QLearningAgent:
     def __init__(self, state_size, action_size):
         self.state_size = state_size
@@ -24,15 +26,16 @@ class QLearningAgent:
         return None
 
     def select_action(self, state, do_train=True):
-        if do_train and np.random.rand() <= self.epsilon:
+        random_exploit = np.random.rand()
+        if do_train and random_exploit <= self.epsilon:
             return random.randrange(self.action_size)
-        elif do_train and np.random.rand() > self.epsilon:
+        elif do_train and random_exploit > self.epsilon:
             return np.argmax(self.model.predict(state)[0])
         else:
             print('Calling remote model...')
+            response = grpc_request(state)
 
-            ## TODO Change to call remote model
-            return np.argmax(self.model.predict(state)[0])
+            return response
 
 
     def record(self, state, action, reward, next_state, done):
