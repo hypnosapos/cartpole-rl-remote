@@ -31,7 +31,7 @@ def rest_request(state):
         "http://" + MINIKUBE_IP + ":8080/api/v0.1/predictions",
         headers=headers,
         json=payload)
-    return json.loads(response.text)
+    return payload, json.loads(response.text)
 
 
 def grpc_request(state):
@@ -47,4 +47,11 @@ def grpc_request(state):
     stub = prediction_pb2_grpc.SeldonStub(channel)
     metadata = [('oauth_token', TOKEN)]
     response = stub.Predict(request=request, metadata=metadata)
-    return int(response.data.tensor.values[0])
+    return response
+
+
+def send_feedback_rest(request, response, reward):
+    headers = {"Authorization": "Bearer " + TOKEN}
+    feedback = {"request": request, "response": response, "reward": reward}
+    ret = requests.post("http://{}:8080/api/v0.1/feedback".format(MINIKUBE_IP), headers=headers, json=feedback)
+    return ret.text

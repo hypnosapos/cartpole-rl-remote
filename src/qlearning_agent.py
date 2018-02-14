@@ -33,9 +33,9 @@ class QLearningAgent:
             return np.argmax(self.model.predict(state)[0])
         else:
             print('Calling remote model...')
-            response = grpc_request(state)
+            request, response = rest_request(state)
 
-            return response
+            return request, response, int(response.get('data').get('tensor').get('values')[0])
 
 
     def record(self, state, action, reward, next_state, done):
