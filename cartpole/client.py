@@ -1,4 +1,6 @@
-#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# vim: tabstop=4 shiftwidth=4 softtabstop=4
+
 import requests
 import grpc
 import json
@@ -7,6 +9,7 @@ import numpy as np
 from requests.auth import HTTPBasicAuth
 from proto import prediction_pb2
 from proto import prediction_pb2_grpc
+
 
 MINIKUBE_IP = "35.226.173.5"
 

@@ -5,6 +5,7 @@ import abc
 
 from cartpole import client as seldon_client
 
+
 class QLearningAgent:
     def __init__(self, state_size, action_size):
         self.state_size = state_size
@@ -37,7 +38,6 @@ class QLearningAgent:
 
             return int(response.get('data').get('tensor').get('values')[0]), request, response
 
-
     def record(self, state, action, reward, next_state, done):
         self.memory.append((state, action, reward, next_state, done))
 
@@ -57,5 +57,3 @@ class QLearningAgent:
 
         if self.epsilon > self.epsilon_min:
             self.epsilon *= self.epsilon_decay
-
-

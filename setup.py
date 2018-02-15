@@ -3,8 +3,12 @@ import os
 
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+
 with open(os.path.join(BASE_DIR, 'README.rst')) as f:
     README = f.read()
+
+with open(os.path.join(BASE_DIR, 'requirements.txt')) as f:
+    requirements = f.read().splitlines()
 
 setup(name='cartpole-rl-remote',
       python_requires='>=3.5',
@@ -24,6 +28,7 @@ setup(name='cartpole-rl-remote',
       url='https://github.com/davsuacar/cartpole-rl-remote',
       packages=find_packages(exclude=["tests", "docs", "seldon", "proto"]),
       include_package_data=True,
+      install_requires=requirements,
       entry_points={
           'console_scripts': [
               "cartpole = cartpole.client.cmd:main"

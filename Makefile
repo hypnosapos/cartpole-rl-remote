@@ -1,4 +1,4 @@
-.PHONY: help clean clean-build clean-pyc clean-test artifact install docs test-all
+.PHONY: help clean clean-build clean-pyc clean-test release install docs test
 .DEFAULT_GOAL := help
 
 # AutoDoc
@@ -18,27 +18,27 @@ help:
 
 clean: clean-build clean-pyc clean-test ## remove all build, test, coverage and Python artifacts
 
-clean-build: ## remove build artifacts
-	rm -rf build dist .eggs .cache docs/build
-	find . -name '*.egg-info' -exec rm -fr {} +
-	find . -name '*.egg' -exec rm -f {} +
+clean-build: ## remove build files
+	@rm -rf build dist .eggs .cache docs/build
+	@find . -name '*.egg-info' -exec rm -fr {} +
+	@find . -name '*.egg' -exec rm -f {} +
 
-clean-pyc: ## remove Python file artifacts
-	find . -name '*.pyc' -exec rm -f {} +
-	find . -name '*.pyo' -exec rm -f {} +
-	find . -name '*~' -exec rm -f {} +
-	find . -name '__pycache__' -exec rm -fr {} +
+clean-pyc: ## remove Python build files
+	@find . -name '*.pyc' -exec rm -f {} +
+	@find . -name '*.pyo' -exec rm -f {} +
+	@find . -name '*~' -exec rm -f {} +
+	@find . -name '__pycache__' -exec rm -fr {} +
 
-clean-test: ## remove test and coverage artifacts
-	rm -rf .tox .coverage htmlcov coverage-reports
+clean-test: ## remove test and coverage generated resources
+	@rm -rf .tox .coverage htmlcov coverage-reports
 
-test: ## run tests on every Python version with tox
+test: ## run tests
 	@tox
 
-build: ## build the wheel :)
+build: ## build artifacts
 	@tox -e build
 
-install: ## install cartpole
+install: ## install
 	pip install .
 
 release: ## upload release to pypi

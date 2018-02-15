@@ -3,13 +3,16 @@ from gym.envs.registration import register
 from cartpole import client as seldon_client
 
 register(
-            id='CartPoleExtra-v0',
-            entry_point='gym.envs.classic_control:CartPoleEnv',
-            max_episode_steps=7000,
-            reward_threshold=195.0,
-        )
+    id='CartPoleExtra-v0',
+    entry_point='gym.envs.classic_control:CartPoleEnv',
+    max_episode_steps=7000,
+    reward_threshold=195.0
+)
+
 
 import gym
+
+
 class GymRunnerRemote:
     def __init__(self, env_id, max_timesteps=100000):
 
@@ -60,7 +63,3 @@ class GymRunnerRemote:
         if do_train:
             print("Saving model...")
             agent.save_model()
-
-
-
-

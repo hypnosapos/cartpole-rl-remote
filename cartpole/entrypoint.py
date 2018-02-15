@@ -1,5 +1,9 @@
+# -*- coding: utf-8 -*-
+# vim: tabstop=4 shiftwidth=4 softtabstop=4
+
 from keras.models import load_model
 import numpy as np
+
 
 class CartpoleRlRemoteAgent(object):
 

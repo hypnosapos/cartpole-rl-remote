@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+# vim: tabstop=4 shiftwidth=4 softtabstop=4
+
 from keras.models import Sequential
 from keras.layers import Dense
 from keras.optimizers import Adam
@@ -23,4 +26,3 @@ class Agent(QLearningAgent):
 
     def save_model(self):
         self.model.save("Cartpole-rl-remote.h5")
-
