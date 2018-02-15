@@ -1,0 +1,25 @@
+language: python
+dist: trusty
+sudo: false
+branches:
+  except:
+    - /^v\d+\.*$/
+    - gh-pages
+    - travis-*
+    - /^untagged.*/
+    - /^feature.*/
+matrix:
+  include:
+  - python: "3.5"
+    env:
+    - FLAG=false
+      TOXENV=py35
+  - python: "3.6"
+    env:
+    - FLAG=true
+      TOXENV=py36
+install:
+- travis_retry pip install tox
+script:
+- tox
+- if [[ $FLAG == 'true' ]]; then pip install . && cartpole -m train -e 5000 python src/cartpole_agent.py; fi

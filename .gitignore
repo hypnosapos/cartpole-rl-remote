@@ -11,5 +11,5 @@ dist/
 *.egg-*/
 __pycache__
 *.h5
-seldon
-proto
+seldon/
+proto/

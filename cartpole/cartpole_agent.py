@@ -2,8 +2,7 @@ from keras.models import Sequential
 from keras.layers import Dense
 from keras.optimizers import Adam
 
-from runner_remote import GymRunnerRemote
-from qlearning_agent import QLearningAgent
+from cartpole.qlearning_agent import QLearningAgent
 
 
 class Agent(QLearningAgent):
@@ -25,13 +24,3 @@ class Agent(QLearningAgent):
     def save_model(self):
         self.model.save("Cartpole-rl-remote.h5")
 
-
-if __name__ == '__main__':
-    gym = GymRunnerRemote('CartPole-v0')
-    agent = Agent()
-
-    #print("Training...")
-    #gym.train(agent, 100000)
-
-    print("Running...")
-    gym.run(agent, 50)

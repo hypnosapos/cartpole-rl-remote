@@ -1,6 +1,6 @@
 
 from gym.envs.registration import register
-from client import send_feedback_rest
+from cartpole import client as seldon_client
 
 register(
             id='CartPoleExtra-v0',
@@ -29,12 +29,13 @@ class GymRunnerRemote:
 
             for t in range(self.max_timesteps):
                 self.env.render()
-                request, response, action = agent.select_action(state, do_train)
+                action, request, response = agent.select_action(state, do_train)
 
                 # execute the selected action
                 next_state, reward, done, _ = self.env.step(action)
 
-                send_feedback_rest(request, response, reward, done)
+                if request and response:
+                    seldon_client.send_feedback_rest(request, response, reward, done)
 
                 next_state = next_state.reshape(1, self.env.observation_space.shape[0])
                 reward = self.calc_reward(state, action, reward, next_state, done)

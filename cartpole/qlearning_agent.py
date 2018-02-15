@@ -3,7 +3,7 @@ import numpy as np
 import random
 import abc
 
-from client import rest_request, grpc_request
+from cartpole import client as seldon_client
 
 class QLearningAgent:
     def __init__(self, state_size, action_size):
@@ -28,14 +28,14 @@ class QLearningAgent:
     def select_action(self, state, do_train=True):
         random_exploit = np.random.rand()
         if do_train and random_exploit <= self.epsilon:
-            return random.randrange(self.action_size)
+            return random.randrange(self.action_size), None, None
         elif do_train and random_exploit > self.epsilon:
-            return np.argmax(self.model.predict(state)[0])
+            return np.argmax(self.model.predict(state)[0]), None, None
         else:
             print('Calling remote model...')
-            request, response = rest_request(state)
+            request, response = seldon_client.rest_request(state)
 
-            return request, response, int(response.get('data').get('tensor').get('values')[0])
+            return int(response.get('data').get('tensor').get('values')[0]), request, response
 
 
     def record(self, state, action, reward, next_state, done):
