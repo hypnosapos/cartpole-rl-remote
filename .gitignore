@@ -1,7 +1,14 @@
-.idea
+#Ignore metafiles
+.*
+!.gitignore
+
+#Ignore python reources
+*.pyc
+*.pyo
+build/
+dist/
+*.egg-*/
 __pycache__
-.venv
 *.h5
-seldon/build
-seldon/proto
-src/proto
+seldon
+proto
