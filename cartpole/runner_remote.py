@@ -28,7 +28,8 @@ class GymRunnerRemote:
             total_reward = 0
 
             for t in range(self.max_timesteps):
-                self.env.render()
+                # TODO Parameter
+                # self.env.render()
                 action, request, response = agent.select_action(state, do_train)
 
                 # execute the selected action
