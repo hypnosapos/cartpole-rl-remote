@@ -5,10 +5,18 @@
 import argparse
 import os
 import sys
-from ..cartpole_agent import Agent
-from ..runner_remote import GymRunnerRemote
+import logging
 
-cli = argparse.ArgumentParser(prog='cartpole')
+from cartpole.cartpole_agent import Agent
+from cartpole.runner_remote import GymRunnerRemote
+
+
+logging.basicConfig(
+    format=format or '%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
+    datefmt='%m-%d %H:%M',
+)
+
+LOG = logging.getLogger('cartpole')
 
 
 def env(*_vars, **kwargs):
@@ -25,34 +33,57 @@ def env(*_vars, **kwargs):
     return kwargs.get('default', '')
 
 
-def main():
-    cli.add_argument('-v', '--verbose', action='store_true',
-                     help='Activate verbose mode')
+def train(gym, agent, args):
+    LOG.info("Training...")
+    gym.train(agent, args.episodes, args.render, args.file_name)
 
-    cli.add_argument('-m', '--mode', choices=('train', 'run',), required=True,
-                     help='Execution mode: Train or Running')
 
-    cli.add_argument('-e', '--episodes', type=int, default=50,
-                     help='Number of episodes')
+def run(gym, agent, args):
+    LOG.info("Running...")
+    gym.run(agent, args.episodes, args.render)
 
-    cmd_args = cli.parse_args()
+
+def main(argv=sys.argv[1:]):
+
+    parser = argparse.ArgumentParser(prog='cartpole')
+    subparsers = parser.add_subparsers(title='subcommands',
+                                       description='required subcommands',
+                                       help='Subcommands')
+    train_subcommand = subparsers.add_parser('train')
+    train_subcommand.set_defaults(func=train)
+
+    run_subcommand = subparsers.add_parser('run')
+    run_subcommand.set_defaults(func=run)
+
+    parser.add_argument('-v', '--verbose', action='store_true',
+                        help='Activate verbose mode')
+
+    parser.add_argument('-r', '--render', action='store_true',
+                        help='Activate view')
+
+    train_subcommand.add_argument('-e', '--episodes', type=int, default=250,
+                                  help='Number of episodes')
+
+    run_subcommand.add_argument('-e', '--episodes', type=int, default=50,
+                                help='Number of episodes')
+
+    train_subcommand.add_argument('-f', '--file-name',
+                                  default='Cartpole-rl-remote.h5',
+                                  help='The name of the h5 file. Defaults to "Cartpole-rl-remote.h5"')
+
+    args = parser.parse_args(argv)
+    if args.verbose:
+        LOG.setLevel(logging.DEBUG)
 
     gym = GymRunnerRemote('CartPole-v0')
     agent = Agent()
 
-    if cmd_args.mode == 'train':
-
-        print("Training...")
-        gym.train(agent, cmd_args.episodes)
-    else:
-
-        print("Running...")
-        gym.run(agent, cmd_args.episodes)
+    args.func(gym, agent, args)
 
 
 if __name__ == "__main__":
     try:
-        main()
+        main(sys.argv[1:])
     except KeyboardInterrupt:
         print("... cartpole command was interrupted", file=sys.stderr)
         sys.exit.exit(2)

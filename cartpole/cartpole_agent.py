@@ -24,5 +24,5 @@ class Agent(QLearningAgent):
 
         return model
 
-    def save_model(self):
-        self.model.save("Cartpole-rl-remote.h5")
+    def save_model(self, name):
+        self.model.save(name)

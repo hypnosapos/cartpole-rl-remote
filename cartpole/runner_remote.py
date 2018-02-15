@@ -1,4 +1,5 @@
-
+# -*- coding: utf-8 -*-
+# vim: tabstop=4 shiftwidth=4 softtabstop=4
 from gym.envs.registration import register
 from cartpole import client as seldon_client
 
@@ -22,18 +23,20 @@ class GymRunnerRemote:
     def calc_reward(self, state, action, gym_reward, next_state, done):
         return gym_reward
 
-    def train(self, agent, num_episodes):
-        return self.run(agent, num_episodes, do_train=True)
+    def train(self, agent, num_episodes, render, file_name):
+        return self.run(agent, num_episodes, train={'file_name': file_name}, render=render)
 
-    def run(self, agent, num_episodes, do_train=False):
+    def run(self, agent, num_episodes, train=None, render=False):
         for episode in range(num_episodes):
             state = self.env.reset().reshape(1, self.env.observation_space.shape[0])
             total_reward = 0
 
             for t in range(self.max_timesteps):
-                # TODO Parameter
-                # self.env.render()
-                action, request, response = agent.select_action(state, do_train)
+
+                if render:
+                    self.env.render()
+
+                action, request, response = agent.select_action(state, train)
 
                 # execute the selected action
                 next_state, reward, done, _ = self.env.step(action)
@@ -45,7 +48,7 @@ class GymRunnerRemote:
                 reward = self.calc_reward(state, action, reward, next_state, done)
 
                 # record the results of the step
-                if do_train:
+                if train:
                     agent.record(state, action, reward, next_state, done)
 
                 total_reward += reward
@@ -54,12 +57,12 @@ class GymRunnerRemote:
                     break
 
             # train the agent based on a sample of past experiences
-            if do_train:
+            if train:
                 agent.replay()
 
             print("episode: {}/{} | score: {} | e: {:.3f}".format(
                 episode + 1, num_episodes, total_reward, agent.epsilon))
 
-        if do_train:
+        if train:
             print("Saving model...")
-            agent.save_model()
+            agent.save_model(train['file_name'])

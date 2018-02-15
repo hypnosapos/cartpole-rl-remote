@@ -26,11 +26,11 @@ class QLearningAgent:
     def build_model(self):
         return None
 
-    def select_action(self, state, do_train=True):
+    def select_action(self, state, train=None):
         random_exploit = np.random.rand()
-        if do_train and random_exploit <= self.epsilon:
+        if train and random_exploit <= self.epsilon:
             return random.randrange(self.action_size), None, None
-        elif do_train and random_exploit > self.epsilon:
+        elif train and random_exploit > self.epsilon:
             return np.argmax(self.model.predict(state)[0]), None, None
         else:
             print('Calling remote model...')
