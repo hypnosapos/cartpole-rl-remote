@@ -50,7 +50,9 @@ def grpc_request(state):
     return response
 
 
-def send_feedback_rest(request, response, reward):
+def send_feedback_rest(request, response, reward, done):
+    if done:
+        reward = 0
     headers = {"Authorization": "Bearer " + TOKEN}
     feedback = {"request": request, "response": response, "reward": reward}
     ret = requests.post("http://{}:8080/api/v0.1/feedback".format(MINIKUBE_IP), headers=headers, json=feedback)

@@ -34,9 +34,7 @@ class GymRunnerRemote:
                 # execute the selected action
                 next_state, reward, done, _ = self.env.step(action)
 
-                print(reward, done)
-
-                send_feedback_rest(request, response, reward)
+                send_feedback_rest(request, response, reward, done)
 
                 next_state = next_state.reshape(1, self.env.observation_space.shape[0])
                 reward = self.calc_reward(state, action, reward, next_state, done)
