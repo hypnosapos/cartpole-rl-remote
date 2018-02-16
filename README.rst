@@ -10,7 +10,7 @@ Cartpole RL Remote
    :target: https://pypi.org/project/cartpole-rl-remote
    :alt: Python versions
 
-This project is intended to play with Cart Pole Game using Reinforce Learning.
+This project is intended to play with Cart Pole Game using Reinforcement Learning.
 
 Install
 =======
