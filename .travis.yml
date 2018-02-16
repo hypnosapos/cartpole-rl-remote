@@ -22,4 +22,4 @@ install:
 - travis_retry pip install tox
 script:
 - tox
-- if [[ $FLAG == 'true' ]]; then pip install . && cartpole -m train -e 10000 ; fi
+- if [[ $FLAG == 'true' ]]; then pip install . && cartpole train -e 10000 ; fi
