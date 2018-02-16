@@ -62,7 +62,7 @@ Training
 
 Once we have the cartpole client installed as it was said above, just type this command to train a model::
 
-  cartpole -m train -e 5000
+  cartpole train -e 5000
 
 
 The output of the training command is an h5 file (a trained model serialized as hdf5).
@@ -72,6 +72,6 @@ Running
 
 In order to run the model, launch this command in your shell::
 
-  cartpole -m run -e 100
+  cartpole run -e 100
 
 
