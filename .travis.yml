@@ -24,7 +24,11 @@ install:
 
 script:
 - make clean test
-- if [[ $FLAG == 'true' ]]; then pip install . && cartpole train -e 500 -f build/model/Cartpole-${TRAVIS_BUILD_NUMBER}.h5; fi
+- if [[ $FLAG == 'true' ]]; then
+    pip install .;
+    mkdir -p build/model;
+    cartpole train -e 500 -f build/model/Cartpole-${TRAVIS_BUILD_NUMBER}.h5;
+  fi
 
 deploy:
 - provider: gcs
