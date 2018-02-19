@@ -18,8 +18,21 @@ matrix:
     env:
     - FLAG=true
       TOXENV=py36
+
 install:
 - travis_retry pip install tox
+
 script:
-- tox
-- if [[ $FLAG == 'true' ]]; then pip install . && cartpole train -e 10000 ; fi
+- make clean test
+- if [[ $FLAG == 'true' ]]; then pip install . && cartpole train -e 2000 -f build/model/Cartpole-{TRAVIS_BUILD_NUMBER}.h5; fi
+
+deploy:
+- provider: gcs
+  skip_cleanup: true
+  access_key_id: "GCS_ACCESS_KEY_ID"
+  secret_access_key: "GCS_SECRET_ACCESS_KEY"
+  bucket: "cartpole"
+  local-dir: build/model
+  on:
+    branch: master
+    condition: $FLAG = true
