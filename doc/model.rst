@@ -8,7 +8,8 @@ Model
 
 Multilayer neural network with two hidden layers. Four dimension array as input containing information about stick position.
 
-code-block::
+.. code-block::
+
     model = Sequential()
     model.add(Dense(12, activation='relu', input_dim=4))
     model.add(Dense(12, activation='relu'))
@@ -21,10 +22,12 @@ QLearning Algorithm
 Select action:
 This is the most import part in this project because of remote grpc call is done. In run mode we send a request to Seldon model deployed while agent is playing.
 
-code-block::
+.. code-block::
+
         request, response = seldon_client.grpc_request(state)
 
-code-block::
+.. code-block::
+
     def grpc_request(state):
         datadef = prediction_pb2.DefaultData(
             names=["names"],
@@ -46,6 +49,7 @@ Size = 2000
 
 Replay:
 QLearning Algorithm implementation. We estimate the Q value using the deep neural network and manage the train process by minibatches.
+
 .. image:: ./img/rl.png
    :alt: Reinforcement Learning
 
