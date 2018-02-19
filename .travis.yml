@@ -33,8 +33,8 @@ script:
 deploy:
 - provider: gcs
   skip_cleanup: true
-  access_key_id: "GCS_ACCESS_KEY_ID"
-  secret_access_key: "GCS_SECRET_ACCESS_KEY"
+  access_key_id: $GCS_ACCESS_KEY_ID
+  secret_access_key: $GCS_SECRET_ACCESS_KEY
   bucket: "cartpole"
   local-dir: build/model
   on:
