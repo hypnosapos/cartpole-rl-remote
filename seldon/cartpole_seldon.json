@@ -1,0 +1,54 @@
+{
+    "apiVersion": "machinelearning.seldon.io/v1alpha1",
+    "kind": "SeldonDeployment",
+    "metadata": {
+        "labels": {
+            "app": "cartpole"
+        },
+        "name": "cartpole"
+    },
+    "spec": {
+        "annotations": {
+            "project_name": "cartpole",
+            "deployment_version": "0.1"
+        },
+        "name": "cartpole",
+        "oauth_key": "oauth-key",
+        "oauth_secret": "oauth-secret",
+        "predictors": [
+            {
+                "componentSpec": {
+                    "spec": {
+                        "containers": [
+                            {
+                                "image": "outsiders/cartpolerlremoteagent",
+                                "imagePullPolicy": "Always",
+                                "name": "cartpole",
+                                "resources": {
+                                    "requests": {
+                                        "memory": "1Mi"
+                                    }
+                                }
+                            }
+                        ],
+                        "terminationGracePeriodSeconds": 20
+                    }
+                },
+                "graph": {
+                    "children": [],
+                    "name": "cartpole",
+                    "endpoint": {
+                        "type" : "REST"
+                    },
+                    "subtype": "MICROSERVICE",
+                    "type": "MODEL"
+                },
+                "name": "cartpole",
+                "replicas": 1,
+                "annotations": {
+                "predictor_version" : "0.1"
+                }
+            }
+        ]
+    }
+}
