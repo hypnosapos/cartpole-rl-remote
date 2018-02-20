@@ -1,6 +1,10 @@
 language: python
 dist: trusty
-sudo: false
+sudo: required
+
+services:
+- docker
+
 branches:
   except:
     - /^v\d+\.*$/
