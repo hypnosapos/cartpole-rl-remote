@@ -25,7 +25,7 @@ install:
 script:
 - make clean test
 - if [[ $FLAG == 'true' ]]; then
-     make train;
+     make EPOCHS_TRAIN="$EPOCHS_TRAIN" MODEL_FILE="$MODEL_FILE" train;
   fi
 
 deploy:
@@ -42,8 +42,8 @@ deploy:
 - provider: script
   skip_cleanup: true
   script: >-
-    docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
-    make EPOCHS_TRAIN="$EPOCHS_TRAIN" MODEL_FILE="$MODEL_FILE" seldon-build seldon-push
+    docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD" &&
+    make MODEL_FILE="$MODEL_FILE" seldon-build seldon-push
   on:
     branch: master
     condition: $FLAG = true
