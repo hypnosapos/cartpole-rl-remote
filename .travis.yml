@@ -44,7 +44,7 @@ deploy:
   skip_cleanup: true
   script: >-
     docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
-    make seldon-build seldon-push
+    make EPOCHS_TRAIN=${EPOCHS_TRAIN} MODEL_FILE=${MODEL_FILE} seldon-build seldon-push
   on:
     branch: master
     condition: $FLAG = true

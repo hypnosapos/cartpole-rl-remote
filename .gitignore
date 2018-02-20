@@ -8,6 +8,8 @@
 *.pyo
 build/
 dist/
+seldon/models
 seldon/requirements.txt
+*.h5
 *.egg-*/
 __pycache__
