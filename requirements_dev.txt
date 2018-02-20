@@ -1,3 +1,4 @@
+flake8==3.5.0
 pytest-mock
 pytest
 pytest-pep8

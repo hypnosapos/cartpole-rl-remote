@@ -75,3 +75,9 @@ In order to run the model, launch this command in your shell::
   cartpole run -e 100
 
 
+
+Doc
+===
+
+See all doc at `here
+ doc/model.rst`_.

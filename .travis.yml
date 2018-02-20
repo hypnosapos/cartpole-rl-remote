@@ -18,16 +18,15 @@ matrix:
     env:
     - FLAG=true
       TOXENV=py36
-
+      MODEL_FILE=Cartpole-${TRAVIS_BUILD_NUMBER}.h5
+      EPOCHS_TRAIN=500
 install:
 - travis_retry pip install tox
 
 script:
 - make clean test
 - if [[ $FLAG == 'true' ]]; then
-    pip install .;
-    mkdir -p build/model;
-    cartpole train -e 500 -f build/model/Cartpole-${TRAVIS_BUILD_NUMBER}.h5;
+     make train;
   fi
 
 deploy:
@@ -37,6 +36,15 @@ deploy:
   secret_access_key: $GCS_SECRET_ACCESS_KEY
   bucket: "cartpole"
   local-dir: build/model
+  on:
+    branch: master
+    condition: $FLAG = true
+
+- provider: script
+  skip_cleanup: true
+  script: >-
+    docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
+    make seldon-build seldon-push
   on:
     branch: master
     condition: $FLAG = true
