@@ -17,9 +17,7 @@ help: ## Show this help
 clean: clean-build clean-pyc clean-test ## remove all build, test, coverage and Python artifacts
 
 clean-build: ## remove build files
-	@rm -rf build dist .eggs .cache docs/build
-	@find . -name '*.egg-info' -exec rm -fr {} +
-	@find . -name '*.egg' -exec rm -f {} +
+	@rm -rf build dist .eggs *.egg-info *.egg.cache docs/build
 
 clean-pyc: ## remove Python build files
 	@find . -name '*.pyc' -exec rm -f {} +
@@ -76,4 +74,4 @@ seldon-push:
 	cd seldon/build && ./push_image.sh
 
 seldon-deploy:
-	kubectl create -f seldon/build/....json
+	kubectl create -f seldon/cartpole_seldon.json
