@@ -11,8 +11,8 @@ curl https://sdk.cloud.google.com -o gcloud_install.sh && bash ./gcloud_install.
 
 cat << EOF > ~/.boto
 [Credentials]
-gs_access_key_id=${GCS_ACCESS_KEY_ID}
-gs_secret_access_key=${GCS_SECRET_ACCESS_KEY}
+gs_access_key_id=$GCS_ACCESS_KEY_ID
+gs_secret_access_key=$GCS_SECRET_ACCESS_KEY
 EOF
 
 gsutil cp gs://cartpole/ca.cert .
