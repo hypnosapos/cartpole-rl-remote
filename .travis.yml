@@ -54,10 +54,10 @@ deploy:
 
 - provider: script
   skip_cleanup: true
-  script: ./cicd.sh
+  script: >-
     KUBE_VERSION=$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt) &&
     curl -LO https://storage.googleapis.com/kubernetes-release/release/${KUBE_VERSION}/bin/linux/amd64/kubectl &&
-    curl https://storage.googleapis.com/cartpole/ca.cert -o ca.cert
+    curl $CA_CERT_SIGNEDURL -o ca.cert &&
     kubectl config set-cluster seldon-cluster --server=https://$KUBERNETES_CLUSTER_IP --certificate-authority=ca.cert &&
     kubectl config set-credentials admin/seldon-cluster --username=$KUBERNETES_USER --password=$KUBERNETES_PASSWORD &&
     kubectl config set-context seldon-cluster --namespace=default --user=admin/seldon-cluster --cluster=seldon-cluster &&
