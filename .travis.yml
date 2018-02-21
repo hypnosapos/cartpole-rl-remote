@@ -58,7 +58,7 @@ deploy:
     KUBE_VERSION=$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt) &&
     curl -LO https://storage.googleapis.com/kubernetes-release/release/${KUBE_VERSION}/bin/linux/amd64/kubectl &&
     chmod +x kubectl && sudo mv kubectl /usr/local/bin/ &&
-    curl https://sdk.cloud.google.com | bash &&
+    curl https://sdk.cloud.google.com -o gcloud_install.sh && bash ./gcloud_install.sh --disable-prompts &&
     ./google-cloud-sdk/bin/gcloud -q components install beta &&
     ./google-cloud-sdk/bin/gcloud config set disable_usage_reporting false &&
     echo "[Credentials]\ngs_access_key_id=$GCS_ACCESS_KEY_ID\ngs_secret_access_key=$GCS_SECRET_ACCESS_KEY" > ~/.boto &&
