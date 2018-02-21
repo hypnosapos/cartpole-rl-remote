@@ -60,7 +60,6 @@ deploy:
     chmod +x kubectl && sudo mv kubectl /usr/local/bin/ &&
     curl https://sdk.cloud.google.com -o gcloud_install.sh && bash ./gcloud_install.sh --disable-prompts &&
     ~/google-cloud-sdk/bin/gcloud -q components install beta &&
-    ~/google-cloud-sdk/bin/gcloud config set disable_usage_reporting false &&
     echo "[Credentials]\ngs_access_key_id=$GCS_ACCESS_KEY_ID\ngs_secret_access_key=$GCS_SECRET_ACCESS_KEY" > ~/.boto &&
     gsutil -m cp gs://cartpole/ca.cert . &&
     kubectl config set-cluster seldon-cluster --server=https://$KUBERNETES_CLUSTER_IP --certificate-authority=ca.cert &&
