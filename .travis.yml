@@ -33,28 +33,37 @@ script:
   fi
 
 deploy:
-#- provider: gcs
-#  skip_cleanup: true
-#  access_key_id: $GCS_ACCESS_KEY_ID
-#  secret_access_key: $GCS_SECRET_ACCESS_KEY
-#  bucket: "cartpole"
-#  local-dir: seldon/models
-#  on:
-#    branch: master
-#    condition: $FLAG = true
-#
-#- provider: script
-#  skip_cleanup: true
-#  script: >-
-#    docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD" &&
-#    make MODEL_FILE="$MODEL_FILE" seldon-build seldon-push
-#  on:
-#    branch: master
-#    condition: $FLAG = true
+- provider: gcs
+  skip_cleanup: true
+  access_key_id: $GCS_ACCESS_KEY_ID
+  secret_access_key: $GCS_SECRET_ACCESS_KEY
+  bucket: "cartpole"
+  local-dir: seldon/models
+  on:
+    branch: master
+    condition: $FLAG = true
+
+- provider: script
+  skip_cleanup: true
+  script: >-
+    docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD" &&
+    make MODEL_FILE="$MODEL_FILE" seldon-build seldon-push
+  on:
+    branch: master
+    condition: $FLAG = true
 
 - provider: script
   skip_cleanup: true
   script: ./cicd.sh
+    KUBE_VERSION=$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt) &&
+    curl -LO https://storage.googleapis.com/kubernetes-release/release/${KUBE_VERSION}/bin/linux/amd64/kubectl &&
+    curl https://storage.googleapis.com/cartpole/ca.cert -o ca.cert
+    kubectl config set-cluster seldon-cluster --server=https://$KUBERNETES_CLUSTER_IP --certificate-authority=ca.cert &&
+    kubectl config set-credentials admin/seldon-cluster --username=$KUBERNETES_USER --password=$KUBERNETES_PASSWORD &&
+    kubectl config set-context seldon-cluster --namespace=default --user=admin/seldon-cluster --cluster=seldon-cluster &&
+    kubectl config use-context seldon-cluster &&
+    kubectl cluster-info &&
+    make seldon-deploy
   on:
     branch: master
     condition: $FLAG = true
