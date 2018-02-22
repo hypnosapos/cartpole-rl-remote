@@ -18,6 +18,8 @@ jobs:
           name: install and train
           command: |
             make EPOCHS_TRAIN=${EPOCHS_TRAIN} install train
+      - store_artifacts:
+          path: ~/repo/seldon/models
       - run:
           name: build and push seldon image
           command: |
