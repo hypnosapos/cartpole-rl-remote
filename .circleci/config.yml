@@ -47,6 +47,10 @@ jobs:
             make install
   "gce":
     docker:
+    - image: google/cloud-sdk
+    steps:
+    - run: gcloud version
+
 workflows:
   version: 2
   build:
