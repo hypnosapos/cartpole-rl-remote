@@ -7,8 +7,8 @@ jobs:
       - checkout
       - run:
           command: |
-            pip install -U ipdb tox tox-pyenv
-            pyenv local '3.5.2'
+            pyenv local 3.5.2
+            pip install -U pip ipdb tox tox-pyenv
             tox -e py35
             make install
             make EPOCHS_TRAIN=$EPOCHS_TRAIN MODEL_FILE=$MODEL_FILE train
