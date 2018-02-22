@@ -32,7 +32,7 @@ jobs:
           name: build and push seldon image
           command: |
             docker login -u=${DOCKER_USERNAME} -p=${DOCKER_PASSWORD}
-            make seldon-clean seldon-build seldon-push
+            make clean-seldon seldon-build seldon-push
   "3.6":
     docker:
     - image: python:3.6
