@@ -53,8 +53,10 @@ workflows:
   version: 2
   build:
     jobs:
-    - "3.5"
     - "3.6"
+    - "3.5":
+        requires:
+        - "3.6"
     - gce:
         requires:
         - "3.5"
