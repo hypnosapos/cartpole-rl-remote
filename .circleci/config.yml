@@ -57,3 +57,5 @@ workflows:
       - "3.5"
       - "3.6"
       - "gce"
+        requires:
+        - "3.5"
