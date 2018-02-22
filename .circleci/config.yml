@@ -5,15 +5,29 @@ jobs:
     working_directory: ~/repo
     environment:
       EPOCHS_TRAIN: 1000
+      MODEL_FILE: Cartpole-rl-remote-${CIRCLE_BUILD_NUM}.h5
+      DOCKER_USERNAME: engapa
+      DOCKER_PASSWORD: engapa
     steps:
       - checkout
       - run:
+          name: install requirements
           command: |
             pyenv local 3.5.2
             pip install -U pip ipdb tox tox-pyenv
+      - run:
+          name: test
+          command: |
             tox -e py35
-            make install
-            make EPOCHS_TRAIN=${EPOCHS_TRAIN} MODEL_FILE=Cartpole-rl-remote-${CIRCLE_BUILD_NUM}.h5 train
+      - run:
+          name: install and train
+          command: |
+            make EPOCHS_TRAIN=${EPOCHS_TRAIN} MODEL_FILE=${MODEL_FILE}.h5 install train
+      - run:
+          name: build and push seldon image
+          command: |
+            docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD" &&
+            make MODEL_FILE="$MODEL_FILE" seldon-build seldon-push
   "3.6":
     docker:
     - image: python:3.6
@@ -36,7 +50,7 @@ jobs:
     docker:
     - image: google/cloud-sdk
     steps:
-    - run: gcloud version
+    - run: gsutil.....
 
 workflows:
   version: 2
