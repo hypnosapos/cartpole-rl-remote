@@ -1,7 +1,6 @@
 #Ignore metafiles
 .*
 !.gitignore
-!.travis.yml
 !.circleci
 
 #Ignore python reources

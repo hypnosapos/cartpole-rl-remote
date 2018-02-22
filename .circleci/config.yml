@@ -25,8 +25,6 @@ jobs:
           command: |
             docker login -u=${DOCKER_USERNAME} -p=${DOCKER_PASSWORD}
             make MODEL_FILE=${MODEL_FILE} seldon-build seldon-push
-      - store_artifacts:
-          path: ~/repo/seldon
   "3.6":
     docker:
     - image: python:3.6

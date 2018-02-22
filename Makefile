@@ -70,8 +70,8 @@ endif
 	cd seldon && docker run -v $(shell pwd)/seldon:/model $(SELDON_IMAGE) /model CartpoleRLRemoteAgent latest $(DOCKER_ORG)
 	cd seldon/build && ./build_image.sh
 
-seldon-push:
+seldon-push:  ## Push docker image for seldon deployment
 	cd seldon/build && ./push_image.sh
 
-seldon-deploy:
-	kubectl create -f seldon/cartpole_seldon.json
+seldon-deploy: ## Deploy seldon resources on kubernetes
+	kubectl apply -f seldon/cartpole_seldon.json
