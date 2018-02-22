@@ -6,21 +6,11 @@ jobs:
     steps:
       - checkout
       - run:
-          name: install dependencies
           command: |
             pip install -U ipdb tox tox-pyenv
             pyenv local '3.5.2'
-      - run:
-          name: test
-          command: |
             tox -e py35
-      - run:
-          name: install
-          command: |
             make install
-      - run:
-          name: train
-          command: |
             make EPOCHS_TRAIN=$EPOCHS_TRAIN MODEL_FILE=$MODEL_FILE train
           environment:
             MODEL_FILE: Cartpole-rl-remote-$CIRCLE_BUILD_NUM.h5
