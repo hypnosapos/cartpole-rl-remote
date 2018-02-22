@@ -67,7 +67,7 @@ seldon-build: clean-seldon ## Generate seldon resources
 ifeq ($(STORAGE_PROVIDER), gcs)
 	curl https://storage.googleapis.com/cartpole/$(MODEL_FILE) seldon/models/$(MODEL_FILE)
 endif
-	cd $(shell pwd)/seldon && docker run -v $(shell pwd)/seldon:/model $(SELDON_IMAGE) /model CartpoleRLRemoteAgent latest $(DOCKER_ORG)
+	cd $(shell pwd)/seldon && docker run -v $(shell pwd)/seldon:/model $(SELDON_IMAGE) /model CartpoleRLRemoteAgent latest $(DOCKER_ORG) --force
 	cd $(shell pwd)/seldon/build && ./build_image.sh
 
 seldon-push:  ## Push docker image for seldon deployment
