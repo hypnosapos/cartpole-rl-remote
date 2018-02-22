@@ -2,7 +2,6 @@ version: 2
 jobs:
   "3.5":
     machine: true
-
     working_directory: ~/repo
     steps:
       - checkout
@@ -57,5 +56,5 @@ workflows:
       - "3.5"
       - "3.6"
       - "gce"
-        requires:
-        - "3.5"
+          requires:
+          - "3.5"
