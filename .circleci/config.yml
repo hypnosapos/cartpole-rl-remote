@@ -58,7 +58,7 @@ jobs:
     - run:
         name: Deploy SeldonDeployment
         command: |
-          kubectl apply -f seldon/cartpole_seldon.json
+          make seldon-deploy
 
 workflows:
   version: 2
