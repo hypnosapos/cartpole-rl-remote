@@ -3,7 +3,7 @@
     "kind": "SeldonDeployment",
     "metadata": {
         "labels": {
-            "app": "cartpole"
+            "app": "seldon"
         },
         "name": "cartpole"
     },
@@ -21,7 +21,7 @@
                     "spec": {
                         "containers": [
                             {
-                                "image": "outsiders/cartpolerlremoteagent",
+                                "image": "hypnosapos/cartpolerlremoteagent",
                                 "imagePullPolicy": "Always",
                                 "name": "cartpole",
                                 "resources": {
