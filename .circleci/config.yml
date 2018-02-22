@@ -13,7 +13,7 @@ jobs:
       - run:
           name: test
           command: |
-            make clean test
+            tox -e py35
       - run:
           name: install
           command: |
@@ -21,8 +21,6 @@ jobs:
   "3.6":
     docker:
     - image: python:3.6
-    environment:
-      TOX_PY35: '3.6.2'
     working_directory: ~/repo
     steps:
       - checkout
@@ -33,7 +31,7 @@ jobs:
       - run:
           name: test
           command: |
-            make clean test
+            tox -e py36
       - run:
           name: install
           command: |
