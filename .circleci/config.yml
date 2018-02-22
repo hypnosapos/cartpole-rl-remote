@@ -46,9 +46,6 @@ jobs:
   gce:
     docker:
     - image: google/cloud-sdk
-      auth:
-        username: _json_key
-        password: ${GOOGLE_AUTH}
     steps:
     - run:
        name: configure gcloud client
