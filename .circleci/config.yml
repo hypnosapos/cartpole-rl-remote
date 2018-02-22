@@ -1,8 +1,7 @@
 version: 2
 jobs:
   "3.5":
-    docker:
-     - image: circleci/python:3.5
+    machine: true
     working_directory: ~/repo
     steps:
       - checkout
@@ -19,8 +18,7 @@ jobs:
           command: |
             make install
   "3.6":
-    docker:
-      - image: circleci/python:3.6
+    machine: true
     working_directory: ~/repo
     steps:
       - checkout
