@@ -1,15 +1,17 @@
 version: 2
 jobs:
   "3.5":
-    machine: true
+    docker:
+    - image: python:3.5
     working_directory: ~/repo
     steps:
       - checkout
+      - setup_remote_docker:
+          docker_layer_caching: true
       - run:
           name: install requirements
           command: |
-            pyenv local 3.5.2
-            pip install -U pip ipdb tox tox-pyenv
+            pip install tox
       - run:
           name: test
           command: |
@@ -18,6 +20,14 @@ jobs:
           name: install and train
           command: |
             make EPOCHS_TRAIN=${EPOCHS_TRAIN} install train
+      - run:
+          name: Install Docker client
+          command: |
+            set -x
+            VER="17.03.0-ce"
+            curl -L -o /tmp/docker-$VER.tgz https://download.docker.com/linux/static/stable/x86_64/docker-$VER.tgz
+            tar -xz -C /tmp -f /tmp/docker-$VER.tgz
+            mv /tmp/docker/* /usr/bin
       - run:
           name: build and push seldon image
           command: |
