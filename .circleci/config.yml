@@ -4,10 +4,7 @@ jobs:
     machine: true
     working_directory: ~/repo
     environment:
-      EPOCHS_TRAIN: 1000
       MODEL_FILE: Cartpole-rl-remote-${CIRCLE_BUILD_NUM}.h5
-      DOCKER_USERNAME: engapa
-      DOCKER_PASSWORD: engapa
     steps:
       - checkout
       - run:
@@ -26,7 +23,7 @@ jobs:
       - run:
           name: build and push seldon image
           command: |
-            docker login -u=${DOCKER_USERNAME} -p=${DOCKER_PASSWORD} &&
+            docker login -u=${DOCKER_USERNAME} -p=${DOCKER_PASSWORD}
             make MODEL_FILE=${MODEL_FILE} seldon-build seldon-push
   "3.6":
     docker:
