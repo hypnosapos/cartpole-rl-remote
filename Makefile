@@ -4,7 +4,7 @@
 # Shell to use with Make
 SHELL := /bin/bash
 
-DOCKER_ORG        = outsiders
+DOCKER_ORG        = hypnosapos
 SELDON_IMAGE      = seldonio/core-python-wrapper
 STORAGE_PROVIDER  = local
 MODEL_FILE        = Cartpole-rl-remote.h5
@@ -67,11 +67,11 @@ seldon-build: clean-seldon ## Generate seldon resources
 ifeq ($(STORAGE_PROVIDER), gcs)
 	curl https://storage.googleapis.com/cartpole/$(MODEL_FILE) seldon/models/$(MODEL_FILE)
 endif
-	cd seldon && docker run -v $(shell pwd)/seldon:/model $(SELDON_IMAGE) /model CartpoleRLRemoteAgent latest $(DOCKER_ORG)
-	cd seldon/build && ./build_image.sh
+	cd $(shell pwd)/seldon && docker run -v $(shell pwd)/seldon:/model $(SELDON_IMAGE) /model CartpoleRLRemoteAgent latest $(DOCKER_ORG)
+	cd $(shell pwd)/seldon/build && ./build_image.sh
 
 seldon-push:  ## Push docker image for seldon deployment
-	cd seldon/build && ./push_image.sh
+	cd $(shell pwd)/seldon/build && ./push_image.sh
 
 seldon-deploy: ## Deploy seldon resources on kubernetes
 	kubectl apply -f seldon/cartpole_seldon.json

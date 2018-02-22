@@ -8,6 +8,7 @@
 *.pyo
 build/
 dist/
+seldon/build
 seldon/models
 seldon/requirements.txt
 *.h5
