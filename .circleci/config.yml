@@ -7,46 +7,50 @@ jobs:
       MODEL_FILE: Cartpole-rl-remote-${CIRCLE_BUILD_NUM}.h5
     steps:
       - checkout
-#      - run:
-#          name: install requirements
-#          command: |
-#            pyenv local 3.5.2
-#            pip install -U pip ipdb tox tox-pyenv
-#      - run:
-#          name: test
-#          command: |
-#            tox -e py35
-#      - run:
-#          name: install and train
-#          command: |
-#            make EPOCHS_TRAIN=${EPOCHS_TRAIN} MODEL_FILE=${MODEL_FILE}.h5 install train
-#      - run:
-#          name: build and push seldon image
-#          command: |
-#            docker login -u=${DOCKER_USERNAME} -p=${DOCKER_PASSWORD}
-#            make MODEL_FILE=${MODEL_FILE} seldon-build seldon-push
+      - run:
+          name: install requirements
+          command: |
+            pyenv local 3.5.2
+            pip install -U pip ipdb tox tox-pyenv
+      - run:
+          name: test
+          command: |
+            tox -e py35
+      - run:
+          name: install and train
+          command: |
+            make EPOCHS_TRAIN=${EPOCHS_TRAIN} MODEL_FILE=${MODEL_FILE}.h5 install train
+      - run:
+          name: build and push seldon image
+          command: |
+            docker login -u=${DOCKER_USERNAME} -p=${DOCKER_PASSWORD}
+            make MODEL_FILE=${MODEL_FILE} seldon-build seldon-push
+      - store_artifacts:
+          path: ~/repo/seldon
   "3.6":
     docker:
     - image: python:3.6
     working_directory: ~/repo
     steps:
-      - checkout
-#      - run:
-#          name: install dependencies
-#          command: |
-#            pip install tox
-#      - run:
-#          name: test
-#          command: |
-#            tox -e py36
-#      - run:
-#          name: install
-#          command: |
-#            make install
+    - checkout
+    - run:
+        name: install dependencies
+        command: |
+          pip install tox
+    - run:
+        name: test
+        command: |
+          tox -e py36
+    - run:
+        name: install
+        command: |
+          make install
   gce:
     docker:
     - image: google/cloud-sdk
+    working_directory: ~/repo
     steps:
+    - checkout
     - run:
        name: configure gcloud client
        command: |
@@ -55,7 +59,10 @@ jobs:
          gcloud --quiet config set project ${GOOGLE_PROJECT_ID}
          gcloud --quiet config set compute/zone ${GOOGLE_COMPUTE_ZONE}
          gcloud --quiet container clusters get-credentials ${GOOGLE_CLUSTER_NAME}
-    - run: gsutil stat gs://cartpole/ca.cert
+    - run:
+        name: Deploy SeldonDeployment
+        command: |
+          kubectl apply -f seldon/cartpole_seldon.json
 
 workflows:
   version: 2
