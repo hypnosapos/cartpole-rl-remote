@@ -26,8 +26,8 @@ jobs:
       - run:
           name: build and push seldon image
           command: |
-            docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD" &&
-            make MODEL_FILE="$MODEL_FILE" seldon-build seldon-push
+            docker login -u=${DOCKER_USERNAME} -p=${DOCKER_PASSWORD} &&
+            make MODEL_FILE=${MODEL_FILE} seldon-build seldon-push
   "3.6":
     docker:
     - image: python:3.6
@@ -50,7 +50,7 @@ jobs:
     docker:
     - image: google/cloud-sdk
     steps:
-    - run: gsutil.....
+    - run: gcloud version
 
 workflows:
   version: 2
