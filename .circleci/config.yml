@@ -3,6 +3,8 @@ jobs:
   "3.5":
     machine: true
     working_directory: ~/repo
+    environment:
+      EPOCHS_TRAIN: 1000
     steps:
       - checkout
       - run:
@@ -11,10 +13,7 @@ jobs:
             pip install -U pip ipdb tox tox-pyenv
             tox -e py35
             make install
-            make EPOCHS_TRAIN=$EPOCHS_TRAIN MODEL_FILE=$MODEL_FILE train
-          environment:
-            MODEL_FILE: Cartpole-rl-remote-$CIRCLE_BUILD_NUM.h5
-            EPOCHS_TRAIN: 2000
+            make EPOCHS_TRAIN=${EPOCHS_TRAIN} MODEL_FILE=Cartpole-rl-remote-${CIRCLE_BUILD_NUM}.h5 train
   "3.6":
     docker:
     - image: python:3.6
