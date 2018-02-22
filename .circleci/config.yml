@@ -10,12 +10,11 @@ jobs:
           name: install dependencies
           command: |
             pip install -U ipdb tox tox-pyenv
+            pyenv local '3.5.2'
       - run:
           name: test
           command: |
             tox -e py35
-          environment:
-            TOX_PY35: '3.5.2'
       - run:
           name: install
           command: |
@@ -57,3 +56,4 @@ workflows:
     jobs:
       - "3.5"
       - "3.6"
+      - "gce"
