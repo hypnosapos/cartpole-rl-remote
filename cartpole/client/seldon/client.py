@@ -7,8 +7,8 @@ import json
 import numpy as np
 
 from requests.auth import HTTPBasicAuth
-from seldon.build.proto import prediction_pb2
-from seldon.build.proto import prediction_pb2_grpc
+from cartpole.client.seldon.proto import prediction_pb2
+from cartpole.client.seldon.proto import prediction_pb2_grpc
 
 
 class SeldonClient(object):

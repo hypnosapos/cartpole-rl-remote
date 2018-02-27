@@ -1,4 +1,4 @@
-.PHONY: help
+.PHONY: help clean test train train-dev seldon-buil seldon-push seldon-deploy
 .DEFAULT_GOAL := help
 
 # Shell to use with Make

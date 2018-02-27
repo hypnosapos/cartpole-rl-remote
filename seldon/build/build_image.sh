@@ -1,0 +1,1 @@
+docker build --force-rm=true -t hypnosapos/cartpolerlremoteagent:latest .

@@ -3,7 +3,7 @@ import numpy as np
 import random
 import abc
 
-from seldon.seldon_client import SeldonClient
+from .client.seldon.client import SeldonClient
 
 
 class QLearningAgent:

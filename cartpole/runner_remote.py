@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 from gym.envs.registration import register
-from seldon.seldon_client import SeldonClient
+from .client.seldon.client import SeldonClient
 
 register(
     id='CartPoleExtra-v0',

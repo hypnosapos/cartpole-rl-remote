@@ -6,9 +6,10 @@
 #Ignore python reources
 *.pyc
 *.pyo
-build/
-dist/
-seldon/build
+/build/
+/dist/
+!/seldon/build
+!seldon/build/proto/
 seldon/models
 seldon/requirements.txt
 *.h5
