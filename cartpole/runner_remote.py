@@ -37,7 +37,7 @@ class GymRunnerRemote:
                 if render:
                     self.env.render()
 
-                action, request, response = agent.select_action(state, train)
+                action, request, response = agent.select_action(state, train, host)
 
                 # execute the selected action
                 next_state, reward, done, _ = self.env.step(action)
