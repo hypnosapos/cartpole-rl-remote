@@ -85,9 +85,9 @@ if __name__ == "__main__":
     try:
         main(sys.argv[1:])
     except KeyboardInterrupt:
-        print("... cartpole command was interrupted", file=sys.stderr)
+        LOG.warning("... cartpole command was interrupted")
         sys.exit.exit(2)
     except Exception as ex:
-        print('Unexpected error: %s' % ex)
+        LOG.error('Unexpected error: %s' % ex)
         sys.exit(1)
     sys.exit(0)
