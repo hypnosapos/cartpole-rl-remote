@@ -1,3 +1,4 @@
+# NOTE: Activate 2 nodes in parallel on CircleCI
 version: 2
 jobs:
   "3.5":
@@ -67,9 +68,7 @@ workflows:
   build:
     jobs:
     - "3.6"
-    - "3.5":
-        requires:
-        - "3.6"
+    - "3.5"
     - gce:
         requires:
         - "3.5"
