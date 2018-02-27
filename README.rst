@@ -1,14 +1,18 @@
 Cartpole RL Remote
 ==================
-.. image:: https://img.shields.io/travis/davsuacar/cartpole-rl-remote/master.svg?style=flat-square
-   :target: http://travis-ci.org/davsuacar/cartpole-rl-remote
+.. image:: https://circleci.com/gh/hypnosapos/cartpole-rl-remote/tree/master.svg?style=svg
+   :target: https://circleci.com/gh/hypnosapos/cartpole-rl-remote/tree/master
    :alt: Build Status
-.. image:: https://img.shields.io/pypi/v/cartpole-rl-remote.svg?style=flat-square
-   :target: https://pypi.org/project/cartpole-rl-remote
+.. image:: https://img.shields.io/pypi/v/modeldb-basic.svg?style=flat-square
+   :target: https://pypi.org/project/modeldb-basic
    :alt: Version
 .. image:: https://img.shields.io/pypi/pyversions/cartpole-rl-remote.svg?style=flat-square
    :target: https://pypi.org/project/cartpole-rl-remote
    :alt: Python versions
+.. image:: https://codecov.io/gh/hypnosapos/cartpole-rl-remote/branch/master/graph/badge.svg
+   :target: https://codecov.io/gh/hypnosapos/cartpole-rl-remote
+   :alt: Coverage
+
 
 This project is intended to play with Cart Pole Game using Reinforcement Learning.
 
@@ -81,3 +85,4 @@ Doc
 
 See all doc at `here
  doc/model.rst`_.
+
