@@ -26,7 +26,7 @@ setup(name='cartpole-rl-remote',
           'Topic :: Scientific/Engineering :: Information Analysis'
       ],
       url='https://github.com/davsuacar/cartpole-rl-remote',
-      packages=find_packages(exclude=["tests", "docs", "seldon", "proto"]),
+      packages=find_packages(exclude=["tests", "docs"]),
       include_package_data=True,
       install_requires=requirements,
       entry_points={
