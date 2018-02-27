@@ -8,8 +8,7 @@
 *.pyo
 /build/
 /dist/
-!/seldon/build
-!seldon/build/proto/
+/seldon/build
 seldon/models
 seldon/requirements.txt
 *.h5
