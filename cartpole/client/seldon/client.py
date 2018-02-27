@@ -15,20 +15,22 @@ class SeldonClient(object):
 
     def __init__(self, host):
         self.host = host
-        self.token = None
+        self._token = None
 
     @property
     def token(self):
-        if self.token:
-            return self.token
-        else:
+        if not self._token:
             payload = {'grant_type': 'client_credentials'}
             response = requests.post(
                 "http://{}:8080/oauth/token".format(self.host),
                 auth=HTTPBasicAuth('oauth-key', 'oauth-secret'),
                 data=payload)
-            self.token = response.json()["access_token"]
-            return self.token
+            self.token(response.json()["access_token"])
+        return self._token
+
+    @token.setter
+    def token(self, token):
+        self._token = token
 
     def rest_request(self, state):
         headers = {'Authorization': 'Bearer {}'.format(self.token)}
