@@ -21,7 +21,7 @@
                     "spec": {
                         "containers": [
                             {
-                                "image": "hypnosapos/cartpolerlremoteagent",
+                                "image": "hypnosapos/cartpolerlremoteagent:VERSION",
                                 "imagePullPolicy": "Always",
                                 "name": "keras-cartpole",
                                 "resources": {

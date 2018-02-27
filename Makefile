@@ -4,12 +4,13 @@
 # Shell to use with Make
 SHELL := /bin/bash
 
-DOCKER_ORG        = hypnosapos
-SELDON_IMAGE      = seldonio/core-python-wrapper
-STORAGE_PROVIDER  = local
-MODEL_FILE        = Cartpole-rl-remote.h5
-PY_DEV_ENV        = .tox/py36/bin/activate
-EPOCHS_TRAIN      = 2000
+DOCKER_ORG        ?= hypnosapos
+SELDON_IMAGE      ?= seldonio/core-python-wrapper
+STORAGE_PROVIDER  ?= local
+MODEL_FILE        ?= Cartpole-rl-remote.h5
+PY_DEV_ENV        ?= .tox/py35/bin/activate
+EPOCHS_TRAIN      ?= 2000
+VERSION           ?= latest
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
@@ -67,7 +68,7 @@ seldon-build: clean-seldon ## Generate seldon resources
 ifeq ($(STORAGE_PROVIDER), gcs)
 	curl https://storage.googleapis.com/cartpole/$(MODEL_FILE) seldon/models/$(MODEL_FILE)
 endif
-	cd $(shell pwd)/seldon && docker run -v $(shell pwd)/seldon:/model $(SELDON_IMAGE) /model CartpoleRLRemoteAgent latest $(DOCKER_ORG) --force
+	cd $(shell pwd)/seldon && docker run -v $(shell pwd)/seldon:/model $(SELDON_IMAGE) /model CartpoleRLRemoteAgent $(VERSION) $(DOCKER_ORG) --force
 	cd $(shell pwd)/seldon/build && ./build_image.sh
 
 seldon-push:  ## Push docker image for seldon deployment
