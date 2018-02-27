@@ -65,7 +65,7 @@ jobs:
         name: Deploy SeldonDeployment
         command: |
           sed -ibak 's/VERSION/'"$VERSION"'/g' seldon/cartpole_seldon.json
-          kubectl apply -f seldon/cartpole_seldon.json
+          kubectl apply -f seldon/cartpole_seldon.json -n seldon
 
 workflows:
   version: 2
