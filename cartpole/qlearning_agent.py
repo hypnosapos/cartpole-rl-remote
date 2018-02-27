@@ -3,7 +3,7 @@ import numpy as np
 import random
 import abc
 
-from cartpole import client as seldon_client
+from seldon.seldon_client import SeldonClient
 
 
 class QLearningAgent:
@@ -21,12 +21,13 @@ class QLearningAgent:
         # agent state
         self.model = self.build_model()
         self.memory = deque(maxlen=2000)
+        self.seldon_client = None
 
     @abc.abstractmethod
     def build_model(self):
         return None
 
-    def select_action(self, state, train=None):
+    def select_action(self, state, train=None, host=None):
         random_exploit = np.random.rand()
         if train and random_exploit <= self.epsilon:
             return random.randrange(self.action_size), None, None
@@ -34,7 +35,10 @@ class QLearningAgent:
             return np.argmax(self.model.predict(state)[0]), None, None
         else:
             print('Calling remote model...')
-            request, response = seldon_client.rest_request(state)
+            if not self.seldon_client:
+                self.seldon_client = SeldonClient(host)
+
+            request, response = self.seldon_client.rest_request(state)
 
             return int(response.get('data').get('tensor').get('values')[0]), request, response
 

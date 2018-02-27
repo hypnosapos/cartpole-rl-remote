@@ -67,6 +67,9 @@ def main(argv=sys.argv[1:]):
     run_subcommand.add_argument('-e', '--episodes', type=int, default=50,
                                 help='Number of episodes')
 
+    run_subcommand.add_argument('--host', required=True,
+                                help='Host IP')
+
     train_subcommand.add_argument('-f', '--file-name',
                                   default='Cartpole-rl-remote.h5',
                                   help='The name of the h5 file. Defaults to "Cartpole-rl-remote.h5"')
