@@ -30,7 +30,7 @@ class SeldonClient(object):
                 "http://{}:8080/oauth/token".format(self.host),
                 auth=HTTPBasicAuth('oauth-key', 'oauth-secret'),
                 data=payload)
-            self.token(response.json()["access_token"])
+            self._token = response.json()["access_token"]
         return self._token
 
     @token.setter
@@ -46,7 +46,7 @@ class SeldonClient(object):
             headers=headers,
             json=payload)
         LOG.debug("Response URL:\n{}\nResponse headers:\n{}\nResponse contents:\n{}",
-                  response.url, response.headers,response.content)
+                  response.url, response.headers, response.text)
         return payload, json.loads(response.text)
 
     def grpc_request(self, state):

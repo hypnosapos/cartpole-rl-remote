@@ -11,7 +11,7 @@ from cartpole.cartpole_agent import Agent
 from cartpole.runner_remote import GymRunnerRemote
 
 logging.basicConfig(
-    format=format or '%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
+    format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
     datefmt='%m-%d %H:%M',
 )
 LOG = logging.getLogger('cartpole')
