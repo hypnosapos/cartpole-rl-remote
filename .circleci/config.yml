@@ -25,25 +25,25 @@ jobs:
           name: build and push seldon image
           command: |
             docker login -u=${DOCKER_USERNAME} -p=${DOCKER_PASSWORD}
-            VERSION="$(echo $CIRCLE_SHA1 | cut -c -7)_${CIRCLE_BUILD_NUM}" make seldon-build seldon-push
-  "3.6":
-    docker:
-    - image: python:3.6
-    working_directory: ~/repo
-    steps:
-    - checkout
-    - run:
-        name: install dependencies
-        command: |
-          pip install tox
-    - run:
-        name: test
-        command: |
-          tox -e py36
-    - run:
-        name: install
-        command: |
-          make install
+            VERSION="$(echo $CIRCLE_SHA1 | cut -c -7)" make seldon-build seldon-push
+#  "3.6":
+#    docker:
+#    - image: python:3.6
+#    working_directory: ~/repo
+#    steps:
+#    - checkout
+#    - run:
+#        name: install dependencies
+#        command: |
+#          pip install tox
+#    - run:
+#        name: test
+#        command: |
+#          tox -e py36
+#    - run:
+#        name: install
+#        command: |
+#          make install
   gce:
     docker:
     - image: google/cloud-sdk
@@ -61,14 +61,14 @@ jobs:
     - run:
         name: Deploy SeldonDeployment
         command: |
-          VERSION="$(echo $CIRCLE_SHA1 | cut -c -7)_${CIRCLE_PREVIOUS_BUILD_NUM}" && sed -ibak 's/VERSION/'"$VERSION"'/g' seldon/cartpole_seldon.json
+          VERSION="$(echo $CIRCLE_SHA1 | cut -c -7)" && sed -ibak 's/VERSION/'"$VERSION"'/g' seldon/cartpole_seldon.json
           kubectl apply -f seldon/cartpole_seldon.json -n seldon
 
 workflows:
   version: 2
   build:
     jobs:
-    - "3.6"
+    #- "3.6"
     - "3.5"
     - gce:
         requires:
