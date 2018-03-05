@@ -59,7 +59,8 @@ class QLearningAgent:
             self.epsilon *= self.epsilon_decay
 
     def request(self, state, call_type='rest'):
-        __request_by_client_type = self.seldon_client.grpc_request if call_type == 'grpc' else self.seldon_client.rest_request
+        __request_by_client_type = \
+            self.seldon_client.grpc_request if call_type == 'grpc' else self.seldon_client.rest_request
         request, response = __request_by_client_type(state)
         if call_type == 'grpc':
             value = int(response.data.tensor.values[0])
@@ -69,6 +70,7 @@ class QLearningAgent:
         return value, request, response
 
     def feedback(self, request, response, reward, done, call_type='rest'):
-        __feedback_by_client_type = self.seldon_client.grpc_feedback if call_type == 'grpc' else self.seldon_client.rest_feedback
+        __feedback_by_client_type = \
+            self.seldon_client.grpc_feedback if call_type == 'grpc' else self.seldon_client.rest_feedback
         response = __feedback_by_client_type(request, response, reward, done)
         return response
