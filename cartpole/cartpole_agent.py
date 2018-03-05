@@ -9,8 +9,8 @@ from cartpole.qlearning_agent import QLearningAgent
 
 
 class Agent(QLearningAgent):
-    def __init__(self, host):
-        super().__init__(4, 2, host)
+    def __init__(self):
+        super().__init__(4, 2)
 
     def build_model(self):
         model = Sequential()

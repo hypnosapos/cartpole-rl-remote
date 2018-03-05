@@ -32,7 +32,7 @@ class GymRunnerRemote:
     def train(self, agent, num_episodes, render=False, file_name='Cartpole-rl-remote.h5'):
         return self.run(agent, num_episodes, train={'file_name': file_name}, render=render)
 
-    def run(self, agent, num_episodes, train=None, render=False, grpc_client=False):
+    def run(self, agent, num_episodes, train=None, render=False, host='localhost', grpc_client=False):
         for episode in range(num_episodes):
             state = self.env.reset().reshape(1, self.env.observation_space.shape[0])
             total_reward = 0
@@ -42,13 +42,13 @@ class GymRunnerRemote:
                 if render:
                     self.env.render()
 
-                action, request, response = agent.select_action(state, train, grpc_client)
+                action, request, response = agent.select_action(state, host=host, train=train, grpc_client=grpc_client)
 
                 # execute the selected action
                 next_state, reward, done, _ = self.env.step(action)
 
                 if request and response:
-                    agent.feedback(request, response, reward, done, call_type='grpc' if grpc_client else 'rest')
+                    agent.feedback(host, request, response, reward, done, call_type='grpc' if grpc_client else 'rest')
 
                 next_state = next_state.reshape(1, self.env.observation_space.shape[0])
 
