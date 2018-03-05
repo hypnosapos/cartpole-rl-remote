@@ -38,7 +38,7 @@ def train(gym, agent, args):
 
 def run(gym, agent, args):
     LOG.info("Running...")
-    gym.run(agent, args.episodes, render=args.render, host=args.host)
+    gym.run(agent, args.episodes, render=args.render, grpc_client=args.grpc_client)
 
 
 def main(argv=sys.argv[1:]):
@@ -68,6 +68,9 @@ def main(argv=sys.argv[1:]):
     run_subcommand.add_argument('--host', required=True,
                                 help='Host IP')
 
+    run_subcommand.add_argument('--grpc-client', action='store_true',
+                                help='If present then GRCP client will be use instead of REST')
+
     train_subcommand.add_argument('-f', '--file-name',
                                   default='Cartpole-rl-remote.h5',
                                   help='The name of the h5 file. Defaults to "Cartpole-rl-remote.h5"')
@@ -77,7 +80,7 @@ def main(argv=sys.argv[1:]):
         LOG.setLevel(logging.DEBUG)
 
     gym = GymRunnerRemote('CartPole-v0')
-    agent = Agent()
+    agent = Agent(host=args.host)
 
     args.func(gym, agent, args)
 

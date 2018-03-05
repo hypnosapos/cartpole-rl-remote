@@ -40,12 +40,12 @@ class SeldonClient(object):
     def rest_request(self, state):
         headers = {'Authorization': 'Bearer {}'.format(self.token)}
         payload = {"data": {"names": ["a"], "tensor": {"shape": [1, 4], "values": np.array(state[0]).tolist()}}}
-        LOG.debug("Launching REST request with:\nHeaders:\n{}\nPayload:\n{}", headers, payload)
+        LOG.debug("Launching REST request with:\nHeaders:\n%s\nPayload:\n%s", headers, payload)
         response = requests.post(
             "http://{}:8080/api/v0.1/predictions".format(self.host),
             headers=headers,
             json=payload)
-        LOG.debug("Response URL:\n{}\nResponse headers:\n{}\nResponse contents:\n{}",
+        LOG.debug("Response URL:\n%s\nResponse headers:\n%s\nResponse contents:\n%s",
                   response.url, response.headers, response.text)
         return payload, json.loads(response.text)
 
@@ -62,12 +62,27 @@ class SeldonClient(object):
         stub = prediction_pb2_grpc.SeldonStub(channel)
         metadata = [('oauth_token', self.token)]
         response = stub.Predict(request=request, metadata=metadata)
-        return response
+        return request, response
 
-    def send_feedback_rest(self, request, response, reward, done):
+    def rest_feedback(self, request, response, reward, done):
         if done:
             reward = 0
         headers = {"Authorization": "Bearer {}".format(self.token)}
         feedback = {"request": request, "response": response, "reward": reward}
+        LOG.debug("Sending feedback...")
         ret = requests.post("http://{}:8080/api/v0.1/feedback".format(self.host), headers=headers, json=feedback)
         return ret.text
+
+    def grpc_feedback(self, request, response, reward, done):
+        if done:
+            reward = 0
+        request = prediction_pb2.Feedback(
+                request=request,
+                response=response,
+                reward=float(reward)
+        )
+        channel = grpc.insecure_channel("{}:5000".format(self.host))
+        stub = prediction_pb2_grpc.SeldonStub(channel)
+        metadata = [('oauth_token', self.token)]
+        response = stub.SendFeedback(request=request, metadata=metadata)
+        return response

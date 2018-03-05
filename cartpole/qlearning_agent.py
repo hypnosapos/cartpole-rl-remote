@@ -7,7 +7,7 @@ from .client.seldon.client import SeldonClient
 
 
 class QLearningAgent:
-    def __init__(self, state_size, action_size):
+    def __init__(self, state_size, action_size, host):
         self.state_size = state_size
         self.action_size = action_size
 
@@ -21,26 +21,22 @@ class QLearningAgent:
         # agent state
         self.model = self.build_model()
         self.memory = deque(maxlen=2000)
-        self.seldon_client = None
+        self.seldon_client = SeldonClient(host)
 
     @abc.abstractmethod
     def build_model(self):
         return None
 
-    def select_action(self, state, train=None, host=None):
+    def select_action(self, state, train=None, grpc_client=False):
         random_exploit = np.random.rand()
         if train and random_exploit <= self.epsilon:
             return random.randrange(self.action_size), None, None
         elif train and random_exploit > self.epsilon:
             return np.argmax(self.model.predict(state)[0]), None, None
         else:
-            print('Calling remote model...')
-            if not self.seldon_client:
-                self.seldon_client = SeldonClient(host)
+            value, request, response = self.request(state, call_type='grpc' if grpc_client else 'rest')
 
-            request, response = self.seldon_client.rest_request(state)
-
-            return int(response.get('data').get('tensor').get('values')[0]), request, response
+            return value, request, response
 
     def record(self, state, action, reward, next_state, done):
         self.memory.append((state, action, reward, next_state, done))
@@ -61,3 +57,18 @@ class QLearningAgent:
 
         if self.epsilon > self.epsilon_min:
             self.epsilon *= self.epsilon_decay
+
+    def request(self, state, call_type='rest'):
+        __request_by_client_type = self.seldon_client.grpc_request if call_type == 'grpc' else self.seldon_client.rest_request
+        request, response = __request_by_client_type(state)
+        if call_type == 'grpc':
+            value = int(response.data.tensor.values[0])
+        else:
+            value = int(response.get('data').get('tensor').get('values')[0])
+
+        return value, request, response
+
+    def feedback(self, request, response, reward, done, call_type='rest'):
+        __feedback_by_client_type = self.seldon_client.grpc_feedback if call_type == 'grpc' else self.seldon_client.rest_feedback
+        response = __feedback_by_client_type(request, response, reward, done)
+        return response

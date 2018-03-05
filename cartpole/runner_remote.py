@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
+
+import logging
+
 from gym.envs.registration import register
 from .client.seldon.client import SeldonClient
 
@@ -10,8 +13,10 @@ register(
     reward_threshold=195.0
 )
 
-
 import gym
+
+
+LOG = logging.getLogger(__name__)
 
 
 class GymRunnerRemote:
@@ -27,7 +32,7 @@ class GymRunnerRemote:
     def train(self, agent, num_episodes, render=False, file_name='Cartpole-rl-remote.h5'):
         return self.run(agent, num_episodes, train={'file_name': file_name}, render=render)
 
-    def run(self, agent, num_episodes, train=None, render=False, host=None):
+    def run(self, agent, num_episodes, train=None, render=False, grpc_client=False):
         for episode in range(num_episodes):
             state = self.env.reset().reshape(1, self.env.observation_space.shape[0])
             total_reward = 0
@@ -37,19 +42,15 @@ class GymRunnerRemote:
                 if render:
                     self.env.render()
 
-                action, request, response = agent.select_action(state, train, host)
+                action, request, response = agent.select_action(state, train, grpc_client)
 
                 # execute the selected action
                 next_state, reward, done, _ = self.env.step(action)
 
                 if request and response:
-                    if not self.seldon_client:
-                        self.seldon_client = SeldonClient(host)
-
-                    self.seldon_client.send_feedback_rest(request, response, reward, done)
+                    agent.feedback(request, response, reward, done, call_type='grpc' if grpc_client else 'rest')
 
                 next_state = next_state.reshape(1, self.env.observation_space.shape[0])
-                reward = self.calc_reward(state, action, reward, next_state, done)
 
                 # record the results of the step
                 if train:
@@ -64,9 +65,8 @@ class GymRunnerRemote:
             if train:
                 agent.replay()
 
-            print("episode: {}/{} | score: {} | e: {:.3f}".format(
-                episode + 1, num_episodes, total_reward, agent.epsilon))
+            LOG.info("episode: %s/%s | score: %s | e: %s", episode + 1, num_episodes, total_reward, agent.epsilon)
 
         if train:
-            print("Saving model...")
+            LOG.info("Saving model...")
             agent.save_model(train['file_name'])
