@@ -10,12 +10,10 @@ import logging
 from cartpole.cartpole_agent import Agent
 from cartpole.runner_remote import GymRunnerRemote
 
-
 logging.basicConfig(
     format=format or '%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
     datefmt='%m-%d %H:%M',
 )
-
 LOG = logging.getLogger('cartpole')
 
 
@@ -35,12 +33,12 @@ def env(*_vars, **kwargs):
 
 def train(gym, agent, args):
     LOG.info("Training...")
-    gym.train(agent, args.episodes, args.render, args.file_name)
+    gym.train(agent, args.episodes, render=args.render, file_name=args.file_name)
 
 
 def run(gym, agent, args):
     LOG.info("Running...")
-    gym.run(agent, args.episodes, args.render)
+    gym.run(agent, args.episodes, render=args.render, host=args.host)
 
 
 def main(argv=sys.argv[1:]):

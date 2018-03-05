@@ -5,10 +5,14 @@ import requests
 import grpc
 import json
 import numpy as np
+import logging
 
 from requests.auth import HTTPBasicAuth
 from cartpole.client.seldon.proto import prediction_pb2
 from cartpole.client.seldon.proto import prediction_pb2_grpc
+
+
+LOG = logging.getLogger(__name__)
 
 
 class SeldonClient(object):
@@ -20,6 +24,7 @@ class SeldonClient(object):
     @property
     def token(self):
         if not self._token:
+            LOG.debug("Getting auth token ...")
             payload = {'grant_type': 'client_credentials'}
             response = requests.post(
                 "http://{}:8080/oauth/token".format(self.host),
@@ -35,10 +40,13 @@ class SeldonClient(object):
     def rest_request(self, state):
         headers = {'Authorization': 'Bearer {}'.format(self.token)}
         payload = {"data": {"names": ["a"], "tensor": {"shape": [1, 4], "values": np.array(state[0]).tolist()}}}
+        LOG.debug("Launching REST request with:\nHeaders:\n{}\nPayload:\n{}", headers, payload)
         response = requests.post(
             "http://{}:8080/api/v0.1/predictions".format(self.host),
             headers=headers,
             json=payload)
+        LOG.debug("Response URL:\n{}\nResponse headers:\n{}\nResponse contents:\n{}",
+                  response.url, response.headers,response.content)
         return payload, json.loads(response.text)
 
     def grpc_request(self, state):

@@ -24,7 +24,7 @@ class GymRunnerRemote:
     def calc_reward(self, state, action, gym_reward, next_state, done):
         return gym_reward
 
-    def train(self, agent, num_episodes, render, file_name):
+    def train(self, agent, num_episodes, render=False, file_name='Cartpole-rl-remote.h5'):
         return self.run(agent, num_episodes, train={'file_name': file_name}, render=render)
 
     def run(self, agent, num_episodes, train=None, render=False, host=None):
