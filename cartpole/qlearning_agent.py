@@ -22,7 +22,7 @@ class QLearningAgent:
         self.model = self.build_model()
         self.memory = deque(maxlen=2000)
         self.seldon_client = None
-        self.host=None
+        self.host = None
 
     @abc.abstractmethod
     def build_model(self):
