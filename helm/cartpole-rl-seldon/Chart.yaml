@@ -1,0 +1,17 @@
+apiVersion: v1
+description: Seldon Deployment for cartpole-rl remote agent
+keywords:
+- kubernetes
+- machine-learning
+- cartpole
+name: cartpole-rl-seldon
+home: https://github.com/hypnosapos/cartpole-rl-remote
+sources:
+- https://github.com/hypnosapos/cartpole-rl-remote
+version: 0.1
+maintainers:
+- name: David Suarez
+  email: dasuacar@gmail.com
+- name: Enrique Garcia
+  email: engapa@gmail.com
+icon: https://avatars1.githubusercontent.com/u/36665264?s=400&u=ff96dd68909da81634499f76dfd4babd033f59ed&v=4

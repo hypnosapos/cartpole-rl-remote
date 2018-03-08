@@ -1,0 +1,7 @@
+dependencies:
+- name: seldon-crd
+  version: "0.1.6_SNAPSHOT"
+  repository: "https://storage.googleapis.com/seldon-charts/seldon-crd"
+- name: seldon-core
+  version: "0.1.6_SNAPSHOT"
+  repository: "https://storage.googleapis.com/seldon-charts/seldon-core"
