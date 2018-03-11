@@ -2,6 +2,9 @@
 .*
 !.gitignore
 !.circleci
+!.dockerignore
+!.gitchangelog.rc
+!.changelog.tpl
 
 #Ignore python reources
 *.pyc
