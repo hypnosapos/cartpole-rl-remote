@@ -1,0 +1,106 @@
+{
+    "apiVersion": "machinelearning.seldon.io/v1alpha1",
+    "kind": "SeldonDeployment",
+    "metadata": {
+	"labels": {
+	    "app": "seldon"
+	},
+	"name": "cartpole-rl-router"
+    },
+    "spec": {
+	"annotations": {
+	    "project_name": "Cartpole RL Router",
+	    "deployment_version": "v1"
+	},
+	"name": "cartpole-rl-router",
+	"oauth_key": "oauth-key",
+	"oauth_secret": "oauth-secret",
+	"predictors": [
+	    {
+		"componentSpec": {
+		    "spec": {
+			"containers": [
+			    {
+				"image": "hypnosapos/cartpolerlremoteagent:1ef114d",
+				"imagePullPolicy": "IfNotPresent",
+				"name": "cartpole-rl-a",
+				"resources": {
+				    "requests": {
+					"memory": "1Mi"
+				    }
+				}
+			    },
+			    {
+				"image": "hypnosapos/cartpolerlremoteagent:1ef114d",
+				"imagePullPolicy": "IfNotPresent",
+				"name": "cartpole-rl-b",
+				"resources": {
+				    "requests": {
+					"memory": "1Mi"
+				    }
+				}
+			    },
+				{
+				"image": "hypnosapos/cartpolerlremoteagent:1ef114d",
+				"imagePullPolicy": "IfNotPresent",
+				"name": "cartpole-rl-c",
+				"resources": {
+				    "requests": {
+					"memory": "1Mi"
+				    }
+				}
+			    },
+			    {
+				"image": "seldonio/mab_epsilon_greedy:1.1",
+				"name": "eg-router"
+			    }
+			],
+			"terminationGracePeriodSeconds": 20
+		    }
+		},
+		"name": "cartpole-rl-router-predictor",
+		"replicas": 1,
+		"annotations": {
+		    "predictor_version": "v1"
+		},
+		"graph": {
+		    "name": "eg-router",
+		    "type":"ROUTER",
+		    "parameters": [
+			{
+			    "name": "n_branches",
+			    "value": "3",
+			    "type": "INT"
+			},
+			{
+			    "name": "epsilon",
+			    "value": "0.3",
+			    "type": "FLOAT"
+			},
+			{
+			    "name": "verbose",
+			    "value": "1",
+			    "type": "BOOL"
+			}
+		    ],
+		    "children": [
+			{
+			    "name": "cartpole-rl-a",
+			    "type": "MODEL"
+			},
+			{
+			    "name": "cartpole-rl-b",
+			    "type": "MODEL"
+			},
+			{
+			    "name": "cartpole-rl-c",
+			    "type": "MODEL"
+			}
+		    ]
+		}
+	    }
+	]
+    }
+}
+
+

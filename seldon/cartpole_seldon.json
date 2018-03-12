@@ -5,14 +5,14 @@
         "labels": {
             "app": "seldon"
         },
-        "name": "seldon-deployment-cartpole"
+        "name": "cartpole-rl"
     },
     "spec": {
         "annotations": {
-            "project_name": "Cartpole RL Remote Agent",
+            "project_name": "Cartpole RL",
             "deployment_version": "v1"
         },
-        "name": "keras-cartpole-deployment",
+        "name": "cartpole-rl",
         "oauth_key": "oauth-key",
         "oauth_secret": "oauth-secret",
         "predictors": [
@@ -36,7 +36,7 @@
                 },
                 "graph": {
                     "children": [],
-                    "name": "keras-cartpole",
+                    "name": "cartpole-rl-predictor",
                     "endpoint": {
                         "type" : "REST"
                     },
