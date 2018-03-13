@@ -73,6 +73,8 @@ class SeldonClient(object):
         stub = prediction_pb2_grpc.SeldonStub(channel)
         metadata = [('oauth_token', self.get_token())]
         response = stub.Predict(request=request, metadata=metadata)
+        LOG.debug("GRPC Request: %s", request)
+        LOG.debug("GRPC Response: %s", response)
         return request, response
 
     def rest_feedback(self, request, response, reward, done):
@@ -95,6 +97,8 @@ class SeldonClient(object):
         stub = prediction_pb2_grpc.SeldonStub(channel)
         metadata = [('oauth_token', self.get_token())]
         response = stub.SendFeedback(request=request, metadata=metadata)
+        LOG.debug("GRPC Feedback Request: %s", request)
+        LOG.debug("GRPC Feedback Response: %s", response)
         return response
 
     def switch_branch_router(self, state, pref_branch=0, iters=100, routing_name='eg-router', show_plot=True):
