@@ -7,16 +7,18 @@ from .client.seldon.client import SeldonClient
 
 
 class QLearningAgent:
-    def __init__(self, state_size, action_size):
+    def __init__(self, state_size, action_size,
+                 gamma, epsilon, epsilon_decay,
+                 epsilon_min, batch_size):
         self.state_size = state_size
         self.action_size = action_size
 
         # hyperparameters
-        self.gamma = 0.95  # discount rate on future rewards
-        self.epsilon = 1.0  # exploration rate
-        self.epsilon_decay = 0.995  # the decay of epsilon after each training batch
-        self.epsilon_min = 0.1  # the minimum exploration rate permissible
-        self.batch_size = 32  # maximum size of the batches sampled from memory
+        self.gamma = gamma  # discount rate on future rewards
+        self.epsilon = epsilon  # exploration rate
+        self.epsilon_decay = epsilon_decay  # the decay of epsilon after each training batch
+        self.epsilon_min = epsilon_min  # the minimum exploration rate permissible
+        self.batch_size = batch_size  # maximum size of the batches sampled from memory
 
         # agent state
         self.model = self.build_model()
@@ -62,6 +64,7 @@ class QLearningAgent:
     def __check_seldon_client(self, host):
         if not self.seldon_client or host != self.host:
             self.seldon_client = SeldonClient(host)
+            self.host = host
 
     def request(self, host, state, call_type='rest'):
         self.__check_seldon_client(host)

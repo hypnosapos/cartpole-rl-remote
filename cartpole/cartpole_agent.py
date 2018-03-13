@@ -9,8 +9,12 @@ from cartpole.qlearning_agent import QLearningAgent
 
 
 class Agent(QLearningAgent):
-    def __init__(self):
-        super().__init__(4, 2)
+    def __init__(self,
+                 gamma=0.95, epsilon=1.0, epsilon_decay=0.995,
+                 epsilon_min=0.1, batch_size=32):
+        super().__init__(4, 2,
+                         gamma=gamma, epsilon=epsilon, epsilon_decay=epsilon_decay,
+                         epsilon_min=epsilon_min, batch_size=batch_size)
 
     def build_model(self):
         model = Sequential()

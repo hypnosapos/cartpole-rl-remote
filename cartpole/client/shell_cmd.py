@@ -59,11 +59,8 @@ def main(argv=sys.argv[1:]):
     parser.add_argument('-r', '--render', action='store_true',
                         help='Activate view')
 
-    train_subcommand.add_argument('-e', '--episodes', type=int, default=250,
-                                  help='Number of episodes')
-
-    run_subcommand.add_argument('-e', '--episodes', type=int, default=50,
-                                help='Number of episodes')
+    parser.add_argument('-e', '--episodes', type=int, default=50,
+                        help='Number of episodes')
 
     run_subcommand.add_argument('--host', required=True,
                                 help='Host IP')
@@ -74,9 +71,25 @@ def main(argv=sys.argv[1:]):
     train_subcommand.add_argument('-f', '--file-name',
                                   default='Cartpole-rl-remote.h5',
                                   help='The name of the h5 file. Defaults to "Cartpole-rl-remote.h5"')
+    train_subcommand.add_argument('--gamma', type=float,
+                                  default='.095',
+                                  help='Gamma value')
+    train_subcommand.add_argument('--epsilon', type=float,
+                                  default='1.0',
+                                  help='Epsilon value')
+    train_subcommand.add_argument('--epsilon-decay', type=float,
+                                  default='0.995',
+                                  help='Epsilon decay value')
+    train_subcommand.add_argument('--epsilon-min', type=float,
+                                  default='0.1',
+                                  help='Min value of epsilon')
+    train_subcommand.add_argument('--batch-size', type=int,
+                                  default='32',
+                                  help='Batch size')
 
     args = parser.parse_args(argv)
     if args.verbose:
+        logging.basicConfig(level=logging.DEBUG)
         LOG.setLevel(logging.DEBUG)
 
     gym = GymRunnerRemote('CartPole-v0')
