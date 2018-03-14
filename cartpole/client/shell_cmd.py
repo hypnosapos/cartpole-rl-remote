@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 
+from multiprocessing import Process
 import argparse
 import os
 import sys
@@ -11,10 +12,12 @@ from cartpole.cartpole_agent import Agent
 from cartpole.runner_remote import GymRunnerRemote
 
 logging.basicConfig(
-    format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
-    datefmt='%m-%d %H:%M',
+    format='%(asctime)s %(name)-12s %(processName)-12s %(levelname)-8s %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S',
 )
 LOG = logging.getLogger('cartpole')
+
+PROCESSES = []
 
 
 def env(*_vars, **kwargs):
@@ -68,6 +71,9 @@ def main(argv=sys.argv[1:]):
     run_subcommand.add_argument('--grpc-client', action='store_true',
                                 help='If present then GRCP client will be use instead of REST')
 
+    run_subcommand.add_argument('--runners', type=int, default=1,
+                                help='Number of processes, defaults to 1')
+
     train_subcommand.add_argument('-f', '--file-name',
                                   default='Cartpole-rl-remote.h5',
                                   help='The name of the h5 file. Defaults to "Cartpole-rl-remote.h5"')
@@ -91,20 +97,33 @@ def main(argv=sys.argv[1:]):
     if args.verbose:
         logging.basicConfig(level=logging.DEBUG)
         LOG.setLevel(logging.DEBUG)
+    else:
+        logging.basicConfig(level=logging.INFO)
+        LOG.setLevel(logging.INFO)
 
-    gym = GymRunnerRemote('CartPole-v0')
-    agent = Agent()
+    for m in range(0, args.runners):
+        gym = GymRunnerRemote()
+        agent = Agent()
+        LOG.info("Runner %s/%s", m+1, args.runners)
+        p = Process(target=args.func, args=(gym, agent, args), name='runner-{}'.format(m+1))
+        PROCESSES.append(p)
+        p.start()
 
-    args.func(gym, agent, args)
+    for p in PROCESSES:
+        p.join()
 
 
 if __name__ == "__main__":
+
     try:
         main(sys.argv[1:])
     except KeyboardInterrupt:
         LOG.warning("... cartpole command was interrupted")
-        sys.exit.exit(2)
+        sys.exit(2)
     except Exception as ex:
         LOG.error('Unexpected error: %s' % ex)
         sys.exit(1)
+    finally:
+        for p in PROCESSES:
+            p.terminate()
     sys.exit(0)

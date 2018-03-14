@@ -12,29 +12,29 @@ from cartpole.client.seldon.proto import prediction_pb2
 from cartpole.client.seldon.proto import prediction_pb2_grpc
 
 
-LOG = logging.getLogger(__name__)
-
-
 class SeldonClient(object):
 
-    def __init__(self, host):
+    def __init__(self, host, name=None):
         self.host = host
         self.session = None
         self.token = None
+        self.log = logging.getLogger(str.join('-', (__name__, name or '',)))
 
     def http_log(self, r, *args, **kwargs):
-        LOG.debug(r)
-        LOG.debug(r.url)
-        LOG.debug('RESPONSE HEADERS << %s', r.headers)
-        LOG.debug('RESPONSE BODY << %s', r.text)
+        self.log.debug(r)
+        self.log.debug(r.url)
+        self.log.debug('RESPONSE HEADERS << %s', r.headers)
+        self.log.debug('RESPONSE BODY << %s', r.text)
 
-    def get_session(self, pool_connections=10, poll_maxsize=100):
+    def get_session(self, pool_connections=10, poll_maxsize=100, max_retries=3):
         if not self.session:
-            LOG.debug("Getting http session ...")
+            self.log.debug("Getting http session ...")
             session = requests.Session()
             http_adapter = requests.adapters.HTTPAdapter(
                 pool_connections=pool_connections,
-                pool_maxsize=poll_maxsize)
+                pool_maxsize=poll_maxsize,
+                max_retries= max_retries
+            )
             session.mount('http://', http_adapter)
             session.mount('https://', http_adapter)
             session.headers = {'Authorization': 'Bearer {}'.format(self.get_token())}
@@ -44,7 +44,7 @@ class SeldonClient(object):
 
     def get_token(self):
         if not self.token:
-            LOG.debug("Getting auth token ...")
+            self.log.debug("Getting auth token ...")
             payload = {'grant_type': 'client_credentials'}
             response = requests.post(
                     "http://{}:8080/oauth/token".format(self.host),
@@ -56,8 +56,8 @@ class SeldonClient(object):
     def rest_request(self, state):
         payload = {"data": {"names": ["a"], "tensor": {"shape": [1, 4], "values": np.array(state[0]).tolist()}}}
         response = self.get_session().post(
-            "http://{}:8080/api/v0.1/predictions".format(self.host),
-            json=payload)
+                "http://{}:8080/api/v0.1/predictions".format(self.host),
+                json=payload)
         return payload, json.loads(response.text)
 
     def grpc_request(self, state):
@@ -73,15 +73,15 @@ class SeldonClient(object):
         stub = prediction_pb2_grpc.SeldonStub(channel)
         metadata = [('oauth_token', self.get_token())]
         response = stub.Predict(request=request, metadata=metadata)
-        LOG.debug("GRPC Request: %s", request)
-        LOG.debug("GRPC Response: %s", response)
+        self.log.debug("GRPC Request: %s", request)
+        self.log.debug("GRPC Response: %s", response)
         return request, response
 
     def rest_feedback(self, request, response, reward, done):
         if done:
             reward = 0
         feedback = {"request": request, "response": response, "reward": reward}
-        LOG.debug("Sending feedback...")
+        self.log.debug("Sending feedback...")
         ret = self.get_session().post("http://{}:8080/api/v0.1/feedback".format(self.host), json=feedback)
         return ret.text
 
@@ -97,8 +97,8 @@ class SeldonClient(object):
         stub = prediction_pb2_grpc.SeldonStub(channel)
         metadata = [('oauth_token', self.get_token())]
         response = stub.SendFeedback(request=request, metadata=metadata)
-        LOG.debug("GRPC Feedback Request: %s", request)
-        LOG.debug("GRPC Feedback Response: %s", response)
+        self.log.debug("GRPC Feedback Request: %s", request)
+        self.log.debug("GRPC Feedback Response: %s", response)
         return response
 
     def switch_branch_router(self, state, pref_branch=0, iters=100, routing_name='eg-router', show_plot=True):
@@ -106,7 +106,7 @@ class SeldonClient(object):
         for _ in range(iters):
             request, response = self.rest_request(state)
             route = response.get("meta").get("routing").get(routing_name)
-            LOG.debug('Route: %s', route)
+            self.log.debug('Route: %s', route)
             if route == pref_branch:
                 self.rest_feedback(request, response, reward=1, done=False)
             else:

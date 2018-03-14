@@ -2,6 +2,7 @@ from collections import deque
 import numpy as np
 import random
 import abc
+import logging
 
 from .client.seldon.client import SeldonClient
 
@@ -25,6 +26,7 @@ class QLearningAgent:
         self.memory = deque(maxlen=2000)
         self.seldon_client = None
         self.host = None
+        self.log = logging.getLogger('cartpole')
 
     @abc.abstractmethod
     def build_model(self):
