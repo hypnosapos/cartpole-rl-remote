@@ -92,6 +92,8 @@ def main(argv=sys.argv[1:]):
     train_subcommand.add_argument('--batch-size', type=int,
                                   default='32',
                                   help='Batch size')
+    train_subcommand.add_argument('--runners', type=int, default=1,
+                                  help='Number of processes, defaults to 1')
 
     args = parser.parse_args(argv)
     if args.verbose:
