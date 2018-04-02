@@ -43,12 +43,12 @@ install: ## install
 
 train: install ## train a model
 	mkdir -p seldon/models
-	cartpole -v train -e $(EPOCHS_TRAIN) -f seldon/models/$(MODEL_FILE)
+	cartpole -v -e $(EPOCHS_TRAIN) train -f seldon/models/$(MODEL_FILE)
 
 train-dev: ## train a model in dev mode (requires a .tox/py36 venv)
 	mkdir -p seldon/models
 	source $(PY_DEV_ENV) &&\
-	cartpole -v train -e $(EPOCHS_TRAIN) -f seldon/models/$(MODEL_FILE)
+	cartpole -v -e $(EPOCHS_TRAIN) train -f seldon/models/$(MODEL_FILE)
 
 train-docker: ## train model by docker container
     mkdir -p seldon/models

@@ -60,14 +60,15 @@ class GymRunnerRemote:
                 if render:
                     self.env.render()
                 try:
-                    action, request, response = agent.select_action(state, host=host, train=train, grpc_client=grpc_client)
+                    action, request, response = agent.select_action(state, host=host, train=train,
+                                                                    grpc_client=grpc_client)
 
                     # execute the selected action
                     next_state, reward, done, _ = self.env.step(action)
 
                     if not train and (request and response):
-                            agent.feedback(host, request, response, reward, done,
-                                           call_type='grpc' if grpc_client else 'rest')
+                        agent.feedback(host, request, response, reward, done,
+                                       call_type='grpc' if grpc_client else 'rest')
 
                     next_state = next_state.reshape(1, self.env.observation_space.shape[0])
 
