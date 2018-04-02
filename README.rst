@@ -12,9 +12,11 @@ Cartpole RL Remote
 .. image:: https://codecov.io/gh/hypnosapos/cartpole-rl-remote/branch/master/graph/badge.svg
    :target: https://codecov.io/gh/hypnosapos/cartpole-rl-remote
    :alt: Coverage
+.. image:: http://dockeri.co/image/hypnosapos/cartpolerlremoteagent
+   :target: https://hub.docker.com/r/hypnosapos/cartpolerlremoteagent
+   :alt: dockeri.co
 
-
-This project is intended to play with Cart Pole Game using Reinforcement Learning.
+This project is intended to play with Cart Pole Game using Reinforcement Learning by a remote agent.
 
 Install
 =======
@@ -22,6 +24,7 @@ Install
 Install this python module to train or run the RL model under the wood.
 
 Requirements:
+- python >=3.5
 - pip
 
 Remotely
@@ -37,11 +40,11 @@ Just type this ``pip`` command to install it from pypi package repository::
 
 Alternatively it's possible to install it by using any of these URLs:
 
-* ``pip install git+https://github.com/davsuacar/cartpole-rl-remote[@<git_ref>]#egg=cartpole-rl-remote``
+* ``pip install git+https://github.com/hypnosapos/cartpole-rl-remote[@<git_ref>]#egg=cartpole-rl-remote``
 * ``pip install <release_file>``
 
 Where [@<git_ref>] is an optional reference to a git reference (i.e: @master, v0.1.6) and
-<release_file> is the URL of one release file at https://github.com/davsuacar/cartpole-rl-remote/releases
+<release_file> is the URL of one release file at https://github.com/hypnosapos/cartpole-rl-remote/releases
 
 Locally
 -------
@@ -66,23 +69,17 @@ Training
 
 Once we have the cartpole client installed as it was said above, just type this command to train a model::
 
-  cartpole train -e 5000
+  cartpole -e 5000 train
 
 
-The output of the training command is an h5 file (a trained model serialized as hdf5).
+The output of the training command is one or many h5 file/s (a trained model serialized as hdf5).
 
 Running
 =======
 
 In order to run the model, launch this command in your shell::
 
-  cartpole run -e 100
+  cartpole  -e 1000 run
 
 
-
-Doc
-===
-
-See all doc at `here
- doc/model.rst`_.
 

@@ -1,0 +1,29 @@
+version: '3.3'
+
+services:
+  visdom:
+    environment:
+    - HOSTNAME=visdom
+    build:
+      context: .
+      dockerfile: docker/Dockerfile-visdom
+    image: hypnosapos/visdom:latest
+    networks:
+      default:
+        aliases:
+        - visdom
+    ports:
+    - "8097:8097"
+  cartpole-rl-remote:
+    depends_on:
+    - visdom
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    image: hypnosapos/cartpole-rl-remote:latest
+    command: |
+        cartpole --log-level DEBUG -e 1000
+         --metrics_engine visdom --metrics_config '{"server": "http://visdom" "env": "main"}'
+         train
+          --gamma 0.095 0.099 0.001
+          --batch_size 32 33
