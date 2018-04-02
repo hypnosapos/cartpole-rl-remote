@@ -2,10 +2,13 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 
 import logging
+import threading
 import numpy as np
+from datetime import datetime
 
 from gym.envs.registration import register
-from .client.seldon.client import SeldonClient
+
+from .metrics.log.visdom import VisdomFormatter, VisdomPlotHandler
 
 register(
     id='CartPoleExtra-v0',
@@ -18,14 +21,32 @@ import gym
 
 
 class GymRunnerRemote:
-    def __init__(self, gym_name='CartPoleExtra-v0', max_timesteps=100000):
-
+    def __init__(self, name='gym_runner_remote',
+                 gym_name='CartPoleExtra-v0',
+                 max_timesteps=100000,
+                 vis_config={}):
+        self.name = name
         self.env = gym.make(gym_name)
         self.max_timesteps = max_timesteps
         self.seldon_client = None
-        self.log = logging.getLogger('cartpole')
+        self.log = logging.getLogger(__name__)
+        if vis_config and self.log.isEnabledFor(logging.DEBUG):
+            vfmt = VisdomFormatter(['episode', 'score'])
+            handler = VisdomPlotHandler(
+                self.name, 'scatter',
+                plot_opts=dict(
+                    title=self.name,
+                    xlabels='episodes',
+                    ylabel='score',
+                    markersize=5
+                ),
+                opts=vis_config
+            )
+            handler.setFormatter(vfmt)
+            self.log.addHandler(handler)
+        self.tstart = datetime.now()
 
-    def train(self, agent, num_episodes, render=False, file_name='Cartpole-rl-remote.h5'):
+    def train(self, agent, num_episodes, render=False, file_name='cartpole-rl-remote'):
         return self.run(agent, num_episodes, train={'file_name': file_name}, render=render)
 
     def run(self, agent, num_episodes, train=None, render=False, host='localhost', grpc_client=False):
@@ -68,17 +89,29 @@ class GymRunnerRemote:
             # train the agent based on a sample of past experiences
             if train:
                 agent.replay()
+                self.log.debug("Metrics - episode: %i/%i | score: %.3f | e: %s",
+                               episode + 1, num_episodes, total_reward, agent.epsilon)
+            else:
+                self.log.debug("Metrics - episode: %i/%i | score: %.3f",
+                               episode + 1, num_episodes, total_reward)
 
-            self.log.info("episode: %s/%s | score: %s | e: %s",
-                          episode + 1, num_episodes, total_reward, agent.epsilon)
             scores.append(total_reward)
         if train:
-            self.log.info("Saving model...")
-            agent.save_model(train['file_name'])
+            file_name = "{}-{}.h5".format(train['file_name'], self.name.split('-')[-1:][0])
+            self.log.info("Saving model {} ...".format(file_name))
+            agent.model.save(file_name)
 
+        max_score = np.max(scores)
+        _time = datetime.now() - self.tstart
         self.log.info('Episodes: %(episodes)i  MaxScore: %(max_score)f'
-                      '  MinScore: %(min_score)f  AvgScore: %(avg_score)f',
+                      '  MinScore: %(min_score)f  AvgScore: %(avg_score)f'
+                      ' SpentTime: %(time)s',
                       {'episodes': num_episodes,
                        'max_score': np.max(scores),
                        'min_score': np.min(scores),
-                       'avg_score': np.average(scores)})
+                       'avg_score': np.average(scores),
+                       'time': _time})
+        if train:
+            return self.name, scores, agent.hparams, max_score, _time, file_name
+        else:
+            return self.name, scores, agent.hparams, max_score, _time, None

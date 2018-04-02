@@ -2,46 +2,95 @@
 # -*- coding: utf-8 -*-
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 
-from multiprocessing import Process
+import multiprocessing
+import threading
 import argparse
 import os
 import sys
 import logging
+import json
+from itertools import product
+import numpy as np
+from datetime import datetime
 
-from cartpole.cartpole_agent import Agent
 from cartpole.runner_remote import GymRunnerRemote
+from cartpole.qlearning_agent import (
+    QLearningAgent as Agent,
+    HPARAMS_SCHEMA
+)
+from cartpole.metrics import get_visdom_conn
+import cartpole.hparam as hp
 
+
+LOG_FORMAT = '%(asctime)s %(name)-12s %(processName)-12s %(threadName)-12s %(levelname)-8s %(message)s'
 logging.basicConfig(
-    format='%(asctime)s %(name)-12s %(processName)-12s %(levelname)-8s %(message)s',
+    format=LOG_FORMAT,
     datefmt='%Y-%m-%d %H:%M:%S',
 )
+
 LOG = logging.getLogger('cartpole')
-
-PROCESSES = []
-
-
-def env(*_vars, **kwargs):
-    """Search for the first defined of possibly many env vars.
-
-    Returns the first environment variable defined in vars, or
-    returns the default defined in kwargs.
-
-    """
-    for var in _vars:
-        value = os.getenv(var, None)
-        if value:
-            return value
-    return kwargs.get('default', '')
+LOG.setLevel(logging.NOTSET)
 
 
-def train(gym, agent, args):
+STR_NOW = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+# By default metrics are disabled
+_METRICS_CONFIG = dict()
+_METRICS_CALLBACK_FUNC = dict(
+    visdom='process_callback_visdom'
+)
+
+
+def train(episodes, render=False, hparams={}, model_config={}, file_name='cartpole-rl-remote'):
     LOG.info("Training...")
-    gym.train(agent, args.episodes, render=args.render, file_name=args.file_name)
+    gym = GymRunnerRemote(name=multiprocessing.current_process().name, vis_config=_METRICS_CONFIG)
+    agent = Agent(hparams=hparams, model_config=model_config)
+    return gym.train(agent, episodes, render=render, file_name=file_name)
 
 
-def run(gym, agent, args):
+def run(episodes, render=False, host='localhost', grpc_client=False):
     LOG.info("Running...")
-    gym.run(agent, args.episodes, render=args.render, host=args.host, grpc_client=args.grpc_client)
+    gym = GymRunnerRemote(name=threading.current_thread().name, vis_config=_METRICS_CONFIG)
+    agent = Agent()
+    return gym.run(agent, episodes, render=render, host=host, grpc_client=grpc_client)
+
+
+def process_callback_visdom(args):
+    vis = get_visdom_conn(**_METRICS_CONFIG)
+    LOG.debug("Precessing callbacks ...")
+    exp_ids, scores, hparams, max_scores, _time, file_name = list(zip(*args))
+
+    vis.boxplot(
+        X=np.column_stack(scores),
+        opts=dict(
+            title='Experiment Scores',
+            legend=exp_ids,
+            width=1200,
+            height=500,
+            marginleft=60,
+            marginright=60,
+            marginbottom=80,
+            margintop=60,
+            fillarea=True,
+            xlabel='Workers',
+            boxpoints='all',
+            ylabel='score'
+        )
+    )
+
+    text = "".join(["<b>%s</b>:&nbsp;%s;&nbsp;Spent time:%s<br/>"
+                    "" % (arg[0], arg[1], arg[2]) for arg in list(zip(exp_ids, hparams, _time))])
+    max_score = np.max(max_scores)
+    max_score_ind = np.argmax(max_scores)
+    text += ("<br/><br/>Best score/s: <b>%.3f</b> was reached with worker/s <b>%s</b>" % (max_score, exp_ids[max_score_ind]))
+    vis.text(
+        text,
+        opts=dict(
+            title='Hyperparameters',
+            width=1200,
+            height=200
+        )
+    )
 
 
 def main(argv=sys.argv[1:]):
@@ -56,14 +105,36 @@ def main(argv=sys.argv[1:]):
     run_subcommand = subparsers.add_parser('run')
     run_subcommand.set_defaults(func=run)
 
-    parser.add_argument('-v', '--verbose', action='store_true',
-                        help='Activate verbose mode')
-
     parser.add_argument('-r', '--render', action='store_true',
                         help='Activate view')
 
     parser.add_argument('-e', '--episodes', type=int, default=50,
                         help='Number of episodes')
+
+    parser.add_argument('--log-file', type=str,
+                        help='Path of file where write logs to.')
+
+    parser.add_argument('--log-level', type=str,
+                        default='INFO',
+                        choices=logging._levelToName.values(),
+                        help='Log level (name). Defaults to INFO')
+
+    parser.add_argument('--conf-file', type=json.load,
+                        help='Pass all parameters from json config file')
+
+    parser.add_argument('--metrics-engine', type=str,
+                        default=None,
+                        choices=(None, 'visdom', 'kibana', 'sphinx',),
+                        help='Type of metrics visualizer engine.')
+
+    parser.add_argument('--metrics-config', type=json.loads,
+                        default={},
+                        help='Metrics configuration. Contents are different accordign to "metrics-engine" arg'
+                             'Example {"server": "http://localhost"}.')
+
+    train_subcommand.add_argument('-f', '--file-name',
+                                  default='cartpole-rl-remote',
+                                  help='The name of the h5 file. Defaults to "cartpole-rl-remote"')
 
     run_subcommand.add_argument('--host', required=True,
                                 help='Host IP')
@@ -72,45 +143,55 @@ def main(argv=sys.argv[1:]):
                                 help='If present then GRCP client will be use instead of REST')
 
     run_subcommand.add_argument('--runners', type=int, default=1,
-                                help='Number of processes, defaults to 1')
+                                help='Number of runners, defaults to 1')
 
-    train_subcommand.add_argument('-f', '--file-name',
-                                  default='Cartpole-rl-remote.h5',
-                                  help='The name of the h5 file. Defaults to "Cartpole-rl-remote.h5"')
-    train_subcommand.add_argument('--gamma', type=float,
-                                  default='.095',
-                                  help='Gamma value')
-    train_subcommand.add_argument('--epsilon', type=float,
-                                  default='1.0',
-                                  help='Epsilon value')
-    train_subcommand.add_argument('--epsilon-decay', type=float,
-                                  default='0.995',
-                                  help='Epsilon decay value')
-    train_subcommand.add_argument('--epsilon-min', type=float,
-                                  default='0.1',
-                                  help='Min value of epsilon')
-    train_subcommand.add_argument('--batch-size', type=int,
-                                  default='32',
-                                  help='Batch size')
+    for hparam_name, hparam in HPARAMS_SCHEMA.items():
+        train_subcommand.add_argument('--{}'.format(hparam_name), type=hparam.get('dtype'), nargs='*',
+                                      required=False,
+                                      default=[hparam.get('default')],
+                                      help='Hyperparameter {}'.format(hparam_name))
 
     args = parser.parse_args(argv)
-    if args.verbose:
-        logging.basicConfig(level=logging.DEBUG)
-        LOG.setLevel(logging.DEBUG)
+
+    logging.basicConfig(level=getattr(logging, args.log_level))
+
+    LOG.setLevel(level=args.log_level)
+
+    if args.log_file:
+        fh = logging.FileHandler(args.log_file)
+        fh.setFormatter(logging.Formatter(LOG_FORMAT))
+        LOG.addHandler(fh)
+
+    if args.metrics_engine == 'visdom':
+        _METRICS_CONFIG.update(dict(server='http://localhost'))
+    _METRICS_CONFIG.update(args.metrics_config)
+
+    if args.func == train:
+
+        hparams = {hparam_name: hp.hparam_steps(getattr(args, hparam_name), HPARAMS_SCHEMA.get(hparam_name).get('dtype'))
+                   for hparam_name in HPARAMS_SCHEMA if hasattr(args, hparam_name)}
+
+        # TODO: auto-modeling by custom config (get_model(**config)), defaults to {}
+        _args = [(args.episodes, args.render, dict(zip(hparams.keys(), hparam_values)), {})
+                 for hparam_values in list(product(*hparams.values()))]
+
+        with multiprocessing.Pool(len(_args)) as process_pool:
+            results = process_pool.starmap_async(
+                args.func,
+                _args,
+                callback=getattr(sys.modules[__name__],
+                                 _METRICS_CALLBACK_FUNC.get(args.metrics_engine)) if args.metrics_engine else None
+            )
+            results.get()
+
     else:
-        logging.basicConfig(level=logging.INFO)
-        LOG.setLevel(logging.INFO)
-
-    for m in range(0, args.runners):
-        gym = GymRunnerRemote()
-        agent = Agent()
-        LOG.info("Runner %s/%s", m+1, args.runners)
-        p = Process(target=args.func, args=(gym, agent, args), name='runner-{}'.format(m+1))
-        PROCESSES.append(p)
-        p.start()
-
-    for p in PROCESSES:
-        p.join()
+        _args = [(args.episodes, args.render, args.host, args.grpc_client) for _ in range(args.runners)]
+        with multiprocessing.Pool(args.runners) as process_pool:
+            results = process_pool.starmap_async(
+                args.func,
+                _args
+            )
+            results.get()
 
 
 if __name__ == "__main__":
@@ -123,7 +204,4 @@ if __name__ == "__main__":
     except Exception as ex:
         LOG.error('Unexpected error: %s' % ex)
         sys.exit(1)
-    finally:
-        for p in PROCESSES:
-            p.terminate()
     sys.exit(0)

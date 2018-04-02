@@ -1,36 +1,65 @@
+# -*- coding: utf-8 -*-
+# vim: tabstop=4 shiftwidth=4 softtabstop=4
+
 from collections import deque
 import numpy as np
 import random
-import abc
 import logging
 
 from .client.seldon.client import SeldonClient
+from .model import get_model
 
 
-class QLearningAgent:
-    def __init__(self, state_size, action_size,
-                 gamma, epsilon, epsilon_decay,
-                 epsilon_min, batch_size):
+HPARAMS_SCHEMA = {
+    'gamma': {
+        'dtype': float,
+        'default': .095
+    },
+    'epsilon': {
+        'dtype': float,
+        'default': 1.
+    },
+    'epsilon_min': {
+        'dtype': float,
+        'default': .1
+    },
+    'epsilon_decay': {
+        'dtype': float,
+        'default': .0995
+    },
+    'batch_size': {
+        'dtype': int,
+        'default': 32
+    }
+}
+
+DEFAULT_HPARAMS = {
+    key: value.get('default', .0) for key, value in HPARAMS_SCHEMA.items()
+}
+
+
+class QLearningAgent(object):
+
+    def __init__(self, state_size=4, action_size=2, hparams={}, model_config={}):
+
+        self.model = get_model(**model_config)
         self.state_size = state_size
         self.action_size = action_size
+        self.hparams = {**DEFAULT_HPARAMS}
 
         # hyperparameters
-        self.gamma = gamma  # discount rate on future rewards
-        self.epsilon = epsilon  # exploration rate
-        self.epsilon_decay = epsilon_decay  # the decay of epsilon after each training batch
-        self.epsilon_min = epsilon_min  # the minimum exploration rate permissible
-        self.batch_size = batch_size  # maximum size of the batches sampled from memory
+        if hparams:
+            assert all(element in DEFAULT_HPARAMS.keys() for element in hparams.keys()),\
+                "Invalid hyperparameters, choose one of: %s" % DEFAULT_HPARAMS.keys()
+            self.hparams.update(hparams)
+
+        [setattr(self, key, value) for key, value in self.hparams.items()]
 
         # agent state
-        self.model = self.build_model()
         self.memory = deque(maxlen=2000)
         self.seldon_client = None
         self.host = None
-        self.log = logging.getLogger('cartpole')
-
-    @abc.abstractmethod
-    def build_model(self):
-        return None
+        self.log = logging.getLogger(__name__)
 
     def select_action(self, state, host=None, train=None, grpc_client=False):
         random_exploit = np.random.rand()

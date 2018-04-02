@@ -14,11 +14,11 @@ from cartpole.client.seldon.proto import prediction_pb2_grpc
 
 class SeldonClient(object):
 
-    def __init__(self, host, name=None):
+    def __init__(self, host):
         self.host = host
         self.session = None
         self.token = None
-        self.log = logging.getLogger(str.join('-', (__name__, name or '',)))
+        self.log = logging.getLogger(__name__)
 
     def http_log(self, r, *args, **kwargs):
         self.log.debug(r)
@@ -101,24 +101,42 @@ class SeldonClient(object):
         self.log.debug("GRPC Feedback Response: %s", response)
         return response
 
-    def switch_branch_router(self, state, pref_branch=0, iters=100, routing_name='eg-router', show_plot=True):
+    def force_branch_router(self, state, pref_branch=0, iters=100, routing_name='eg-router', vis_config=None):
+
         routes_history = []
-        for _ in range(iters):
+        feedback_history = []
+        vis_routes_win = None
+        vis_feedback_win = None
+
+        # if vis_config:
+        #     from cartpole.metrics import get_visdom_conn
+        #     vis = get_visdom_conn(**vis_config)
+        #     vis_routes_win = vis.scatter(
+        #         routes_history,
+        #         Y=[1 if x == pref_branch else 0],
+        #     )
+        #     vis_feedback_win = vis.scatter(
+        #         routes_history,
+        #         Y=[1 if x == pref_branch else 0],
+        #     )
+
+        for i in range(iters):
             request, response = self.rest_request(state)
             route = response.get("meta").get("routing").get(routing_name)
             self.log.debug('Route: %s', route)
-            if route == pref_branch:
-                self.rest_feedback(request, response, reward=1, done=False)
-            else:
-                self.rest_feedback(request, response, reward=0, done=False)
-            routes_history.append(route)
-
-        if show_plot:
-            import matplotlib.pyplot as plt
-
-            plt.figure(figsize=(15, 6))
-            ax = plt.scatter(range(len(routes_history)), routes_history)
-            ax.axes.xaxis.set_label_text("Incoming Requests over Time")
-            ax.axes.yaxis.set_label_text("Selected Branch")
-            plt.yticks([0, 1, 2])
-            _ = plt.title("Branch Chosen for Incoming Requests")
+            reward = 1 if route == pref_branch else 0
+            self.rest_feedback(request, response, reward=reward, done=False)
+            routes_history.append((i, route,))
+            feedback_history.append((i, reward,))
+            # if vis_routes_win:
+            #     vis.scatter(
+            #
+            #         win=vis_routes_win,
+            #         update='append'
+            #     )
+            # if vis_feedback_win:
+            #     vis.scatter(
+            #
+            #         win=vis_feedback_win,
+            #         update='append'
+            #     )
