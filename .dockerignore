@@ -1,0 +1,17 @@
+#Ignore metafiles
+.*
+
+*.md
+tox*
+
+#Ignore python reources
+*.pyc
+*.pyo
+/build/
+/dist/
+/doc/
+*.egg-info
+/seldon
+*.h5
+*.egg-*/
+__pycache__
