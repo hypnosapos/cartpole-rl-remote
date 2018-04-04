@@ -50,7 +50,7 @@ def train(episodes, render=False, hparams={}, model_config={}, file_name='cartpo
 
 def run(episodes, render=False, host='localhost', grpc_client=False):
     LOG.info("Running...")
-    gym = GymRunnerRemote(name=threading.current_thread().name, vis_config=_METRICS_CONFIG)
+    gym = GymRunnerRemote(name=multiprocessing.current_process().name, vis_config=_METRICS_CONFIG)
     agent = Agent()
     return gym.run(agent, episodes, render=render, host=host, grpc_client=grpc_client)
 
@@ -82,7 +82,8 @@ def process_callback_visdom(args):
                     "" % (arg[0], arg[1], arg[2]) for arg in list(zip(exp_ids, hparams, _time))])
     max_score = np.max(max_scores)
     max_score_ind = np.argmax(max_scores)
-    text += ("<br/><br/>Best score/s: <b>%.3f</b> was reached with worker/s <b>%s</b>" % (max_score, exp_ids[max_score_ind]))
+    text += ("<br/><br/>Best score/s: <b>%.3f</b>"
+             " was reached with worker/s <b>%s</b>" % (max_score, exp_ids[max_score_ind]))
     vis.text(
         text,
         opts=dict(
@@ -168,11 +169,15 @@ def main(argv=sys.argv[1:]):
 
     if args.func == train:
 
-        hparams = {hparam_name: hp.hparam_steps(getattr(args, hparam_name), HPARAMS_SCHEMA.get(hparam_name).get('dtype'))
-                   for hparam_name in HPARAMS_SCHEMA if hasattr(args, hparam_name)}
+        hparams = {
+            hparam_name: hp.hparam_steps(
+                getattr(args, hparam_name),
+                HPARAMS_SCHEMA.get(hparam_name).get('dtype')
+            ) for hparam_name in HPARAMS_SCHEMA if hasattr(args, hparam_name)
+        }
 
         # TODO: auto-modeling by custom config (get_model(**config)), defaults to {}
-        _args = [(args.episodes, args.render, dict(zip(hparams.keys(), hparam_values)), {})
+        _args = [(args.episodes, args.render, dict(zip(hparams.keys(), hparam_values)), {}, args.file_name)
                  for hparam_values in list(product(*hparams.values()))]
 
         with multiprocessing.Pool(len(_args)) as process_pool:

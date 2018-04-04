@@ -16,9 +16,12 @@ services:
     - visdom
     build:
       context: .
-      dockerfile: docker/Dockerfile
+      dockerfile: Dockerfile
     image: hypnosapos/cartpole-rl-remote:latest
     command: >-
+      mkdir -p /tmp/seldon/models &&
       cartpole --log-level DEBUG -e 400
       --metrics-engine visdom --metrics-config '{"server": "http://35.195.122.47", "env": "main"}'
-      train --gamma 0.095 0.099 0.001 --batch_size 32 33
+      train --gamma 0.095 0.099 0.001 --batch_size 32 33 -f /tmp/seldon/models/cartpole-rl-remote
+    volumes:
+    - .seldon/models:/tmp/seldon/models

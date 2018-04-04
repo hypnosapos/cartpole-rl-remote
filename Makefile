@@ -1,15 +1,17 @@
-.PHONY: help clean test train train-dev seldon-buil seldon-push seldon-deploy pre-release release
+.PHONY: help clean test train train-dev train-docker seldon-build seldon-push seldon-deploy pre-release release
 .DEFAULT_GOAL := help
 
 # Shell to use with Make
 SHELL := /bin/bash
 
 DOCKER_ORG        ?= hypnosapos
+DOCKER_IMAGE      ?= cartpole-rl-remote
 SELDON_IMAGE      ?= seldonio/core-python-wrapper
 STORAGE_PROVIDER  ?= local
 MODEL_FILE        ?= cartpole-rl-remote
 PY_DEV_ENV        ?= .tox/py35/bin/activate
-TRAIN_EPISODES    ?= 2000
+TRAIN_EPISODES    ?= 500
+RUN_EPISODES	  ?= 10
 VERSION           ?= latest
 
 help: ## Show this help
@@ -35,33 +37,37 @@ clean-seldon: ## remove seldon resources
 test: ## run tests
 	@tox
 
-build: ## build artifacts
+codecov: ## update coverage to codecov
+	@tox -e codecov
+
+build-py: ## build artifacts
 	@tox -e build
+
+build-docker:
+	docker build -t $(DOCKER_ORG)/$(DOCKER_IMAGE):$(shell git rev-parse --short HEAD) .
 
 install: ## install
 	pip install .
 
 train: install ## train a model
 	mkdir -p seldon/models
-	cartpole -v -e $(EPOCHS_TRAIN) train -f seldon/models/$(MODEL_FILE)
+	cartpole -e $(EPISODES) train -f seldon/models/$(MODEL_FILE)
 
-train-dev: ## train a model in dev mode (requires a .tox/py36 venv)
+train-dev: ## train a model in dev mode (requires a .tox/py35 venv)
 	mkdir -p seldon/models
 	source $(PY_DEV_ENV) &&\
-	cartpole -v -e $(EPOCHS_TRAIN) train -f seldon/models/$(MODEL_FILE)
+	cartpole -e $(TRAIN_EPISODES) --log-level DEBUG train -f seldon/models/$(MODEL_FILE)
 
-train-docker: ## train model by docker container
-    mkdir -p seldon/models
-    docker build -t
+train-docker: ## train by docker container
+	docker run -it -p 8097:8097 $(DOCKER_ORG)/$(DOCKER_IMAGE):$(shell git rev-parse --short HEAD)\
+	  cartpole -e $(TRAIN_EPISODES) --log-level DEBUG train -f seldon/models/$(MODEL_FILE)
 
-train-docker-compose:
-
+train-docker-visdom: ## train by docker compose using visdom server for monitoring
+	docker-compose run cartpole-rl-remote cartpole --log-level DEBUG -e $(TRAIN_EPISODES) --metrics-engine visdom --metrics-config '{"server": "http://visdom", "env": "main"}' train --gamma 0.095 0.099 0.001 -f /tmp/seldon/models/$(MODEL_FILE)
+	docker-compose down
 
 publish-gcs:
 	gsutils rsync seldon/build/models gs://cartpole
-
-codecov: ## update coverage to codecov
-	@tox -e codecov
 
 doc: ## create documentation
 	@tox -e doc
