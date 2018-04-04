@@ -11,7 +11,7 @@ DOCKER_PASSWORD   ?= secretito
 SELDON_IMAGE      ?= seldonio/core-python-wrapper
 STORAGE_PROVIDER  ?= local
 MODEL_FILE        ?= cartpole-rl-remote
-PY_DEV_ENV        ?= .tox/py35/bin/activate
+PY_DEV_ENV        ?= .tox/py36/bin/activate
 TRAIN_EPISODES    ?= 500
 RUN_EPISODES	  ?= 10
 
@@ -34,6 +34,8 @@ clean-test: ## remove test and coverage generated resources
 
 clean-seldon: ## remove seldon resources
 	@rm -rf seldon/build
+
+clean-seldon-models: ## Remove seldon models
 	@rm -rf seldon/models
 
 test: ## run tests
@@ -46,10 +48,14 @@ build-py: ## build artifacts
 	@tox -e build
 
 build-docker:
-	docker build -t $(DOCKER_ORG)/$(DOCKER_IMAGE):$(shell git rev-parse --short HEAD) $(DOCKER_ORG)/$(DOCKER_IMAGE):latest .
+	docker build -t $(DOCKER_ORG)/$(DOCKER_IMAGE):$(shell git rev-parse --short HEAD)\
+	 -t $(DOCKER_ORG)/$(DOCKER_IMAGE):latest .
 
 install: ## install
 	pip install .
+
+visdom: ## Run a visdom server
+	docker run -d -p 8097:8097 hypnosapos/visdom:latest
 
 train: install ## train a model
 	mkdir -p seldon/models
@@ -58,7 +64,9 @@ train: install ## train a model
 train-dev: ## train a model in dev mode (requires a .tox/py35 venv)
 	mkdir -p seldon/models
 	source $(PY_DEV_ENV) &&\
-	cartpole -e $(TRAIN_EPISODES) --log-level DEBUG train --gamma 0.095 0.099 0.001 -f seldon/models/$(MODEL_FILE)
+	cartpole -e $(TRAIN_EPISODES) -r --log-level DEBUG\
+	 --metrics-engine visdom --metrics-config '{"server": "http://localhost", "env": "main"}'\
+	 train --gamma 0.095 0.099 0.001 -f seldon/models/$(MODEL_FILE)
 
 train-docker: ## train by docker container
 	mkdir -p seldon/models
@@ -72,10 +80,10 @@ train-docker-visdom: ## train by docker compose using visdom server for monitori
 	  train --gamma 0.095 0.099 0.001 -f /tmp/seldon/models/$(MODEL_FILE)
 	docker-compose down
 
-publish-gcs:
+publish-gcs: ## Upload experiments to google cloud storage
 	gsutils rsync seldon/build/models gs://cartpole
 
-push-docker:
+push-docker: ## Publish docker image
 	docker login -u=$(DOCKER_USERNAME) -p=$(DOCKER_PASSWORD)
 	docker push $(DOCKER_ORG)/$(DOCKER_IMAGE):$(shell git rev-parse --short HEAD)
 	docker push $(DOCKER_ORG)/$(DOCKER_IMAGE):latest
