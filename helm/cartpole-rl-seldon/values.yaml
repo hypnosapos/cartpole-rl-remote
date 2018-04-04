@@ -1,8 +1,0 @@
-project: "Cartpole RL Remote Agent"
-name: keras-cartpole
-oauth_key: oauth_key
-oauth_secret: oauth_secret
-config:
-  type: MODEL
-  image:
-    tag: VERSION

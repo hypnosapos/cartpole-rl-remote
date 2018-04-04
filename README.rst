@@ -12,9 +12,6 @@ Cartpole RL Remote
 .. image:: https://codecov.io/gh/hypnosapos/cartpole-rl-remote/branch/master/graph/badge.svg
    :target: https://codecov.io/gh/hypnosapos/cartpole-rl-remote
    :alt: Coverage
-.. image:: http://dockeri.co/image/hypnosapos/cartpolerlremoteagent
-   :target: https://hub.docker.com/r/hypnosapos/cartpolerlremoteagent
-   :alt: dockeri.co
 
 This project is intended to play with Cart Pole Game using Reinforcement Learning by a remote agent.
 
@@ -26,6 +23,8 @@ Install this python module to train or run the RL model under the wood.
 Requirements:
 - python >=3.5
 - pip
+
+You may launch all needed components using docker (or docker-compose) instead
 
 Remotely
 --------
@@ -64,22 +63,42 @@ If the module was installed successfully, check out that "cartpole" command is a
  cartpole --help
 
 
+
 Training
 ========
 
 Once we have the cartpole client installed as it was said above, just type this command to train a model::
 
-  cartpole -e 5000 train
+  cartpole --log-level DEBUG -e 800 --metrics-engine visdom \
+   --metrics-config '{"server": "http://localhost", "env": "train"}' train --gamma 0.097 0.099 0.001 --batch_size 32 33
 
 
 The output of the training command is one or many h5 file/s (a trained model serialized as hdf5).
+
+If you prefer launch the train with needed components just type::
+
+   docker-compose up
+
+
+* Adjust the command above for training
+
+In order to view results take a look at: http://localhost:8097
 
 Running
 =======
 
 In order to run the model, launch this command in your shell::
 
-  cartpole  -e 1000 run
+  cartpole -r --log-level DEBUG -e 5 --metrics-engine visdom \
+   --metrics-config '{"server": "http://localhost", "env": "run"}' run --runners 5 --host "35.205.193.137"
 
 
 
+If you prefer launch the train with needed components just type::
+
+   docker-compose up
+
+
+* Adjust the command above for running remote agent (default env name is 'main')
+
+In order to view results take a look at: http://localhost:8097

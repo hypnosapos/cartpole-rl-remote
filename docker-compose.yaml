@@ -4,9 +4,6 @@ services:
   visdom:
     environment:
     - HOSTNAME=visdom
-    build:
-      context: .
-      dockerfile: docker/Dockerfile-visdom
     image: hypnosapos/visdom:latest
     networks:
       default:
@@ -23,7 +20,7 @@ services:
     image: hypnosapos/cartpole-rl-remote:latest
     command: |
         cartpole --log-level DEBUG -e 1000
-         --metrics_engine visdom --metrics_config '{"server": "http://visdom" "env": "main"}'
+         --metrics_engine visdom --metrics_config '{"server": "http://35.195.122.47" "env": "main"}'
          train
           --gamma 0.095 0.099 0.001
           --batch_size 32 33
