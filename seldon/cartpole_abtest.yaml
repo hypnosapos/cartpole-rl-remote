@@ -1,0 +1,54 @@
+---
+apiVersion: machinelearning.seldon.io/v1alpha1
+kind: SeldonDeployment
+metadata:
+  labels:
+    app: seldon
+  name: cartpole-abtest
+spec:
+  annotations:
+    project_name: "Cartpole RL ABTest"
+    deployment_version: v1
+  name: cartpole-abtest
+  oauth_key: oauth-key
+  oauth_secret: oauth-secret
+  predictors:
+  - componentSpec:
+      spec:
+        containers:
+        - image: hypnosapos/cartpolerlremoteagent:1ef114d
+          imagePullPolicy: IfNotPresent
+          name: cartpole-a
+          resources:
+            requests:
+              memory: 2Mi
+        - image: hypnosapos/cartpolerlremoteagent:1ef114d
+          imagePullPolicy: IfNotPresent
+          name: cartpole-b
+          resources:
+            requests:
+              memory: 2Mi
+        terminationGracePeriodSeconds: 20
+    name: cartpole-abtest
+    replicas: 1
+    annotations:
+      predictor_version: v1
+    graph:
+      name: cartpole-abtest
+      endpoint: {}
+      implementation: RANDOM_ABTEST
+      parameters:
+      - name: ratioA
+        value: '0.7'
+        type: FLOAT
+      children:
+      - name: cartpole-a
+        endpoint:
+          type: REST
+        type: MODEL
+        children: []
+      - name: cartpole-b
+        endpoint:
+          type: REST
+        type: MODEL
+        children: []

@@ -1,0 +1,34 @@
+apiVersion: machinelearning.seldon.io/v1alpha1
+kind: SeldonDeployment
+metadata:
+  labels:
+    app: seldon
+  name: cartpole-model
+spec:
+  annotations:
+    project_name: "Cartpole RL"
+    deployment_version: v1
+  name: cartpole-model
+  oauth_key: "oauth-key"
+  oauth_secret: "oauth-secret"
+  predictors:
+  - componentSpec:
+      spec:
+        containers:
+        - image: "hypnosapos/cartpolerlremoteagent:d02217c"
+          imagePullPolicy: IfNotPresent
+          name: cartpole
+          resources:
+            requests:
+              memory: "2Mi"
+        terminationGracePeriodSeconds: 20
+    graph:
+      children: []
+      name: cartpole
+      endpoint:
+        type: "REST"
+      type: "MODEL"
+    name: cartpole
+    replicas: 2
+    annotations:
+      predictor_version: v1

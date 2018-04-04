@@ -5,7 +5,7 @@ import numpy as np
 class CartpoleRLRemoteAgent(object):
 
     def __init__(self):
-        self.model = load_model('models/Cartpole-rl-remote.h5')
+        self.model = load_model('models/cartpole-rl-remote.h5')
 
     def predict(self, X, feature_names):
         # Send two element in order to avoid changing auto-generated module model_microservice.py
