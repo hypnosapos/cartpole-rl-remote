@@ -33,6 +33,7 @@ clean-test: ## remove test and coverage generated resources
 
 clean-seldon: ## remove seldon resources
 	@rm -rf seldon/build
+	@rm -rf seldon/models
 
 test: ## run tests
 	@tox
@@ -59,10 +60,12 @@ train-dev: ## train a model in dev mode (requires a .tox/py35 venv)
 	cartpole -e $(TRAIN_EPISODES) --log-level DEBUG train -f seldon/models/$(MODEL_FILE)
 
 train-docker: ## train by docker container
+	mkdir -p seldon/models
 	docker run -it -v $(shell pwd)/seldon/models:/tmp/seldon/models $(DOCKER_ORG)/$(DOCKER_IMAGE):$(shell git rev-parse --short HEAD)\
 	  cartpole -e $(TRAIN_EPISODES) --log-level DEBUG train -f /tmp/seldon/models/$(MODEL_FILE)
 
 train-docker-visdom: ## train by docker compose using visdom server for monitoring
+	mkdir -p seldon/models
 	DOCKER_TAG=$(shell git rev-parse --short HEAD) docker-compose run cartpole-rl-remote cartpole --log-level DEBUG -e $(TRAIN_EPISODES)\
 	 --metrics-engine visdom --metrics-config '{"server": "http://visdom", "env": "main"}'\
 	  train --gamma 0.095 0.099 0.001 -f /tmp/seldon/models/$(MODEL_FILE)

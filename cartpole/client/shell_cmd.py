@@ -3,7 +3,7 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 
 import multiprocessing
-import threading
+from shutil import copy2
 import argparse
 import os
 import sys
@@ -34,31 +34,54 @@ LOG.setLevel(logging.NOTSET)
 
 STR_NOW = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
-# By default metrics are disabled
-_METRICS_CONFIG = dict()
-_METRICS_CALLBACK_FUNC = dict(
-    visdom='process_callback_visdom'
-)
 
-
-def train(episodes, render=False, hparams={}, model_config={}, file_name='cartpole-rl-remote'):
+def train(episodes, render=False, hparams={}, model_config={}, file_name='cartpole-rl-remote', vis_config={}):
     LOG.info("Training...")
-    gym = GymRunnerRemote(name=multiprocessing.current_process().name, vis_config=_METRICS_CONFIG)
+    gym = GymRunnerRemote(name=multiprocessing.current_process().name, vis_config=vis_config)
     agent = Agent(hparams=hparams, model_config=model_config)
     return gym.train(agent, episodes, render=render, file_name=file_name)
 
 
-def run(episodes, render=False, host='localhost', grpc_client=False):
+def run(episodes, render=False, host='localhost', grpc_client=False, vis_config={}):
     LOG.info("Running...")
-    gym = GymRunnerRemote(name=multiprocessing.current_process().name, vis_config=_METRICS_CONFIG)
+    gym = GymRunnerRemote(name=multiprocessing.current_process().name, vis_config=vis_config)
     agent = Agent()
     return gym.run(agent, episodes, render=render, host=host, grpc_client=grpc_client)
 
 
-def process_callback_visdom(args):
-    vis = get_visdom_conn(**_METRICS_CONFIG)
+def process_callback(callback_args, metrics_config={}):
+
     LOG.debug("Precessing callbacks ...")
-    exp_ids, scores, hparams, max_scores, _time, file_name = list(zip(*args))
+    exp_ids, scores, hparams, max_scores, _time, file_name = list(zip(*callback_args))
+    max_score = np.max(max_scores)
+    max_score_ind = np.argmax(max_scores)
+
+    metrics_engine = metrics_config.get('engine')
+    if metrics_engine:
+        getattr(sys.modules[__name__],
+                ('process_callback_%s' % metrics_engine))(
+                    exp_ids, scores, hparams, max_scores, _time, max_score,
+                    max_score_ind, metrics_config.get('config', {}))
+
+    model_dir = os.path.dirname(file_name[max_score_ind])
+    _, file_extension = os.path.splitext(file_name[max_score_ind])
+    model_file = 'cartpole-rl-remote{}'.format(file_extension)
+    model_path = os.path.join(model_dir, model_file if model_dir else model_file)
+    copy2(file_name[max_score_ind], model_path)
+
+    sys.stdout.write(
+        json.dumps(
+            dict(
+                score=max_score,
+                hparams=hparams[max_score_ind]
+            )
+        )
+    )
+
+
+def process_callback_visdom(exp_ids, scores, hparams, max_scores, _time, max_score, max_score_ind, config={}):
+
+    vis = get_visdom_conn(**config)
 
     vis.boxplot(
         X=np.column_stack(scores),
@@ -80,10 +103,8 @@ def process_callback_visdom(args):
 
     text = "".join(["<b>%s</b>:&nbsp;%s;&nbsp;Spent time:%s<br/>"
                     "" % (arg[0], arg[1], arg[2]) for arg in list(zip(exp_ids, hparams, _time))])
-    max_score = np.max(max_scores)
-    max_score_ind = np.argmax(max_scores)
-    text += ("<br/><br/>Best score/s: <b>%.3f</b>"
-             " was reached with worker/s <b>%s</b>" % (max_score, exp_ids[max_score_ind]))
+    text += ("<br/><br/>Best score: <b>%.3f</b>"
+             " was reached with worker <b>%s</b>" % (max_score, exp_ids[max_score_ind]))
     vis.text(
         text,
         opts=dict(
@@ -112,10 +133,10 @@ def main(argv=sys.argv[1:]):
     parser.add_argument('-e', '--episodes', type=int, default=50,
                         help='Number of episodes')
 
-    parser.add_argument('--log-file', type=str,
+    parser.add_argument('--log-file',
                         help='Path of file where write logs to.')
 
-    parser.add_argument('--log-level', type=str,
+    parser.add_argument('--log-level',
                         default='INFO',
                         choices=logging._levelToName.values(),
                         help='Log level (name). Defaults to INFO')
@@ -123,7 +144,7 @@ def main(argv=sys.argv[1:]):
     parser.add_argument('--conf-file', type=json.load,
                         help='Pass all parameters from json config file')
 
-    parser.add_argument('--metrics-engine', type=str,
+    parser.add_argument('--metrics-engine',
                         default=None,
                         choices=(None, 'visdom', 'kibana', 'sphinx',),
                         help='Type of metrics visualizer engine.')
@@ -163,9 +184,14 @@ def main(argv=sys.argv[1:]):
         fh.setFormatter(logging.Formatter(LOG_FORMAT))
         LOG.addHandler(fh)
 
+    metrics_config = dict(
+        engine=args.metrics_engine,
+        config=dict()
+    )
+
     if args.metrics_engine == 'visdom':
-        _METRICS_CONFIG.update(dict(server='http://localhost'))
-    _METRICS_CONFIG.update(args.metrics_config)
+        metrics_config['config'].update(dict(server='http://localhost'))
+    metrics_config['config'].update(args.metrics_config)
 
     if args.func == train:
 
@@ -177,20 +203,20 @@ def main(argv=sys.argv[1:]):
         }
 
         # TODO: auto-modeling by custom config (get_model(**config)), defaults to {}
-        _args = [(args.episodes, args.render, dict(zip(hparams.keys(), hparam_values)), {}, args.file_name)
-                 for hparam_values in list(product(*hparams.values()))]
+        _args = [(args.episodes, args.render, dict(zip(hparams.keys(), hparam_values)),
+                  {}, args.file_name, metrics_config['config']) for hparam_values in list(product(*hparams.values()))]
 
         with multiprocessing.Pool(len(_args)) as process_pool:
             results = process_pool.starmap_async(
                 args.func,
                 _args,
-                callback=getattr(sys.modules[__name__],
-                                 _METRICS_CALLBACK_FUNC.get(args.metrics_engine)) if args.metrics_engine else None
+                callback=lambda callback_args: process_callback(callback_args, metrics_config)
             )
             results.get()
 
     else:
-        _args = [(args.episodes, args.render, args.host, args.grpc_client) for _ in range(args.runners)]
+        _args = [(args.episodes, args.render, args.host,
+                  args.grpc_client, metrics_config['config']) for _ in range(args.runners)]
         with multiprocessing.Pool(args.runners) as process_pool:
             results = process_pool.starmap_async(
                 args.func,
@@ -203,6 +229,7 @@ if __name__ == "__main__":
 
     try:
         main(sys.argv[1:])
+
     except KeyboardInterrupt:
         LOG.warning("... cartpole command was interrupted")
         sys.exit(2)

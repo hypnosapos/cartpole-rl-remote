@@ -16,7 +16,7 @@ services:
     - visdom
     image: hypnosapos/cartpole-rl-remote:${DOCKER_TAG:-latest}
     command: >-
-      cartpole --log-level DEBUG -e 400
+      cartpole --log-level DEBUG -e 40
       --metrics-engine visdom --metrics-config '{"server": "http://35.195.122.47", "env": "main"}'
       train --gamma 0.095 0.099 0.001 --batch_size 32 33 -f /tmp/seldon/models/cartpole-rl-remote
     volumes:
