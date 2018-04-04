@@ -16,19 +16,19 @@ spec:
   - componentSpec:
       spec:
         containers:
-        - image: hypnosapos/cartpolerlremoteagent:1ef114d
+        - image: hypnosapos/cartpolerlremoteagent:latest
           imagePullPolicy: IfNotPresent
           name: cartpole-0
           resources:
             requests:
               memory: 2Mi
-        - image: hypnosapos/cartpolerlremoteagent:1ef114d
+        - image: hypnosapos/cartpolerlremoteagent:latest
           imagePullPolicy: IfNotPresent
           name: cartpole-1
           resources:
             requests:
               memory: 2Mi
-        - image: hypnosapos/cartpolerlremoteagent:1ef114d
+        - image: hypnosapos/cartpolerlremoteagent:latest
           imagePullPolicy: IfNotPresent
           name: cartpole-2
           resources:

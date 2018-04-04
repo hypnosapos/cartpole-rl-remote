@@ -59,11 +59,13 @@ train-dev: ## train a model in dev mode (requires a .tox/py35 venv)
 	cartpole -e $(TRAIN_EPISODES) --log-level DEBUG train -f seldon/models/$(MODEL_FILE)
 
 train-docker: ## train by docker container
-	docker run -it -p 8097:8097 $(DOCKER_ORG)/$(DOCKER_IMAGE):$(shell git rev-parse --short HEAD)\
-	  cartpole -e $(TRAIN_EPISODES) --log-level DEBUG train -f seldon/models/$(MODEL_FILE)
+	docker run -it -v $(shell pwd)/seldon/models:/tmp/seldon/models $(DOCKER_ORG)/$(DOCKER_IMAGE):$(shell git rev-parse --short HEAD)\
+	  cartpole -e $(TRAIN_EPISODES) --log-level DEBUG train -f /tmp/seldon/models/$(MODEL_FILE)
 
 train-docker-visdom: ## train by docker compose using visdom server for monitoring
-	docker-compose run cartpole-rl-remote cartpole --log-level DEBUG -e $(TRAIN_EPISODES) --metrics-engine visdom --metrics-config '{"server": "http://visdom", "env": "main"}' train --gamma 0.095 0.099 0.001 -f /tmp/seldon/models/$(MODEL_FILE)
+	DOCKER_TAG=$(shell git rev-parse --short HEAD) docker-compose run cartpole-rl-remote cartpole --log-level DEBUG -e $(TRAIN_EPISODES)\
+	 --metrics-engine visdom --metrics-config '{"server": "http://visdom", "env": "main"}'\
+	  train --gamma 0.095 0.099 0.001 -f /tmp/seldon/models/$(MODEL_FILE)
 	docker-compose down
 
 publish-gcs:
@@ -85,7 +87,7 @@ seldon-push:  ## Push docker image for seldon deployment
 	cd $(shell pwd)/seldon/build && ./push_image.sh
 
 seldon-deploy: ## Deploy seldon resources on kubernetes
-	kubectl apply -f seldon/cartpole_seldon.json
+	kubectl apply -f seldon/cartpole_model.yaml -n seldon
 
 pre-release: ## Pre-release tasks. Setup a version (SemV2) and generate changelog file (underlaying command generate a git tag)
 	@tox -e pre-release
