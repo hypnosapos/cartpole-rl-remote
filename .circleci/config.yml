@@ -18,7 +18,7 @@ jobs:
       - run:
           name: install and train
           command: |
-            make EPOCHS_TRAIN=${EPOCHS_TRAIN} install train
+            make TRAIN_EPISODES=${TRAIN_EPISODES} install train
       - store_artifacts:
           path: ~/repo/seldon/models
       - run:

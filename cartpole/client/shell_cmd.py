@@ -69,7 +69,7 @@ def process_callback(callback_args, metrics_config={}):
     model_path = os.path.join(model_dir, model_file if model_dir else model_file)
     copy2(file_name[max_score_ind], model_path)
 
-    sys.stdout.write(
+    print(
         json.dumps(
             dict(
                 score=max_score,
