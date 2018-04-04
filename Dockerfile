@@ -6,8 +6,6 @@ RUN pip install -U pip &&\
 FROM python:3.6-jessie
 COPY --from=python-reqs /root/.cache /root/.cache
 
-ENV VISDOM_SERVER=visdom
-
 RUN mkdir /cartpole
 
 ADD . /cartpole

@@ -1,4 +1,4 @@
-.PHONY: help clean test train train-dev train-docker seldon-build seldon-push seldon-deploy pre-release release
+.PHONY: help clean test train train-dev train-docker build-docker train-docker-visdom push-docker seldon-build seldon-push seldon-deploy pre-release release
 .DEFAULT_GOAL := help
 
 # Shell to use with Make
@@ -6,13 +6,14 @@ SHELL := /bin/bash
 
 DOCKER_ORG        ?= hypnosapos
 DOCKER_IMAGE      ?= cartpole-rl-remote
+DOCKER_USERNAME   ?= engapa
+DOCKER_PASSWORD   ?= secretito
 SELDON_IMAGE      ?= seldonio/core-python-wrapper
 STORAGE_PROVIDER  ?= local
 MODEL_FILE        ?= cartpole-rl-remote
 PY_DEV_ENV        ?= .tox/py35/bin/activate
 TRAIN_EPISODES    ?= 500
 RUN_EPISODES	  ?= 10
-VERSION           ?= latest
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
@@ -45,24 +46,24 @@ build-py: ## build artifacts
 	@tox -e build
 
 build-docker:
-	docker build -t $(DOCKER_ORG)/$(DOCKER_IMAGE):$(shell git rev-parse --short HEAD) .
+	docker build -t $(DOCKER_ORG)/$(DOCKER_IMAGE):$(shell git rev-parse --short HEAD) $(DOCKER_ORG)/$(DOCKER_IMAGE):latest .
 
 install: ## install
 	pip install .
 
 train: install ## train a model
 	mkdir -p seldon/models
-	cartpole -e $(EPISODES) train -f seldon/models/$(MODEL_FILE)
+	cartpole -e $(EPISODES) train --gamma 0.095 0.099 0.001 -f seldon/models/$(MODEL_FILE)
 
 train-dev: ## train a model in dev mode (requires a .tox/py35 venv)
 	mkdir -p seldon/models
 	source $(PY_DEV_ENV) &&\
-	cartpole -e $(TRAIN_EPISODES) --log-level DEBUG train -f seldon/models/$(MODEL_FILE)
+	cartpole -e $(TRAIN_EPISODES) --log-level DEBUG train --gamma 0.095 0.099 0.001 -f seldon/models/$(MODEL_FILE)
 
 train-docker: ## train by docker container
 	mkdir -p seldon/models
 	docker run -it -v $(shell pwd)/seldon/models:/tmp/seldon/models $(DOCKER_ORG)/$(DOCKER_IMAGE):$(shell git rev-parse --short HEAD)\
-	  cartpole -e $(TRAIN_EPISODES) --log-level DEBUG train -f /tmp/seldon/models/$(MODEL_FILE)
+	  cartpole -e $(TRAIN_EPISODES) --log-level DEBUG train --gamma 0.095 0.099 0.001 -f /tmp/seldon/models/$(MODEL_FILE)
 
 train-docker-visdom: ## train by docker compose using visdom server for monitoring
 	mkdir -p seldon/models
@@ -74,6 +75,11 @@ train-docker-visdom: ## train by docker compose using visdom server for monitori
 publish-gcs:
 	gsutils rsync seldon/build/models gs://cartpole
 
+push-docker:
+	docker login -u=$(DOCKER_USERNAME) -p=$(DOCKER_PASSWORD)
+	docker push $(DOCKER_ORG)/$(DOCKER_IMAGE):$(shell git rev-parse --short HEAD)
+	docker push $(DOCKER_ORG)/$(DOCKER_IMAGE):latest
+
 doc: ## create documentation
 	@tox -e doc
 
@@ -83,7 +89,8 @@ seldon-build: clean-seldon ## Generate seldon resources
 ifeq ($(STORAGE_PROVIDER), gcs)
 	curl https://storage.googleapis.com/cartpole/$(MODEL_FILE) seldon/models/$(MODEL_FILE)
 endif
-	cd $(shell pwd)/seldon && docker run -v $(shell pwd)/seldon:/model $(SELDON_IMAGE) /model CartpoleRLRemoteAgent $(VERSION) $(DOCKER_ORG) --force
+	cd $(shell pwd)/seldon &&\
+	docker run -v $(shell pwd)/seldon:/model $(SELDON_IMAGE) /model CartpoleRLRemoteAgent $(shell git rev-parse --short HEAD) $(DOCKER_ORG) --force
 	cd $(shell pwd)/seldon/build && ./build_image.sh
 
 seldon-push:  ## Push docker image for seldon deployment
