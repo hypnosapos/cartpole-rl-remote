@@ -64,6 +64,7 @@ train: install ## train a model
 train-dev: ## train a model in dev mode (requires a .tox/py35 venv)
 	mkdir -p seldon/models
 	source $(PY_DEV_ENV) &&\
+	pip install -e . &&\
 	cartpole -e $(TRAIN_EPISODES) -r --log-level DEBUG\
 	 --metrics-engine visdom --metrics-config '{"server": "http://localhost", "env": "main"}'\
 	 train --gamma 0.095 0.099 0.001 -f seldon/models/$(MODEL_FILE)
@@ -105,7 +106,7 @@ seldon-push:  ## Push docker image for seldon deployment
 	cd $(shell pwd)/seldon/build && ./push_image.sh
 
 seldon-deploy: ## Deploy seldon resources on kubernetes
-	kubectl apply -f seldon/cartpole_model.yaml -n seldon
+	kubectl apply -f test/cartpole_model.yaml -n seldon
 
 pre-release: ## Pre-release tasks. Setup a version (SemV2) and generate changelog file (underlaying command generate a git tag)
 	@tox -e pre-release

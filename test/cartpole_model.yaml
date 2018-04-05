@@ -15,7 +15,7 @@ spec:
   - componentSpec:
       spec:
         containers:
-        - image: "hypnosapos/cartpolerlremoteagent:f00d44d"
+        - image: "hypnosapos/cartpolerlremoteagent:c44fc87"
           imagePullPolicy: IfNotPresent
           name: cartpole
           resources:
