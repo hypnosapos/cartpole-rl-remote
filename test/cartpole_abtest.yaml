@@ -16,13 +16,13 @@ spec:
   - componentSpec:
       spec:
         containers:
-        - image: hypnosapos/cartpolerlremoteagent:latest
+        - image: hypnosapos/cartpolerlremoteagent:849bf7a
           imagePullPolicy: IfNotPresent
           name: cartpole-a
           resources:
             requests:
               memory: 2Mi
-        - image: hypnosapos/cartpolerlremoteagent:latest
+        - image: hypnosapos/cartpolerlremoteagent:849bf7a
           imagePullPolicy: IfNotPresent
           name: cartpole-b
           resources:
@@ -39,7 +39,7 @@ spec:
       implementation: RANDOM_ABTEST
       parameters:
       - name: ratioA
-        value: '0.7'
+        value: '0.5'
         type: FLOAT
       children:
       - name: cartpole-a

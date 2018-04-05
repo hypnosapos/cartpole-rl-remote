@@ -57,11 +57,11 @@ install: ## install
 visdom: ## Run a visdom server
 	docker run -d -p 8097:8097 hypnosapos/visdom:latest
 
-train: install ## train a model
+train: install clean-seldon-models ## train a model
 	mkdir -p seldon/models
 	cartpole -e $(EPISODES) train --gamma 0.095 0.099 0.001 -f seldon/models/$(MODEL_FILE)
 
-train-dev: ## train a model in dev mode (requires a .tox/py35 venv)
+train-dev: clean-seldon-models ## train a model in dev mode (requires a .tox/py35 venv)
 	mkdir -p seldon/models
 	source $(PY_DEV_ENV) &&\
 	pip install -e . &&\
@@ -69,12 +69,12 @@ train-dev: ## train a model in dev mode (requires a .tox/py35 venv)
 	 --metrics-engine visdom --metrics-config '{"server": "http://localhost", "env": "main"}'\
 	 train --gamma 0.095 0.099 0.001 -f seldon/models/$(MODEL_FILE)
 
-train-docker: ## train by docker container
+train-docker: clean-seldon-models ## train by docker container
 	mkdir -p seldon/models
 	docker run -it -v $(shell pwd)/seldon/models:/tmp/seldon/models $(DOCKER_ORG)/$(DOCKER_IMAGE):$(shell git rev-parse --short HEAD)\
-	  cartpole -e $(TRAIN_EPISODES) --log-level DEBUG train --gamma 0.095 0.099 0.001 -f /tmp/seldon/models/$(MODEL_FILE)
+	  cartpole -e $(TRAIN_EPISODES) --log-level DEBUG train --gamma 0.094 0.099 0.001 -f /tmp/seldon/models/$(MODEL_FILE)
 
-train-docker-visdom: ## train by docker compose using visdom server for monitoring
+train-docker-visdom: clean-seldon-models ## train by docker compose using visdom server for monitoring
 	mkdir -p seldon/models
 	DOCKER_TAG=$(shell git rev-parse --short HEAD) docker-compose run cartpole-rl-remote cartpole --log-level DEBUG -e $(TRAIN_EPISODES)\
 	 --metrics-engine visdom --metrics-config '{"server": "http://visdom", "env": "main"}'\
