@@ -51,7 +51,7 @@ def run(episodes, render=False, host='localhost', grpc_client=False, vis_config=
 
 def process_callback(callback_args, metrics_config={}):
 
-    LOG.debug("Precessing callbacks ...")
+    LOG.debug("Processing callbacks ...")
     exp_ids, scores, hparams, max_scores, _time, file_name = list(zip(*callback_args))
     max_score = np.max(max_scores)
     max_score_ind = np.argmax(max_scores)
@@ -72,6 +72,7 @@ def process_callback(callback_args, metrics_config={}):
     print(
         json.dumps(
             dict(
+                model=file_name[max_score_ind],
                 score=max_score,
                 hparams=hparams[max_score_ind]
             )

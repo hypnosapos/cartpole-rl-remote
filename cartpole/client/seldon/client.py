@@ -7,6 +7,8 @@ import json
 import numpy as np
 import logging
 
+from cartpole.metrics import get_visdom_conn
+
 from requests.auth import HTTPBasicAuth
 from cartpole.client.seldon.proto import prediction_pb2
 from cartpole.client.seldon.proto import prediction_pb2_grpc
@@ -101,42 +103,44 @@ class SeldonClient(object):
         self.log.debug("GRPC Feedback Response: %s", response)
         return response
 
-    def force_branch_router(self, state, pref_branch=0, iters=100, routing_name='eg-router', vis_config=None):
+    def force_branch_router(self, state, pref_branch=0, iters=100, routing_name='eg-router', vis_config={}):
 
         routes_history = []
         feedback_history = []
         vis_routes_win = None
         vis_feedback_win = None
 
-        # if vis_config:
-        #     from cartpole.metrics import get_visdom_conn
-        #     vis = get_visdom_conn(**vis_config)
-        #     vis_routes_win = vis.scatter(
-        #         routes_history,
-        #         Y=[1 if x == pref_branch else 0],
-        #     )
-        #     vis_feedback_win = vis.scatter(
-        #         routes_history,
-        #         Y=[1 if x == pref_branch else 0],
-        #     )
-
         for i in range(iters):
             request, response = self.rest_request(state)
             route = response.get("meta").get("routing").get(routing_name)
-            self.log.debug('Route: %s', route)
             reward = 1 if route == pref_branch else 0
+            print('\n Iter num. : %s  -- Route: %s -- Reward: %s' % (i, route, reward))
             self.rest_feedback(request, response, reward=reward, done=False)
             routes_history.append((i, route,))
             feedback_history.append((i, reward,))
-            # if vis_routes_win:
-            #     vis.scatter(
-            #
-            #         win=vis_routes_win,
-            #         update='append'
-            #     )
-            # if vis_feedback_win:
-            #     vis.scatter(
-            #
-            #         win=vis_feedback_win,
-            #         update='append'
-            #     )
+            if vis_config:
+                if i == 0:
+                    vis = get_visdom_conn(**vis_config)
+                    vis_routes_win = vis.scatter(
+                        np.array([[i, route]]),
+                        opts=dict(
+                            title="Route selected (pref: {})".format(pref_branch),
+                            xlabels='Req.',
+                            ylabel='Route'))
+                    vis_feedback_win = vis.scatter(
+                        np.array([[i, route]]),
+                        opts=dict(
+                            title="Feedback",
+                            xlabels='Req.',
+                            ylabel='Reward'))
+                elif vis and i >= 0:
+                    vis.scatter(
+                        np.array([[i, route]]),
+                        win=vis_routes_win,
+                        update='append')
+                    vis.scatter(
+                        np.array([[i, reward]]),
+                        win=vis_feedback_win,
+                        update='append')
+            routes_history.append((i, route,))
+            feedback_history.append((i, reward,))
