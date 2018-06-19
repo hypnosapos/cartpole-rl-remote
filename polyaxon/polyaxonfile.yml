@@ -5,12 +5,10 @@ kind: group
 
 settings:
   concurrency: 2
-  random_search:
-    n_experiments: 10
 
   matrix:
     gamma:
-      linspace: 0.095:0.099:5
+      linspace: 0.097:0.099:3
     batch_size:
       values: [31, 32, 33]
 
@@ -22,5 +20,5 @@ run:
   image: hypnosapos/cartpole-rl-remote:latest
   build_steps:
   - pip install --no-cache-dir -U polyaxon-helper
-  cmd:  python model.py -e {{num_episodes}} train \
+  cmd: python model.py -e {{num_episodes}} \
     --log-level {{log_level }} train --gamma {{gamma}} --batch_size {{batch_size}}
