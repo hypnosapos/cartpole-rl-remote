@@ -11,13 +11,14 @@ services:
         - visdom
     ports:
     - "8097:8097"
-  cartpole-rl-remote:
+  train-cartpole:
     depends_on:
     - visdom
-    image: hypnosapos/cartpole-rl-remote:${DOCKER_TAG:-latest}
+    build: ./
+    image: hypnosapos/${DOCKER_IMAGE:-cartpole-rl-remote}:${DOCKER_TAG:-latest}
     command: >-
-      cartpole --log-level DEBUG -e 40
-      --metrics-engine visdom --metrics-config '{"server": "http://35.195.122.47", "env": "main"}'
+      cartpole --log-level DEBUG -e 200
+      --metrics-engine visdom --metrics-config '{"server": "http://visdom", "env": "main"}'
       train --gamma 0.095 0.099 0.001 --batch_size 32 33 -f /tmp/seldon/models/cartpole-rl-remote
     volumes:
     - ./seldon/models:/tmp/seldon/models

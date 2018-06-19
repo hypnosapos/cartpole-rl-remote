@@ -5,8 +5,10 @@ FROM python:${PY_VERSION}-${DIST}
 
 WORKDIR /cartpole-rl-remote
 
-ADD . .
+COPY requirement*.txt ./
 
-RUN pip install -U pip &&\
-    pip install . && \
+RUN pip install -U pip && \
+    pip install -r requirements.txt -r requirements-dev.txt && \
     rm -rf /root/.cache
+
+ADD . .

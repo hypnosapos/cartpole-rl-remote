@@ -17,19 +17,19 @@ spec:
       spec:
         containers:
         - image: hypnosapos/cartpolerlremoteagent:untrained
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           name: cartpole-0
           resources:
             requests:
               memory: 2Mi
-        - image: hypnosapos/cartpolerlremoteagent:849bf7a
-          imagePullPolicy: IfNotPresent
+        - image: hypnosapos/cartpolerlremoteagent:c26d35c
+          imagePullPolicy: Always
           name: cartpole-1
           resources:
             requests:
               memory: 2Mi
         - image: hypnosapos/cartpolerlremoteagent:849bf7a
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           name: cartpole-2
           resources:
             requests:

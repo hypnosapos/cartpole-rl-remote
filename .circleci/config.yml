@@ -2,14 +2,14 @@
 version: 2
 jobs:
   "3.5":
-    machine: true
+    docker:
+    - image: python:3.5-slim
     working_directory: ~/repo
     steps:
       - checkout
       - run:
           name: install requirements
           command: |
-            pyenv local 3.5.2
             pip install -U pip ipdb tox tox-pyenv
       - run:
           name: test
@@ -26,24 +26,35 @@ jobs:
           command: |
             docker login -u=${DOCKER_USERNAME} -p=${DOCKER_PASSWORD}
             VERSION="$(echo $CIRCLE_SHA1 | cut -c -7)" make seldon-build seldon-push
-#  "3.6":
-#    docker:
-#    - image: python:3.6
-#    working_directory: ~/repo
-#    steps:
-#    - checkout
-#    - run:
-#        name: install dependencies
-#        command: |
-#          pip install tox
-#    - run:
-#        name: test
-#        command: |
-#          tox -e py36
-#    - run:
-#        name: install
-#        command: |
-#          make install
+  "3.6":
+    docker:
+    - image: python:3.6-slim
+    working_directory: ~/repo
+    steps:
+    - checkout
+    - restore_cache:
+        keys:
+        - pip-cache-{{ arch }}-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}
+    - run:
+        name: install dependencies
+        command: |
+          pip install -r requirements.txt -r requirements-dev.txt
+    - save_cache:
+        key: pip-cache-{{ arch }}-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}
+        paths:
+        - ~/.cache
+    - run:
+        name: test
+        command: |
+          ./entry.sh test
+    - run:
+        name: build
+        command: |
+          ./entry.sh build
+    - run:
+        name: install
+        command: |
+          pip install ~/repo
   gce:
     docker:
     - image: google/cloud-sdk
@@ -68,7 +79,7 @@ workflows:
   version: 2
   build:
     jobs:
-    #- "3.6"
+    - "3.6"
     - "3.5"
     - gce:
         requires:

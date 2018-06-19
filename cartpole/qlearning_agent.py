@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 
-from collections import deque
+from collections import deque, OrderedDict
 import numpy as np
 import random
 import logging
@@ -60,6 +60,9 @@ class QLearningAgent(object):
         self.seldon_client = None
         self.host = None
         self.log = logging.getLogger(__name__)
+        self.log.info('Hyperparams:: gamma: %(gamma)f epsilon: %(epsilon)f '
+                      'epsilon_decay: %(epsilon_decay)f epsilon_min: %(epsilon_min)f batch_size: %(batch_size)i',
+                      self.hparams)
 
     def select_action(self, state, host=None, train=None, grpc_client=False):
         random_exploit = np.random.rand()

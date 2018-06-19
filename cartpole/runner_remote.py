@@ -2,7 +2,6 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 
 import logging
-import threading
 import numpy as np
 from datetime import datetime
 
@@ -106,7 +105,7 @@ class GymRunnerRemote:
         _time = datetime.now() - self.tstart
         self.log.info('Episodes: %(episodes)i  MaxScore: %(max_score)f'
                       '  MinScore: %(min_score)f  AvgScore: %(avg_score)f'
-                      ' SpentTime: %(time)s',
+                      '  SpentTime: %(time)s',
                       {'episodes': num_episodes,
                        'max_score': np.max(scores),
                        'min_score': np.min(scores),

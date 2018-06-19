@@ -103,7 +103,7 @@ class SeldonClient(object):
         self.log.debug("GRPC Feedback Response: %s", response)
         return response
 
-    def force_branch_router(self, state, pref_branch=0, iters=100, routing_name='eg-router', vis_config={}):
+    def force_branch_router(self, state, pref_branch=0, iters=100, router_name='eg-router', vis_config={}):
 
         routes_history = []
         feedback_history = []
@@ -112,9 +112,9 @@ class SeldonClient(object):
 
         for i in range(iters):
             request, response = self.rest_request(state)
-            route = response.get("meta").get("routing").get(routing_name)
+            route = response.get("meta").get("routing").get(router_name)
             reward = 1 if route == pref_branch else 0
-            print('\n Iter num. : %s  -- Route: %s -- Reward: %s' % (i, route, reward))
+            print('Iter num. : %s  -- Route: %s -- Reward: %s' % (i, route, reward))
             self.rest_feedback(request, response, reward=reward, done=False)
             routes_history.append((i, route,))
             feedback_history.append((i, reward,))

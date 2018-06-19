@@ -7,6 +7,7 @@ from shutil import copy2
 import argparse
 import os
 import sys
+import uuid
 import logging
 import json
 from itertools import product
@@ -21,8 +22,11 @@ from cartpole.qlearning_agent import (
 from cartpole.metrics import get_visdom_conn
 import cartpole.hparam as hp
 
+STR_NOW = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+EXPERIMENT_GROUP = uuid.uuid1()
 
-LOG_FORMAT = '%(asctime)s %(name)-12s %(processName)-12s %(threadName)-12s %(levelname)-8s %(message)s'
+LOG_FORMAT = '%(asctime)s %(name)-12s [' + str(EXPERIMENT_GROUP) \
+             + '] %(processName)-12s %(threadName)-12s %(levelname)-8s %(message)s'
 logging.basicConfig(
     format=LOG_FORMAT,
     datefmt='%Y-%m-%d %H:%M:%S',
@@ -30,9 +34,6 @@ logging.basicConfig(
 
 LOG = logging.getLogger('cartpole')
 LOG.setLevel(logging.NOTSET)
-
-
-STR_NOW = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
 
 def train(episodes, render=False, hparams={}, model_config={}, file_name='cartpole-rl-remote', vis_config={}):

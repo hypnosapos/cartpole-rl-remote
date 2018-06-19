@@ -20,15 +20,6 @@ class BaseVisdomHandler(Handler):
         """
         Handler.__init__(self)
         self.viz = get_visdom_conn(**opts)
-        self.opts = dict(
-            server=self.viz.server,
-            endpoint=self.viz.endpoint,
-            port=self.viz.port,
-            ipv6=self.viz.ipv6,
-            proxy=self.viz.proxy,
-            env=self.viz.env,
-            send=self.viz.send
-        )
 
     def emit(self, record):
         try:
@@ -57,7 +48,7 @@ class VisdomPlotHandler(BaseVisdomHandler):
         Plot your metrics
         :param name: name of window
         :param plot_type: Select one of: scatter, line or bar
-        :param opts: Add particular options for ech type of plot, for example,
+        :param opts: Add particular options for each type of plot, for example,
         """
         super(VisdomPlotHandler, self).__init__(opts)
         self.name = name
@@ -68,9 +59,9 @@ class VisdomPlotHandler(BaseVisdomHandler):
         self.plot_opts = plot_opts
 
         # Check the window does not exist yet
-        if self.viz.win_exists(win=self.name, env=self.opts['env']):
+        if self.viz.win_exists(win=self.name, env=self.viz.env):
             raise ValueError('A window with name {} already exists in the env {}.'
-                             .format(self.name, self.opts['env']))
+                             .format(self.name, self.viz.env))
 
         self.win_fn = getattr(self.viz, plot_type)
         self.win = None
@@ -87,17 +78,17 @@ class VisdomPlotHandler(BaseVisdomHandler):
                     data = {'X': x_y[0], 'Y': x_y[1]}
                 else:
                     data = {'X': x_y[0]}
-            if self.win and self.viz.win_exists(win=self.win, env=self.opts['env']):
+            if self.win and self.viz.win_exists(win=self.win, env=self.viz.env):
                 self.win_fn(
                     **data,
                     win=self.win,
-                    env=self.opts['env'],
+                    env=self.viz.env,
                     update='append'
                 )
             else:
                 self.win = self.win_fn(
                     **data,
-                    env=self.opts['env'],
+                    env=self.viz.env,
                     opts=self.plot_opts)
 
 
