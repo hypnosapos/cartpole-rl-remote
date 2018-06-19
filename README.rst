@@ -102,3 +102,12 @@ If you prefer launch the train with needed components just type::
 * Adjust the command above for running remote agent (default env name is 'main')
 
 In order to view results take a look at: http://localhost:8097
+
+LICENSE
+=======
+
+This project is under MIT License
+
+.. image:: https://app.fossa.io/api/projects/git%2Bgithub.com%2Fhypnosapos%2Fcartpole-rl-remote.svg?type=large
+   :target: https://app.fossa.io/projects/git%2Bgithub.com%2Fhypnosapos%2Fcartpole-rl-remote?ref=badge_large
+   :alt: License Check
