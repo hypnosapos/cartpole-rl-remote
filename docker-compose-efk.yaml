@@ -22,9 +22,9 @@ services:
   fluentd:
     depends_on:
     - elasticsearch
-    build: ./fluentd
+    build: ./efk/fluentd
     volumes:
-      - ./efk//fluentd/conf:/fluentd/etc
+      - ./efk/fluentd/conf:/fluentd/etc
     links:
       - "elasticsearch"
     ports:
