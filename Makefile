@@ -18,10 +18,21 @@ RUN_EPISODES      ?= 10
 PY_ENVS           ?= 3.5 3.6
 DEFAULT_PY_ENV    ?= 3.5
 
+GCLOUD_IMAGE_TAG    ?= 203.0.0-alpine
+GCP_CREDENTIALS     ?= $$HOME/gcp.json
+GCP_ZONE            ?= my_zone
+GCP_PROJECT_ID      ?= my_project
 
-define search_container
-	$(shell docker ps -a | grep cartpole-$(1)-test | grep wc -l)
-endef
+GKE_CLUSTER_VERSION ?= 1.9.7-gke.3
+GKE_CLUSTER_NAME    ?= ml-demo
+GKE_GPU_AMOUNT      ?= 1
+GKE_GPU_NODES_MIN   ?= 0
+GKE_GPU_NODES       ?= 0
+GKE_GPU_NODES_MAX   ?= 3
+GKE_GPU_TYPE        ?= nvidia-tesla-p100
+
+GITHUB_TOKEN        ?= githubtoken
+
 
 .PHONY: help
 help: ## Show this help
@@ -98,10 +109,12 @@ docker-push: ## Push docker images
 docker-visdom: ## Run a visdom server
 	@docker run -d --name local-visdom -p 8097:8097 hypnosapos/visdom:latest
 
+.PHONY: train
 train: clean-seldon-models## Train model
 	@cartpole -e $(EPISODES) \
 	  train --gamma 0.095 0.099 0.001 -f seldon/models/$(MODEL_FILE)
 
+.PHONY: train-dev
 train-dev: docker-visdom clean-seldon-models ## Train a model in dev mode with render option and visdom reports (requires a .tox/py35 venv)
 	@. .venv/bin/activate && \
 	 pip install -e . && \
@@ -110,19 +123,29 @@ train-dev: docker-visdom clean-seldon-models ## Train a model in dev mode with r
 	   train --gamma 0.095 0.099 0.001 -f seldon/models/$(MODEL_FILE)
 	@docker rm -f local-visdom
 
+.PHONY: train-docker
 train-docker: clean-seldon-models ## train by docker container
 	@docker run -it -v $(shell pwd)/seldon/models:/tmp/seldon/models $(DOCKER_ORG)/$(DOCKER_IMAGE):$(shell git rev-parse --short HEAD)\
 	 cartpole -e $(TRAIN_EPISODES) --log-level DEBUG \
-	   train --gamma 0.094 0.099 0.001 -f /tmp/seldon/models/$(MODEL_FILE)
+	   train --gamma 0.095 0.099 0.001 -f /tmp/seldon/models/$(MODEL_FILE)
 
-train-docker-visdom: clean-seldon-models ## train by docker compose using visdom server for monitoring
-	@docker-compose -f docker-compose-visdom.yaml up --exit-code-from train-cartpole
+.PHONY: train-docker-visdom
+train-docker-visdom: clean-seldon-models ## train by docker compose using visdom server for metrics
+	## @docker-compose -f docker-compose-visdom.yaml up --exit-code-from train-cartpole
+	@docker-compose -f docker-compose-visdom.yaml up
 	@docker-compose -f docker-compose-visdom.yaml down
 
-train-docker-visdom: clean-seldon-models ## train by docker compose using EFK for monitoring
+.PHONY: train-docker-efk
+train-docker-efk: clean-seldon-models ## train by docker compose using EFK for metrics and monitoring
 	@docker-compose -f docker-compose-efk.yaml up
 	@docker-compose -f docker-compose-efk.yaml down
 
+.PHONY: train-docker-visdom-efk
+train-docker-visdom-efk: clean-seldon-models ## train by docker compose using EFK and visdom for metrics and monitoring
+	@docker-compose -f docker-compose.yaml up
+	@docker-compose -f docker-compose.yaml down
+
+.PHONY: seldon-build
 seldon-build: clean-seldon clean-seldon-models ## Generate seldon resources
 	@ cp -a requirements.txt seldon/
 ifeq ($(STORAGE_PROVIDER), gcs)
@@ -132,10 +155,51 @@ endif
 	@docker run -v $(shell pwd)/seldon:/model $(SELDON_IMAGE) /model CartpoleRLRemoteAgent $(shell git rev-parse --short HEAD) $(DOCKER_ORG) --force
 	@cd $(shell pwd)/seldon/build && ./build_image.sh
 
+.PHONY: seldon-push
 seldon-push:  ## Push docker image for seldon deployment
 	@cd $(shell pwd)/seldon/build && ./push_image.sh
 
+.PHONY: seldon-deploy
 seldon-deploy: ## Deploy seldon resources on kubernetes
 	@kubectl apply -f test/cartpole_model.yaml -n seldon
 
+.PHONY: gke-bastion
+gke-bastion: ## Run a gke-bastion container.
+	@docker run -it -d --name gke-bastion \
+	   -p 8001:8001 -p 3000:3000 \
+	   -v $(GCP_CREDENTIALS):/tmp/gcp.json \
+	   google/cloud-sdk:$(GCLOUD_IMAGE_TAG) \
+	   sh
+	@docker exec gke-bastion \
+	   sh -c "gcloud components install kubectl --quiet \
+	          && gcloud auth activate-service-account --key-file=/tmp/gcp.json"
 
+.PHONY: gke-create-cluster
+gke-create-cluster: ## Create a kubernetes cluster on GKE.
+	@docker exec gke-bastion \
+	   sh -c "gcloud container --project $(GCP_PROJECT_ID) clusters create $(GKE_CLUSTER_NAME) --zone "$(GCP_ZONE)" \
+	          --username "admin" --cluster-version "$(GKE_CLUSTER_VERSION)" --machine-type "n1-standard-4" --image-type "COS" \
+	          --disk-type "pd-standard" --disk-size "100" \
+	          --scopes "compute-rw","storage-rw","logging-write","monitoring","service-control","service-management","trace" \
+	          --num-nodes "5" --enable-cloud-logging --enable-cloud-monitoring --network "default" \
+	          --subnetwork "default" --addons HorizontalPodAutoscaling,HttpLoadBalancing,KubernetesDashboard \
+	          && gcloud container clusters get-credentials $(GKE_CLUSTER_NAME) --zone "$(GCP_ZONE)" --project $(GCP_PROJECT_ID)"
+	@docker exec gke-bastion \
+	   sh -c "kubectl config set-credentials gke_$(GCP_PROJECT_ID)_$(GCP_ZONE)_$(GKE_CLUSTER_NAME) --username=admin \
+	          --password=$$(gcloud container clusters describe $(GKE_CLUSTER_NAME) | grep password | awk '{print $$2}')"
+
+.PHONY: gke-create-gpu-group
+gke-create-gpu-group: ## Create a GPU group for kubernetes cluster on GKE.
+	@docker exec gke-bastion \
+	  sh -c "gcloud beta container node-pools create $(GKE_CLUSTER_NAME)-gpu-pool \
+	         --accelerator type=$(GKE_GPU_TYPE),count=$(GKE_GPU_AMOUNT) --zone "$(GCP_ZONE)" \
+	         --cluster $(GKE_CLUSTER_NAME) --num-nodes $(GKE_GPU_NODES) --min-nodes $(GKE_GPU_NODES_MIN) \
+	         --max-nodes $(GKE_GPU_NODES_MAX) --enable-autoscaling"
+
+.PHONY: gke-tiller-helm
+gke-tiller-helm: ## Install Helm on GKE cluster.
+	@docker exec gke-bastion \
+	   sh -c "curl  -H "Cache-Control: no-cache" -H "Authorization: token ${GITHUB_TOKEN}" https://raw.githubusercontent.com/kubernetes/helm/master/scripts/get | bash
+	          && kubectl -n kube-system create sa tiller \
+	          && kubectl create clusterrolebinding tiller --clusterrole cluster-admin --serviceaccount=kube-system:tiller \
+	          && helm init --wait --service-account tiller"

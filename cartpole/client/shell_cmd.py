@@ -207,7 +207,6 @@ def main(argv=sys.argv[1:]):
         # TODO: auto-modeling by custom config (get_model(**config)), defaults to {}
         _args = [(args.episodes, args.render, dict(zip(hparams.keys(), hparam_values)),
                   {}, args.file_name, metrics_config['config']) for hparam_values in list(product(*hparams.values()))]
-
         with multiprocessing.Pool(len(_args)) as process_pool:
             results = process_pool.starmap_async(
                 args.func,
@@ -231,7 +230,6 @@ if __name__ == "__main__":
 
     try:
         main(sys.argv[1:])
-
     except KeyboardInterrupt:
         LOG.warning("... cartpole command was interrupted")
         sys.exit(2)
