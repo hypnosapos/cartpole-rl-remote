@@ -194,7 +194,8 @@ gke-create-gpu-group: ## Create a GPU group for kubernetes cluster on GKE.
 	  sh -c "gcloud beta container node-pools create $(GKE_CLUSTER_NAME)-gpu-pool \
 	         --accelerator type=$(GKE_GPU_TYPE),count=$(GKE_GPU_AMOUNT) --zone "$(GCP_ZONE)" \
 	         --cluster $(GKE_CLUSTER_NAME) --num-nodes $(GKE_GPU_NODES) --min-nodes $(GKE_GPU_NODES_MIN) \
-	         --max-nodes $(GKE_GPU_NODES_MAX) --enable-autoscaling"
+	         --max-nodes $(GKE_GPU_NODES_MAX) --enable-autoscaling \
+	         && kubectl apply -f https://raw.githubusercontent.com/GoogleCloudPlatform/container-engine-accelerators/stable/nvidia-driver-installer/cos/daemonset-preloaded.yaml"
 
 .PHONY: gke-tiller-helm
 gke-tiller-helm: ## Install Helm on GKE cluster.
