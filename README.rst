@@ -3,8 +3,8 @@ Cartpole RL Remote
 .. image:: https://circleci.com/gh/hypnosapos/cartpole-rl-remote/tree/master.svg?style=svg
    :target: https://circleci.com/gh/hypnosapos/cartpole-rl-remote/tree/master
    :alt: Build Status
-.. image:: https://img.shields.io/pypi/v/modeldb-basic.svg?style=flat-square
-   :target: https://pypi.org/project/modeldb-basic
+.. image:: https://img.shields.io/pypi/v/cartpole-rl-remote.svg?style=flat-square
+   :target: https://pypi.org/project/cartpole-rl-remote
    :alt: Version
 .. image:: https://img.shields.io/pypi/pyversions/cartpole-rl-remote.svg?style=flat-square
    :target: https://pypi.org/project/cartpole-rl-remote
@@ -15,9 +15,126 @@ Cartpole RL Remote
 
 This project is intended to play with Cart Pole Game using Reinforcement Learning by a remote agent.
 
-Install
-=======
+We want to show you a journey from custom model trainer to a productive platform based on open source.
 
+Requirements
+============
+
+Basic scenarios:
+
+- Make (gcc)
+- Docker (17+)
+- Docker compose (version 3.3+)
+
+Advanced scenarios:
+
+- kubernetes (1.8+)
+
+Round #1: Custom trainer and metric collection
+==============================================
+
+As with any other software development, machine learning code must follow the same best practices.
+It's very important to have on mind that our code should be run on any environment, on my laptop or on any cloud.
+
+In the first attempt to train a CartPole RL Remote Agent we have implemented a multiprocessor python module, by default it tries to get
+ use a processor for each hyperparameter combination.
+
+As result of the training stage we'll get out an **h5** file with the trained model.
+
+.. image:: assets/basic_scenario.png
+   :alt: Basic Scenario
+
+Collecting metrics with visdom
+------------------------------
+
+We trust in logs, so all details of model training should be outlined using builtins log libraries, and then the instrumentation
+may come from tools that manage these log lines. We've used as first approach a log handler for Visdom server in order to send metrics to an external site.
+
+Using python virtual env
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+Requirements:
+
+- Python (3.5+)
+
+To create a local virtual env for python type::
+
+   make venv
+
+When this virtual env is activated, we can use the ``cartpole`` command client, type::
+
+   cartpole --help
+
+for more information about how to use.
+
+We have a couple of argument to provide Visdom configuration to send metrics: ``--metrics-engine`` and ``--metrics-config``.
+
+The simplest way to train the model and collect metrics with visdom is next command::
+
+   make train-dev
+
+
+Change default values for hyperparameters in Makefile file if you wish another combination. Note that render mode is activated by default
+so many windows, one per experiment, will show the CartPole game in action while is training.
+
+Visdom server must be ready at: http://localhost:8097
+
+Using docker compose
+^^^^^^^^^^^^^^^^^^^^
+
+If you prefer use docker containers for everything launch this command::
+
+   make train-docker-visdom
+
+
+
+Using docker log drivers, EFK in action
+---------------------------------------
+
+Ok, it's possible implement our metrics collector, but as we are using container, couldn't we use docker log drivers to extract metrics form log lines ?
+Yes, of course.
+
+We've create a fluentd conf file to specify the regex of searched lines in logs, and fluentd will send metrics to elasticsearch.
+Finally in efk directory you can find a kibana dashboard file that you can import.
+
+To run this stack type::
+
+   make train-docker-efk
+
+
+
+Anybody can launch a docker compose with Visdom and the EFK by this command::
+
+   make train-docker-visdom-efk
+
+
+Round #2: Advanced train with Polyaxon
+======================================
+
+Well, we have a simple model trainer with simple hyperparameter tuning implementation (something like a well known grid algorithm).
+But we have too few hands on the code, and few weeks ago i discovered `polyaxon <http://polyaxon.com>`_.
+A good open source project (from my point of view), it uses kubernetes as platform where all resources will be deployed.
+
+The challenge now is try to create a wrapper for polyaxon to take the CartPole model and train multiple experiments with several hyperparameter combinations.
+
+Under the directory **polyaxon** you can find all resources related to it.
+
+Follow this command sequence to get launch an experiment group with polyaxon (we've GKE service to provide a kubernetes cluster)::
+
+   export GCP_CREDENTIALS=/tmp/gcp.json
+   export GCP_ZONE=europe-west1-b
+   export GCP_PROJECT_ID=my_project
+   export GKE_CLUSTER_NAME=cartpole
+   export GITHUB_TOKEN=githubtoken
+   make gke-bastion gke-create-cluster gke-tiller-helm
+   cd polyaxon
+   make
+
+
+Round #3: Model inference with Seldon
+=====================================
+
+The idea is to get trained models and deploy them within `Seldon <https://seldon.io>`_.
 Install this python module to train or run the RL model under the wood.
 
 Requirements:
@@ -45,44 +162,6 @@ Alternatively it's possible to install it by using any of these URLs:
 Where [@<git_ref>] is an optional reference to a git reference (i.e: @master, v0.1.6) and
 <release_file> is the URL of one release file at https://github.com/hypnosapos/cartpole-rl-remote/releases
 
-Locally
--------
-
-Previously downloaded in your host, somebody may install the package by typing::
-
- pip install -e .
-
-or::
-
- python setup.py install
-
-
-
-If the module was installed successfully, check out that "cartpole" command is available::
-
- cartpole --help
-
-
-
-Training
-========
-
-Once we have the cartpole client installed as it was said above, just type this command to train a model::
-
-  cartpole --log-level DEBUG -e 800 --metrics-engine visdom \
-   --metrics-config '{"server": "http://localhost", "env": "train"}' train --gamma 0.097 0.099 0.001 --batch_size 32 33
-
-
-The output of the training command is one or many h5 file/s (a trained model serialized as hdf5).
-
-If you prefer launch the train with needed components just type::
-
-   docker-compose up
-
-
-* Adjust the command above for training
-
-In order to view results take a look at: http://localhost:8097
 
 Running
 =======
@@ -103,7 +182,7 @@ If you prefer launch the train with needed components just type::
 
 In order to view results take a look at: http://localhost:8097
 
-LICENSE
+License
 =======
 
 This project is under MIT License
@@ -111,3 +190,10 @@ This project is under MIT License
 .. image:: https://app.fossa.io/api/projects/git%2Bgithub.com%2Fhypnosapos%2Fcartpole-rl-remote.svg?type=large
    :target: https://app.fossa.io/projects/git%2Bgithub.com%2Fhypnosapos%2Fcartpole-rl-remote?ref=badge_large
    :alt: License Check
+
+Authors
+=======
+
+David Suarez   - `davsuacar <http://github.com/davsuacar>`_
+Enrique Garcia - `engapa <http://github.com/engapa>`_
+Leticia Garcia - `laetitiae <http://github.com/laetitiae>`_
