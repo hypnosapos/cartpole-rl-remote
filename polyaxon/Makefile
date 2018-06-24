@@ -50,6 +50,14 @@ gke-polyaxon-install: ## Install polyaxon
 	           --namespace=polyaxon \
 	           -f /tmp/scaffold/polyaxon-config.yml"
 
+.PHONY: gke-polyaxon-uninstall
+gke-polyaxon-uninstall: ## Uninstall polyaxon
+	@docker exec gke-bastion \
+	   sh -c 'helm del --purge polyaxon \
+	         && for file in data logs outputs repos upload; \
+	         do kubectl delete -f /tmp/scaffold/$$file-pvc.yml; done \
+	         && kubectl delete ns polyaxon'
+
 .PHONY: gke-polyaxon-cartpole
 gke-polyaxon-cartpole:
 	@docker exec gke-bastion \
