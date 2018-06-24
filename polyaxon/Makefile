@@ -22,10 +22,11 @@ gke-polyaxon-nfs: ## Create a NFS server by ZFS single Node
 
 .PHONY: gke-polyaxon-nfs-grafana
 gke-polyaxon-nfs-grafana: ## Create a machine to serve NFS storage
+	## @docker exec gke-bastion \
+	##   sh -c "gcloud --project $(GCP_PROJECT_ID) compute ssh --ssh-flag=-L3000:localhost:3000 --zone=$(GCP_ZONE) polyaxon-nfs-vm"
 	@docker exec gke-bastion \
-	   sh -c "gcloud --project $(GCP_PROJECT_ID) compute ssh --ssh-flag=-L3000:localhost:3000 --zone=$(GCP_ZONE) polyaxon-nfs-vm"
-	@docker exec gke-bastion \
-	   sh -c ""
+	   sh -c "gcloud --project $(GCP_PROJECT_ID) compute ssh --zone=$(GCP_ZONE) polyaxon-nfs-vm \
+	         --command 'for dir_name in data outputs logs repos upload;do mkdir -m 777 /data/$$dir_name;done'"
 
 .PHONY: gke-polyaxon-preinstall
 gke-polyaxon-preinstall: ## Get a docker image list of all nodes
