@@ -13,36 +13,38 @@ Cartpole RL Remote
    :target: https://codecov.io/gh/hypnosapos/cartpole-rl-remote
    :alt: Coverage
 
-This project is intended to play with Cart Pole Game using Reinforcement Learning by a remote agent.
+This project is intended to play with `CartPole <https://gym.openai.com/envs/CartPole-v0/>`_ game using Reinforcement Learning.
 
-We want to show you a journey from custom model trainer to a productive platform based on open source.
+The project is divided basically in three parts: Neural network model, QLearning algorithm and application runner.
+
+We want to show you a journey from custom model trainer to a productive platform based on open source (training/inference).
 
 Requirements
 ============
 
-Basic scenarios:
+Basic scenario (Station #1):
 
 - Make (gcc)
 - Docker (17+)
-- Docker compose (version 3.3+)
+- Docker compose (version 17.06.+, compose file format 3.3)
 
-Advanced scenarios:
+Advanced scenarios (Station #2 and #3):
 
 - kubernetes (1.8+)
 
-Round #1: Custom trainer and metric collection
-==============================================
+Station #1: Custom trainer and metrics collection
+=================================================
 
 As with any other software development, machine learning code must follow the same best practices.
 It's very important to have on mind that our code should be run on any environment, on my laptop or on any cloud.
 
-In the first attempt to train a CartPole RL Remote Agent we have implemented a multiprocessor python module, by default it tries to get
- use a processor for each hyperparameter combination.
-
-As result of the training stage we'll get out an **h5** file with the trained model.
+In the first attempt to train a CartPole model we have implemented a multiprocessor python module,
+by default it tries to use one processor for each hyperparameter combination.
 
 .. image:: assets/basic_scenario.png
    :alt: Basic Scenario
+
+As result of the training we'll get out an **h5** file with the trained model and all metrics about the training process.
 
 Collecting metrics with visdom
 ------------------------------
@@ -105,13 +107,13 @@ Kibana URL would be: http://localhost:5601. Set the text ``cartpole-*`` for the 
 a kibana dashboard json file that you can import to view all graphics about cartpole model experiments.
 
 
-Anybody could launch a docker compose with Visdom and the EFK all-in-one by this command::
+Anybody could launch a docker compose with visdom and the EFK all-in-one by this command::
 
    make train-docker-visdom-efk
 
 
-Round #2: Advanced training with Polyaxon
-=========================================
+Station #2: Advanced training with Polyaxon
+===========================================
 
 Well, we have a simple model trainer with simple hyperparameter tuning implementation (something like a well known grid algorithm).
 But we have too few hands on the code, and few weeks ago i discovered `polyaxon <http://polyaxon.com>`_.
@@ -139,8 +141,8 @@ Let's deploy our experiments groups by this command::
 
    make gke-polyaxon-cartpole
 
-Round #3: Model inference with Seldon
-=====================================
+Station #3: Model inference with Seldon
+=======================================
 
 The idea is to get trained models and deploy them within `Seldon <https://seldon.io>`_.
 Install this python module to train or run the RL model under the wood.
@@ -150,7 +152,7 @@ Deploy Seldon
 
 Deploy Seldon::
 
-   make run-dev
+   make gke-seldon-install
 
 Run remote agent
 ----------------

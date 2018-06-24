@@ -234,3 +234,28 @@ gke-tiller-helm: ## Install Helm on GKE cluster.
 	         && kubectl -n kube-system create sa tiller \
 	         && kubectl create clusterrolebinding tiller --clusterrole cluster-admin --serviceaccount=kube-system:tiller \
 	         && helm init --wait --service-account tiller"
+
+.PHONY: gke-seldon-install
+gke-seldon-install: ## Installing Seldon components
+	@docker exec gke-bastion \
+	  sh -c "helm repo add seldon https://storage.googleapis.com/seldon-charts \
+	         && helm repo update \
+	         && helm install seldon/seldon-core-crd --name seldon-core-crd \
+	            --set rbac.enabled=false \
+	            --set usage_metrics.enabled=true \
+	         && kubectl create namespace seldon \
+	         && helm install seldon/seldon-core --name seldon-core \
+	            --set rbac.enabled=false \
+	            --set apife_service_type=LoadBalancer --namespace seldon \
+	         && helm install seldon/seldon-core-analytics --name seldon-core-analytics \
+                --set grafana_prom_admin_password=password \
+                --set persistence.enabled=false \
+                --set rbac.enabled=false \
+                --set grafana_prom_service_type=LoadBalancer --namespace seldon"
+
+.PHONY: gke-seldon-uninstall
+gke-seldon-uninstall: ## Uninstalling Seldon components
+	@docker exec gke-bastion \
+	  sh -c "helm del --purge seldon-core \
+	         && helm del --purge seldon-core-analytics \
+	         && helm del --purge seldon-core-crd"
