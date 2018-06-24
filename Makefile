@@ -199,7 +199,8 @@ gke-create-gpu-group: ## Create a GPU group for kubernetes cluster on GKE.
 .PHONY: gke-tiller-helm
 gke-tiller-helm: ## Install Helm on GKE cluster.
 	@docker exec gke-bastion \
-	   sh -c "curl  -H "Cache-Control: no-cache" -H "Authorization: token ${GITHUB_TOKEN}" https://raw.githubusercontent.com/kubernetes/helm/master/scripts/get | bash
-	          && kubectl -n kube-system create sa tiller \
-	          && kubectl create clusterrolebinding tiller --clusterrole cluster-admin --serviceaccount=kube-system:tiller \
-	          && helm init --wait --service-account tiller"
+	  sh -c "apk update && apk add openssl \
+	         && curl https://raw.githubusercontent.com/kubernetes/helm/master/scripts/get | bash \
+	         && kubectl -n kube-system create sa tiller \
+	         && kubectl create clusterrolebinding tiller --clusterrole cluster-admin --serviceaccount=kube-system:tiller \
+	         && helm init --wait --service-account tiller"
