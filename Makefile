@@ -174,6 +174,17 @@ gke-bastion: ## Run a gke-bastion container.
 	   sh -c "gcloud components install kubectl --quiet \
 	          && gcloud auth activate-service-account --key-file=/tmp/gcp.json"
 
+.PHONY: gke-ui-login-skip
+gke-ui-login-skip: ## TRICK: Grant complete access to dashboard. Be careful, anyone could enter into your dashboard and execute admin ops.
+	@docker cp $(shell pwd)/skip_login.yml gke-bastion:/tmp/skip_login.yml
+	@docker exec gke-bastion \
+	  sh -c "kubectl create -f /tmp/skip_login.yml"
+
+.PHONY: gke-proxy
+gke-proxy: ## Run kubectl proxy on gke container.
+	@docker exec -it -d gke-bastion \
+	   sh -c "kubectl proxy --address='0.0.0.0'"
+
 .PHONY: gke-create-cluster
 gke-create-cluster: ## Create a kubernetes cluster on GKE.
 	@docker exec gke-bastion \
@@ -187,6 +198,13 @@ gke-create-cluster: ## Create a kubernetes cluster on GKE.
 	@docker exec gke-bastion \
 	   sh -c "kubectl config set-credentials gke_$(GCP_PROJECT_ID)_$(GCP_ZONE)_$(GKE_CLUSTER_NAME) --username=admin \
 	          --password=$$(gcloud container clusters describe $(GKE_CLUSTER_NAME) | grep password | awk '{print $$2}')"
+
+.PHONY: gke-delete-cluster
+gke-delete-cluster: ## Delete a kubernetes cluster on GKE.
+	@docker exec gke-bastion \
+	   sh -c "gcloud config set project $(GCP_PROJECT_ID) \
+	          && gcloud container --project $(GCP_PROJECT_ID) clusters delete $(GKE_CLUSTER_NAME) \
+	          --zone $(GCP_ZONE) --quiet"
 
 .PHONY: gke-create-gpu-group
 gke-create-gpu-group: ## Create a GPU group for kubernetes cluster on GKE.
