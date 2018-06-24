@@ -110,14 +110,14 @@ Anybody could launch a docker compose with Visdom and the EFK all-in-one by this
    make train-docker-visdom-efk
 
 
-Round #2: Advanced train with Polyaxon
-======================================
+Round #2: Advanced training with Polyaxon
+=========================================
 
 Well, we have a simple model trainer with simple hyperparameter tuning implementation (something like a well known grid algorithm).
 But we have too few hands on the code, and few weeks ago i discovered `polyaxon <http://polyaxon.com>`_.
-A good open source project (from my point of view), it uses kubernetes as platform where all resources will be deployed.
+It uses kubernetes as platform where all resources will be deployed.
 
-The challenge now is try to create a wrapper for polyaxon to take the CartPole model and train multiple experiments with several hyperparameter combinations.
+The challenge now is try to create a polyaxon wrapper to take the CartPole model and train multiple experiments with several hyperparameter combinations.
 
 Under the directory **polyaxon** you can find all resources related to it.
 
@@ -172,6 +172,6 @@ This project is under MIT License
 Authors
 =======
 
-David Suarez   - `davsuacar <http://github.com/davsuacar>`_
-Enrique Garcia - `engapa <http://github.com/engapa>`_
-Leticia Garcia - `laetitiae <http://github.com/laetitiae>`_
+- David Suarez   - `davsuacar <http://github.com/davsuacar>`_
+- Enrique Garcia - `engapa <http://github.com/engapa>`_
+- Leticia Garcia - `laetitiae <http://github.com/laetitiae>`_
