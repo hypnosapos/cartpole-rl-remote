@@ -6,3 +6,6 @@ pytest-cov
 mock
 coverage
 behave
+bumpversion
+pystache
+gitchangelog

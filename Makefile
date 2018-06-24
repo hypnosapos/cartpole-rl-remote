@@ -86,7 +86,7 @@ docker-test-build:
 .PHONY: venv
 venv: ## Create a local virtualenv with default python version (supported 3.5 and 3.6)
 	@python -m venv .venv
-	@. .venv/bin/activate && pip install -U pip && pip install -r requirements.txt -r requirements-dev.txt
+	@. .venv/bin/activate && pip install -U pip && pip install -r requirements.txt
 	@echo -e "\033[32m[[ Type '. .venv/bin/activate' to activate virtualenv ]]\033[0m"
 
 .PHONY: test
@@ -115,7 +115,7 @@ train: clean-seldon-models## Train model
 	  train --gamma 0.095 0.099 0.001 -f seldon/models/$(MODEL_FILE)
 
 .PHONY: train-dev
-train-dev: docker-visdom clean-seldon-models ## Train a model in dev mode with render option and visdom reports (requires a .tox/py35 venv)
+train-dev: docker-visdom clean-seldon-models ## Train a model in dev mode with render option and visdom reports (requires venv)
 	@. .venv/bin/activate && \
 	 pip install -e . && \
 	 cartpole -e $(TRAIN_EPISODES) -r --log-level DEBUG \

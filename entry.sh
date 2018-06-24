@@ -34,6 +34,17 @@ publish() {
 
 }
 
+release(){
+
+    bumpversion --tag --commit --message "[skip ci] Update version \{current_version\} --> \{new_version\}" patch
+    gitchangelog > CHANGELOG.md
+
+}
+
+docs() {
+
+   sphinx-build -d docs/build/doctrees source docs/build/html
+}
 
 # Main options
 case "$1" in
@@ -57,12 +68,22 @@ case "$1" in
         build "$@"
         exit $?
         ;;
+  release)
+        shift
+        release "$@"
+        exit $?
+        ;;
   publish)
         shift
         publish "$@"
         exit $?
         ;;
+  docs)
+        shift
+        docs "$@"
+        exit $?
+        ;;
   *)
-        echo "Usage: $0 {test|test_e2e|codecov|build|publish}"
+        echo "Usage: $0 {test|test_e2e|codecov|build|release|publish|docs}"
         exit 1
 esac
