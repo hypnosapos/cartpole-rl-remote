@@ -32,10 +32,10 @@ gke-polyaxon-nfs-grafana: ## Create a machine to serve NFS storage
 gke-polyaxon-preinstall: ## Get a docker image list of all nodes
 	@docker cp scaffold gke-bastion:/tmp/
 	@docker exec gke-bastion \
-	   sh -c "IP=$$(gcloud compute instances describe polyaxon-nfs-vm \
-	          --zone=$(GCP_ZONE) \
-	          --format='value(networkInterfaces[0].networkIP)') \
-	          && sed -e s/NFS_HOST/$${IP}/g /tmp/scaffold/*-pvc.yml"
+	   sh -c 'export IP="$$(gcloud compute instances describe polyaxon-nfs-vm \
+	            --zone=$(GCP_ZONE) --format="'"value(networkInterfaces[0].networkIP)"'")" \
+	            && find /tmp/scaffold -name "'"*-pvc.yml"'" \
+	            -exec sed -i s/NFS_HOST/$$IP/g {} \;'
 	@docker exec gke-bastion \
 	   sh -c 'kubectl create namespace polyaxon \
 	          && for file in data logs outputs repos upload; \
@@ -50,6 +50,14 @@ gke-polyaxon-install: ## Install polyaxon
 	           --name=polyaxon \
 	           --namespace=polyaxon \
 	           -f /tmp/scaffold/polyaxon-config.yml"
+
+.PHONY: gke-polyaxon-uninstall
+gke-polyaxon-uninstall: ## Uninstall polyaxon
+	@docker exec gke-bastion \
+	   sh -c 'helm del --purge polyaxon \
+	         && for file in data logs outputs repos upload; \
+	         do kubectl delete -f /tmp/scaffold/$$file-pvc.yml; done \
+	         && kubectl delete ns polyaxon'
 
 .PHONY: gke-polyaxon-cartpole
 gke-polyaxon-cartpole:
