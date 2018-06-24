@@ -5,7 +5,6 @@ pytest-pep8
 pytest-cov
 mock
 coverage
-behave
 bumpversion
 pystache
 gitchangelog

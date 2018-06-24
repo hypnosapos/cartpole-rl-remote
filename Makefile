@@ -14,7 +14,8 @@ STORAGE_PROVIDER  ?= local
 MODEL_FILE        ?= cartpole-rl-remote
 PY_DEV_ENV        ?= .tox/py36/bin/activate
 TRAIN_EPISODES    ?= 500
-RUN_EPISODES      ?= 10
+RUN_EPISODES      ?= 200
+RUN_MODEL_IP      ?= localhost
 PY_ENVS           ?= 3.5 3.6
 DEFAULT_PY_ENV    ?= 3.5
 
@@ -163,11 +164,21 @@ seldon-push:  ## Push docker image for seldon deployment
 seldon-deploy: ## Deploy seldon resources on kubernetes
 	@kubectl apply -f test/cartpole_model.yaml -n seldon
 
+.PHONY: run-dev
+run-dev: docker-visdom ## Run a remote agent in dev mode with render option and visdom reports (requires venv)
+	@. .venv/bin/activate && \
+	 pip install -e . && \
+	 cartpole -e $(RUN_EPISODES) -r --log-level DEBUG \
+	   --metrics-engine visdom --metrics-config '{"server": "http://localhost", "env": "main"}' \
+	   run --host "$(RUN_MODEL_IP)" --runners 5
+	@docker rm -f local-visdom
+
 .PHONY: gke-bastion
 gke-bastion: ## Run a gke-bastion container.
 	@docker run -it -d --name gke-bastion \
-	   -p 8001:8001 -p 3000:3000 \
+	   -p 8001:8001 -p 3000:3000 -p 8888:80 \
 	   -v $(GCP_CREDENTIALS):/tmp/gcp.json \
+	   -v $(shell pwd):/cartpole-rl-remote \
 	   google/cloud-sdk:$(GCLOUD_IMAGE_TAG) \
 	   sh
 	@docker exec gke-bastion \

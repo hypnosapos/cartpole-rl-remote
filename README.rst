@@ -61,13 +61,13 @@ To create a local virtual env for python type::
 
    make venv
 
-When this virtual env is activated, we can use the ``cartpole`` command client, type::
+When this virtual env is activated, we can use the ``cartpole`` command client directly, type::
 
    cartpole --help
 
-for more information about how to use.
+for more information about how to use it.
 
-We have a couple of argument to provide Visdom configuration to send metrics: ``--metrics-engine`` and ``--metrics-config``.
+We have a couple of arguments to provide visdom configuration to send metrics: ``--metrics-engine`` and ``--metrics-config``.
 
 The simplest way to train the model and collect metrics with visdom is next command::
 
@@ -91,19 +91,21 @@ If you prefer use docker containers for everything launch this command::
 Using docker log drivers, EFK in action
 ---------------------------------------
 
-Ok, it's possible implement our metrics collector, but as we are using container, couldn't we use docker log drivers to extract metrics form log lines ?
+Ok, it's possible to implement our metrics collector, but as we are using containers, couldn't we use docker log drivers to extract metrics from log lines?
 Yes, of course.
 
-We've create a fluentd conf file to specify the regex of searched lines in logs, and fluentd will send metrics to elasticsearch.
-Finally in efk directory you can find a kibana dashboard file that you can import.
+We've created a fluentd conf file to specify the regex pattern of searched lines in logs, and fluentd will send metrics to elasticsearch.
 
 To run this stack type::
 
    make train-docker-efk
 
 
+Kibana URL would be: http://localhost:5601. Set the text ``cartpole-*`` for the index pattern, in **efk/kibana** directory you can find
+a kibana dashboard json file that you can import to view all graphics about cartpole model experiments.
 
-Anybody can launch a docker compose with Visdom and the EFK by this command::
+
+Anybody could launch a docker compose with Visdom and the EFK all-in-one by this command::
 
    make train-docker-visdom-efk
 
@@ -119,7 +121,7 @@ The challenge now is try to create a wrapper for polyaxon to take the CartPole m
 
 Under the directory **polyaxon** you can find all resources related to it.
 
-Follow this command sequence to get launch an experiment group with polyaxon (we've GKE service to provide a kubernetes cluster)::
+Follow this command sequence to get a kubernetes cluster with all polyaxon components (we'll use GKE service)::
 
    export GCP_CREDENTIALS=/tmp/gcp.json
    export GCP_ZONE=europe-west1-b
@@ -128,8 +130,14 @@ Follow this command sequence to get launch an experiment group with polyaxon (we
    export GITHUB_TOKEN=githubtoken
    make gke-bastion gke-create-cluster gke-tiller-helm
    cd polyaxon
-   make
+   make venv
+   make gke-polyaxon-nfs
+   make gke-polyaxon-nfs-grafana
+   make gke-polyaxon-preinstall gke-polyaxon-install
 
+Let's deploy our experiments groups by this command::
+
+   make gke-polyaxon-cartpole
 
 Round #3: Model inference with Seldon
 =====================================
@@ -137,50 +145,20 @@ Round #3: Model inference with Seldon
 The idea is to get trained models and deploy them within `Seldon <https://seldon.io>`_.
 Install this python module to train or run the RL model under the wood.
 
-Requirements:
-- python >=3.5
-- pip
+Deploy Seldon
+-------------
 
-You may launch all needed components using docker (or docker-compose) instead
+Deploy Seldon::
 
-Remotely
---------
+   make run-dev
 
-The most widely known way to install a python package is by **pip** command.
-The python package is available at [pypi repository](https://pypi.org/project/cartpole-rl-remote/) (legacy repo [here](https://pypi.python.org/pypi/cartpole-rl-remote)).
+Run remote agent
+----------------
 
-Just type this ``pip`` command to install it from pypi package repository::
+In order to get model predictions launch this command in your shell::
 
- pip install cartpole-rl-remote
+  make run-dev
 
-
-Alternatively it's possible to install it by using any of these URLs:
-
-* ``pip install git+https://github.com/hypnosapos/cartpole-rl-remote[@<git_ref>]#egg=cartpole-rl-remote``
-* ``pip install <release_file>``
-
-Where [@<git_ref>] is an optional reference to a git reference (i.e: @master, v0.1.6) and
-<release_file> is the URL of one release file at https://github.com/hypnosapos/cartpole-rl-remote/releases
-
-
-Running
-=======
-
-In order to run the model, launch this command in your shell::
-
-  cartpole -r --log-level DEBUG -e 5 --metrics-engine visdom \
-   --metrics-config '{"server": "http://localhost", "env": "run"}' run --runners 5 --host "35.205.193.137"
-
-
-
-If you prefer launch the train with needed components just type::
-
-   docker-compose up
-
-
-* Adjust the command above for running remote agent (default env name is 'main')
-
-In order to view results take a look at: http://localhost:8097
 
 License
 =======

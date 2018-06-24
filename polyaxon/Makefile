@@ -12,9 +12,9 @@ help: ## Show this help
 
 .PHONY: venv
 venv: ## Create a local virtualenv with polyaxon packages installed
-	@python -m venv .venv
-	@. .venv/bin/activate && pip install -U pip && pip install polyaxon-cli
-	@echo -e "\033[32m[[ Type '. .venv/bin/activate' to activate virtualenv ]]\033[0m"
+	@python -m venv .pvenv
+	@. .pvenv/bin/activate && pip install -U pip && pip install polyaxon-cli
+	@echo -e "\033[32m[[ Type '. .pvenv/bin/activate' to activate virtualenv ]]\033[0m"
 
 .PHONY: gke-polyaxon-nfs
 gke-polyaxon-nfs: ## Create a NFS server by ZFS single Node
@@ -50,9 +50,16 @@ gke-polyaxon-install: ## Install polyaxon
 	           --namespace=polyaxon \
 	           -f /tmp/scaffold/polyaxon-config.yml"
 
-.PHONY: polyaxon-cartpole
-polyaxon-cartpole:
-	@. .venv/bin/activate && \
-	 polyaxon create project --name "cartpole" --description "Cartpole RL Remote Agent" && \
-	 polyaxon init cartpole && \
-	 polyaxon run -u
+.PHONY: gke-polyaxon-cartpole
+gke-polyaxon-cartpole:
+	@docker exec gke-bastion \
+	   sh -c "pip install polyaxon-cli \
+	          && export POLYAXON_IP=$$(kubectl get svc --namespace polyaxon plx-polyaxon-ingress -o jsonpath='{.status.loadBalancer.ingress[0].ip}') \
+	          && export POLYAXON_HTTP_PORT=80 \
+	          && export POLYAXON_WS_PORT=80 \
+	          && echo http://$$POLYAXON_IP:$$POLYAXON_HTTP_PORT \
+	          && cd /cartpole-rl-remote/polyaxon \
+	          && polyaxon config set --host=$$POLYAXON_IP --http_port=$$POLYAXON_HTTP_PORT  --ws_port=$$POLYAXON_WS_PORT \
+	          && polyaxon create project --name "cartpole" --description "Cartpole RL Remote Agent" \
+	          && polyaxon init cartpole \
+	          && polyaxon run -u
