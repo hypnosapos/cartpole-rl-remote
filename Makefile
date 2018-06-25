@@ -30,10 +30,11 @@ GKE_GPU_AMOUNT      ?= 1
 GKE_GPU_NODES_MIN   ?= 0
 GKE_GPU_NODES       ?= 0
 GKE_GPU_NODES_MAX   ?= 3
-GKE_GPU_TYPE        ?= nvidia-tesla-p100
+GKE_GPU_TYPE        ?= nvidia-tesla-k80
 
 GITHUB_TOKEN        ?= githubtoken
 
+SELDON_MODEL_TYPE   ?= model
 
 .PHONY: help
 help: ## Show this help
@@ -44,7 +45,7 @@ clean: clean-build clean-py clean-test clean-docker clean-seldon clean-seldon-mo
 
 .PHONY: clean-build
 clean-build: ## Remove build files
-	@rm -rf build dist .eggs *.egg-info *.egg.cache docs/build
+	@rm -rf build dist .eggs .models *.egg-info *.egg.cache docs/build
 
 .PHONY: clean-py
 clean-py: ## Remove Python build files
@@ -87,7 +88,7 @@ docker-test-build:
 .PHONY: venv
 venv: ## Create a local virtualenv with default python version (supported 3.5 and 3.6)
 	@python -m venv .venv
-	@. .venv/bin/activate && pip install -U pip && pip install -r requirements.txt
+	@. .venv/bin/activate && pip install -U pip && pip install .
 	@echo -e "\033[32m[[ Type '. .venv/bin/activate' to activate virtualenv ]]\033[0m"
 
 .PHONY: test
@@ -113,65 +114,67 @@ docker-visdom: ## Run a visdom server
 .PHONY: train
 train: clean-seldon-models## Train model
 	@cartpole -e $(EPISODES) \
-	  train --gamma 0.095 0.099 0.001 -f seldon/models/$(MODEL_FILE)
+	  train --gamma 0.095 0.099 0.001 -f ./.models/$(MODEL_FILE)
 
 .PHONY: train-dev
 train-dev: docker-visdom clean-seldon-models ## Train a model in dev mode with render option and visdom reports (requires venv)
 	@. .venv/bin/activate && \
-	 pip install -e . && \
 	 cartpole -e $(TRAIN_EPISODES) -r --log-level DEBUG \
 	   --metrics-engine visdom --metrics-config '{"server": "http://localhost", "env": "main"}' \
-	   train --gamma 0.095 0.099 0.001 -f seldon/models/$(MODEL_FILE)
+	   train --gamma 0.095 0.099 0.001 -f ./.models/$(MODEL_FILE)
 	@docker rm -f local-visdom
 
 .PHONY: train-docker
-train-docker: clean-seldon-models ## train by docker container
-	@docker run -it -v $(shell pwd)/seldon/models:/tmp/seldon/models $(DOCKER_ORG)/$(DOCKER_IMAGE):$(shell git rev-parse --short HEAD)\
+train-docker: clean-seldon-models ## Train by docker container
+	@docker run -it -v $(shell pwd)/.models:/tmp/models $(DOCKER_ORG)/$(DOCKER_IMAGE):$(shell git rev-parse --short HEAD)\
 	 cartpole -e $(TRAIN_EPISODES) --log-level DEBUG \
-	   train --gamma 0.095 0.099 0.001 -f /tmp/seldon/models/$(MODEL_FILE)
+	   train --gamma 0.095 0.099 0.001 -f /tmp/models/$(MODEL_FILE)
 
 .PHONY: train-docker-visdom
-train-docker-visdom: clean-seldon-models ## train by docker compose using visdom server for metrics
+train-docker-visdom: clean-seldon-models ## Train by docker compose using visdom server for metrics
 	## @docker-compose -f docker-compose-visdom.yaml up --exit-code-from train-cartpole
 	@docker-compose -f docker-compose-visdom.yaml up
 	@docker-compose -f docker-compose-visdom.yaml down
 
 .PHONY: train-docker-efk
-train-docker-efk: clean-seldon-models ## train by docker compose using EFK for metrics and monitoring
+train-docker-efk: clean-seldon-models ## Train by docker compose using EFK for metrics and monitoring
 	@docker-compose -f docker-compose-efk.yaml up
 	@docker-compose -f docker-compose-efk.yaml down
 
 .PHONY: train-docker-visdom-efk
-train-docker-visdom-efk: clean-seldon-models ## train by docker compose using EFK and visdom for metrics and monitoring
+train-docker-visdom-efk: clean-seldon-models ## Train by docker compose using EFK and visdom for metrics and monitoring
 	@docker-compose -f docker-compose.yaml up
 	@docker-compose -f docker-compose.yaml down
 
 .PHONY: seldon-build
-seldon-build: clean-seldon clean-seldon-models ## Generate seldon resources
-	@ cp -a requirements.txt seldon/
+seldon-build: clean-seldon ## Generate seldon resources
+	@cp -a requirements.txt seldon/
 ifeq ($(STORAGE_PROVIDER), gcs)
-	@curl https://storage.googleapis.com/cartpole/$(MODEL_FILE) seldon/models/$(MODEL_FILE)
+	@curl https://storage.googleapis.com/cartpole/$(MODEL_FILE) $(shell pwd)/seldon/models/$(MODEL_FILE)
+else
+	@mv $(shell pwd)/.models/$(MODEL_FILE).h5 $(shell pwd)/seldon/models/
 endif
-	@cd $(shell pwd)/seldon &&\
-	@docker run -v $(shell pwd)/seldon:/model $(SELDON_IMAGE) /model CartpoleRLRemoteAgent $(shell git rev-parse --short HEAD) $(DOCKER_ORG) --force
+	@cd $(shell pwd)/seldon && \
+	@docker run -v $(shell pwd)/seldon:/model $(SELDON_IMAGE) /model CartpoleRLRemoteAgent $(DOCKER_TAG) $(DOCKER_ORG) --force
 	@cd $(shell pwd)/seldon/build && ./build_image.sh
 
 .PHONY: seldon-push
 seldon-push:  ## Push docker image for seldon deployment
 	@cd $(shell pwd)/seldon/build && ./push_image.sh
 
-.PHONY: seldon-deploy
-seldon-deploy: ## Deploy seldon resources on kubernetes
-	@kubectl apply -f test/cartpole_model.yaml -n seldon
-
 .PHONY: run-dev
 run-dev: docker-visdom ## Run a remote agent in dev mode with render option and visdom reports (requires venv)
 	@. .venv/bin/activate && \
-	 pip install -e . && \
 	 cartpole -e $(RUN_EPISODES) -r --log-level DEBUG \
 	   --metrics-engine visdom --metrics-config '{"server": "http://localhost", "env": "main"}' \
 	   run --host "$(RUN_MODEL_IP)" --runners 5
 	@docker rm -f local-visdom
+
+.PHONY: run-dev-router-agent
+run-dev-router-agent: ## Run a router agent to change the default behaviour
+	@. .venv/bin/activate && \
+	 python ./test/e2e/test_router.py --visdom-config '{"server": "http://localhost", "env": "main"}' \
+	 -pref-branch 2 -router-name eg-router -api-server $(RUN_MODEL_IP) --num-reqs 200000
 
 .PHONY: gke-bastion
 gke-bastion: ## Run a gke-bastion container.
@@ -182,7 +185,7 @@ gke-bastion: ## Run a gke-bastion container.
 	   google/cloud-sdk:$(GCLOUD_IMAGE_TAG) \
 	   sh
 	@docker exec gke-bastion \
-	   sh -c "gcloud components install kubectl --quiet \
+	   sh -c "gcloud components install kubectl beta --quiet \
 	          && gcloud auth activate-service-account --key-file=/tmp/gcp.json"
 
 .PHONY: gke-ui-login-skip
@@ -199,9 +202,9 @@ gke-proxy: ## Run kubectl proxy on gke container.
 .PHONY: gke-create-cluster
 gke-create-cluster: ## Create a kubernetes cluster on GKE.
 	@docker exec gke-bastion \
-	   sh -c "gcloud container --project $(GCP_PROJECT_ID) clusters create $(GKE_CLUSTER_NAME) --zone "$(GCP_ZONE)" \
-	          --username "admin" --cluster-version "$(GKE_CLUSTER_VERSION)" --machine-type "n1-standard-4" --image-type "COS" \
-	          --disk-type "pd-standard" --disk-size "100" \
+	   sh -c "gcloud beta container --project $(GCP_PROJECT_ID) clusters create $(GKE_CLUSTER_NAME) --zone "$(GCP_ZONE)" \
+	          --username "admin" --cluster-version "$(GKE_CLUSTER_VERSION)" --machine-type "n1-standard-8" --image-type "COS" \
+	          --disk-type "pd-standard" --disk-size "100" --accelerator type=$(GKE_GPU_TYPE),count=$(GKE_GPU_AMOUNT) \
 	          --scopes "compute-rw","storage-rw","logging-write","monitoring","service-control","service-management","trace" \
 	          --num-nodes "5" --enable-cloud-logging --enable-cloud-monitoring --network "default" \
 	          --subnetwork "default" --addons HorizontalPodAutoscaling,HttpLoadBalancing,KubernetesDashboard \
@@ -217,20 +220,25 @@ gke-delete-cluster: ## Delete a kubernetes cluster on GKE.
 	          && gcloud container --project $(GCP_PROJECT_ID) clusters delete $(GKE_CLUSTER_NAME) \
 	          --zone $(GCP_ZONE) --quiet"
 
+.PHONY: gke-create-gpu-nvidia-driver
+gke-create-gpu-nvidia-driver:
+	@docker exec gke-bastion \
+	  sh -c "kubectl apply -f \
+	    https://raw.githubusercontent.com/GoogleCloudPlatform/container-engine-accelerators/stable/nvidia-driver-installer/cos/daemonset-preloaded.yaml"
+
 .PHONY: gke-create-gpu-group
 gke-create-gpu-group: ## Create a GPU group for kubernetes cluster on GKE.
 	@docker exec gke-bastion \
 	  sh -c "gcloud beta container node-pools create $(GKE_CLUSTER_NAME)-gpu-pool \
 	         --accelerator type=$(GKE_GPU_TYPE),count=$(GKE_GPU_AMOUNT) --zone "$(GCP_ZONE)" \
 	         --cluster $(GKE_CLUSTER_NAME) --num-nodes $(GKE_GPU_NODES) --min-nodes $(GKE_GPU_NODES_MIN) \
-	         --max-nodes $(GKE_GPU_NODES_MAX) --enable-autoscaling \
-	         && kubectl apply -f https://raw.githubusercontent.com/GoogleCloudPlatform/container-engine-accelerators/stable/nvidia-driver-installer/cos/daemonset-preloaded.yaml"
+	         --max-nodes $(GKE_GPU_NODES_MAX) --enable-autoscaling"
 
 .PHONY: gke-tiller-helm
 gke-tiller-helm: ## Install Helm on GKE cluster.
 	@docker exec gke-bastion \
-	  sh -c "apk update && apk add openssl \
-	         && curl https://raw.githubusercontent.com/kubernetes/helm/master/scripts/get | bash \
+	  sh -c "apk --update add openssl \
+	         && curl  -H 'Cache-Control: no-cache' -H 'Authorization: token $(GITHUB_TOKEN)' https://raw.githubusercontent.com/kubernetes/helm/master/scripts/get | bash \
 	         && kubectl -n kube-system create sa tiller \
 	         && kubectl create clusterrolebinding tiller --clusterrole cluster-admin --serviceaccount=kube-system:tiller \
 	         && helm init --wait --service-account tiller"
@@ -240,18 +248,21 @@ gke-seldon-install: ## Installing Seldon components
 	@docker exec gke-bastion \
 	  sh -c "helm repo add seldon https://storage.googleapis.com/seldon-charts \
 	         && helm repo update \
-	         && helm install seldon/seldon-core-crd --name seldon-core-crd \
-	            --set rbac.enabled=false \
-	            --set usage_metrics.enabled=true \
+	         && helm install seldon/seldon-core-crd --name seldon-core-crd --version 0.1.6 \
 	         && kubectl create namespace seldon \
 	         && helm install seldon/seldon-core --name seldon-core \
-	            --set rbac.enabled=false \
-	            --set apife_service_type=LoadBalancer --namespace seldon \
+	            --set apife_service_type=LoadBalancer \
+	            --version 0.1.6 --namespace seldon \
 	         && helm install seldon/seldon-core-analytics --name seldon-core-analytics \
                 --set grafana_prom_admin_password=password \
                 --set persistence.enabled=false \
-                --set rbac.enabled=false \
-                --set grafana_prom_service_type=LoadBalancer --namespace seldon"
+                --set grafana_prom_service_type=LoadBalancer \
+                --version 0.2 --namespace seldon"
+
+.PHONY: gke-seldon-cartpole
+gke-seldon-cartpole: ## Deploy cartpole model according to different seldon implementations (model, abtest, router)
+	@docker exec gke-bastion \
+	  sh -c "kubectl create -f /cartpole-rl-remote/test/e2e/k8s-resources/cartpole_$(SELDON_MODEL_TYPE).yaml -n seldon"
 
 .PHONY: gke-seldon-uninstall
 gke-seldon-uninstall: ## Uninstalling Seldon components

@@ -15,7 +15,7 @@ spec:
   - componentSpec:
       spec:
         containers:
-        - image: "hypnosapos/cartpolerlremoteagent:c26d35c"
+        - image: "hypnosapos/cartpolerlremoteagent:max_score"
           imagePullPolicy: Always
           name: cartpole
           resources:

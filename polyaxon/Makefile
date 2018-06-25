@@ -30,16 +30,15 @@ gke-polyaxon-nfs-grafana: ## Create a machine to serve NFS storage
 
 .PHONY: gke-polyaxon-preinstall
 gke-polyaxon-preinstall: ## Get a docker image list of all nodes
-	@docker cp scaffold gke-bastion:/tmp/
 	@docker exec gke-bastion \
 	   sh -c 'export IP="$$(gcloud compute instances describe polyaxon-nfs-vm \
 	            --zone=$(GCP_ZONE) --format="'"value(networkInterfaces[0].networkIP)"'")" \
-	            && find /tmp/scaffold -name "'"*-pvc.yml"'" \
+	            && find /cartpole-rl-remote/polyaxon/scaffold -name "'"*-pvc.yml"'" \
 	            -exec sed -i s/NFS_HOST/$$IP/g {} \;'
 	@docker exec gke-bastion \
 	   sh -c 'kubectl create namespace polyaxon \
 	          && for file in data logs outputs repos upload; \
-	          do kubectl apply -f /tmp/scaffold/$$file-pvc.yml; done'
+	          do kubectl apply -f /cartpole-rl-remote/polyaxon/scaffold/$$file-pvc.yml; done'
 
 .PHONY: gke-polyaxon-install
 gke-polyaxon-install: ## Install polyaxon
@@ -49,26 +48,27 @@ gke-polyaxon-install: ## Install polyaxon
 	          && helm install polyaxon/polyaxon \
 	           --name=polyaxon \
 	           --namespace=polyaxon \
-	           -f /tmp/scaffold/polyaxon-config.yml"
+	           -f /cartpole-rl-remote/polyaxon/scaffold/polyaxon-config.yml"
 
 .PHONY: gke-polyaxon-uninstall
 gke-polyaxon-uninstall: ## Uninstall polyaxon
 	@docker exec gke-bastion \
-	   sh -c 'helm del --purge polyaxon \
+	   sh -c "helm del --purge polyaxon \
 	         && for file in data logs outputs repos upload; \
-	         do kubectl delete -f /tmp/scaffold/$$file-pvc.yml; done \
-	         && kubectl delete ns polyaxon'
+	         do kubectl delete -f /cartpole-rl-remote/polyaxon/scaffold/$$file-pvc.yml; done \
+	         && kubectl delete ns polyaxon"
 
-.PHONY: gke-polyaxon-cartpole
+.PHONY: gke-polyaxon-cartpole ## Deploy cartpole experiment group
 gke-polyaxon-cartpole:
-	@docker exec gke-bastion \
-	   sh -c "pip install polyaxon-cli \
-	          && export POLYAXON_IP=$$(kubectl get svc --namespace polyaxon plx-polyaxon-ingress -o jsonpath='{.status.loadBalancer.ingress[0].ip}') \
+	docker exec gke-bastion \
+	   sh -c "apk --update add py-pip python-dev build-base && pip install polyaxon-cli \
+	          && export POLYAXON_IP=$$(kubectl get svc --namespace polyaxon polyaxon-polyaxon-ingress -o jsonpath='{.status.loadBalancer.ingress[0].ip}') \
 	          && export POLYAXON_HTTP_PORT=80 \
 	          && export POLYAXON_WS_PORT=80 \
 	          && echo http://$$POLYAXON_IP:$$POLYAXON_HTTP_PORT \
 	          && cd /cartpole-rl-remote/polyaxon \
 	          && polyaxon config set --host=$$POLYAXON_IP --http_port=$$POLYAXON_HTTP_PORT  --ws_port=$$POLYAXON_WS_PORT \
-	          && polyaxon create project --name "cartpole" --description "Cartpole RL Remote Agent" \
+	          && polyaxon login --username root --password $$(kubectl get secret --namespace polyaxon polyaxon-polyaxon-secret -o jsonpath='{.data.user-password}' | base64 -d) \
+	          && polyaxon project create --name 'cartpole' --description 'Cartpole RL Remote Agent' \
 	          && polyaxon init cartpole \
-	          && polyaxon run -u
+	          && polyaxon run -u"

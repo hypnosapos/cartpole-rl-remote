@@ -131,11 +131,10 @@ Follow this command sequence to get a kubernetes cluster with all polyaxon compo
    export GKE_CLUSTER_NAME=cartpole
    export GITHUB_TOKEN=githubtoken
    make gke-bastion gke-create-cluster gke-tiller-helm
-   cd polyaxon
-   make venv
-   make gke-polyaxon-nfs
-   make gke-polyaxon-nfs-grafana
-   make gke-polyaxon-preinstall gke-polyaxon-install
+   make -C polyaxon venv
+   make -C polyaxon gke-polyaxon-nfs
+   make -C polyaxon gke-polyaxon-nfs-grafana
+   make -C polyaxon gke-polyaxon-preinstall gke-polyaxon-install
 
 Let's deploy our experiments groups by this command::
 
@@ -152,15 +151,36 @@ Deploy Seldon
 
 Deploy Seldon::
 
-   make gke-seldon-install
+   export GKE_CLUSTER_NAME=seldon
+   make gke-bastion gke-create-cluster gke-ui-login-skip gke-proxy
+   make gke-tiller-helm gke-seldon-install
+
+
+Deploy CartPole within Seldon
+-----------------------------
+
+Deploy seldon graphs with the cartpole model with different implements (choose one value of: [model, abtest, router] for SELDON_MODEL_TYPE variable)::
+
+   SELDON_MODEL_TYPE=model make gke-seldon-cartpole
 
 Run remote agent
 ----------------
 
+You have to get external IP from svc/seldon-apiserver to set RUN_MODEL_IP variable.
+
 In order to get model predictions launch this command in your shell::
 
+  export RUN_MODEL_IP=35.205.148.146
   make run-dev
 
+
+Model metrics in running mode will be collected on a `local visdom server <http://localhost:8059>`_.
+
+//TODO imagen visdom switch route
+
+Take a look at the grafana dashboard to view seldon metrics. Since *seldon-core-analytics* was installed with loadbalancer find out the public ip to get access.
+
+//TODO imagen grafana
 
 License
 =======

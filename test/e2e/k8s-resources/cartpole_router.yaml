@@ -22,13 +22,13 @@ spec:
           resources:
             requests:
               memory: 2Mi
-        - image: hypnosapos/cartpolerlremoteagent:c26d35c
+        - image: hypnosapos/cartpolerlremoteagent:untrained
           imagePullPolicy: Always
           name: cartpole-1
           resources:
             requests:
               memory: 2Mi
-        - image: hypnosapos/cartpolerlremoteagent:849bf7a
+        - image: hypnosapos/cartpolerlremoteagent:max_score
           imagePullPolicy: Always
           name: cartpole-2
           resources:
