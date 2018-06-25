@@ -2,14 +2,16 @@ namespace: "polyaxon"
 
 rbac:
   enabled: true
-ingress:
-  enabled: true
-  annotations:
-    kubernetes.io/ingress.global-static-ip-name: "polyaxon"
-    kubernetes.io/ingress.class: "gce"
+#ingress:
+#  enabled: true
+#  annotations:
+#    ingress.kubernetes.io/ssl-redirect: "false"
+#    ingress.kubernetes.io/rewrite-target: /
+#    ingress.kubernetes.io/add-base-url: "true"
+#    kubernetes.io/ingress.class: polyaxon-ingress
 # If you enable ingress, please set this value to ClusterIP or NodePort
 # Otherwise you should set it to LoadBalancer
-serviceType: ClusterIP
+serviceType: LoadBalancer
 
 user:
   username: "root"
