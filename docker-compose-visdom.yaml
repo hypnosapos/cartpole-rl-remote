@@ -19,6 +19,6 @@ services:
     command: >-
       cartpole --log-level DEBUG -e ${TRAIN_EPISODES:-200}
       --metrics-engine visdom --metrics-config '{"server": "http://visdom", "env": "main"}'
-      train --gamma 0.095 0.099 0.001 -f /tmp/seldon/models/cartpole-rl-remote
+      train --gamma 0.095 0.099 0.001 -f /tmp/models/cartpole-rl-remote
     volumes:
-    - ./seldon/models:/tmp/seldon/models
+    - ./.models:/tmp/models
