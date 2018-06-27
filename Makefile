@@ -12,7 +12,6 @@ DOCKER_PASSWORD   ?= secretito
 SELDON_IMAGE      ?= seldonio/core-python-wrapper
 STORAGE_PROVIDER  ?= local
 MODEL_FILE        ?= cartpole-rl-remote
-PY_DEV_ENV        ?= .tox/py36/bin/activate
 TRAIN_EPISODES    ?= 500
 RUN_EPISODES      ?= 200
 RUN_MODEL_IP      ?= localhost
@@ -126,7 +125,7 @@ train-dev: docker-visdom clean-seldon-models ## Train a model in dev mode with r
 
 .PHONY: train-docker
 train-docker: clean-seldon-models ## Train by docker container
-	@docker run -it -v $(shell pwd)/.models:/tmp/models $(DOCKER_ORG)/$(DOCKER_IMAGE):$(shell git rev-parse --short HEAD)\
+	@docker run -it -v $(shell pwd)/.models:/tmp/models $(DOCKER_ORG)/$(DOCKER_IMAGE):$(DOCKER_TAG)\
 	 cartpole -e $(TRAIN_EPISODES) --log-level DEBUG \
 	   train --gamma 0.095 0.099 0.001 -f /tmp/models/$(MODEL_FILE)
 
@@ -155,7 +154,7 @@ else
 	@mv $(shell pwd)/.models/$(MODEL_FILE).h5 $(shell pwd)/seldon/models/
 endif
 	@cd $(shell pwd)/seldon && \
-	@docker run -v $(shell pwd)/seldon:/model $(SELDON_IMAGE) /model CartpoleRLRemoteAgent $(DOCKER_TAG) $(DOCKER_ORG) --force
+	 docker run -v $(shell pwd)/seldon:/model $(SELDON_IMAGE) /model CartpoleRLRemoteAgent $(DOCKER_TAG) $(DOCKER_ORG) --force
 	@cd $(shell pwd)/seldon/build && ./build_image.sh
 
 .PHONY: seldon-push
@@ -174,7 +173,7 @@ run-dev: docker-visdom ## Run a remote agent in dev mode with render option and 
 run-dev-router-agent: ## Run a router agent to change the default behaviour
 	@. .venv/bin/activate && \
 	 python ./test/e2e/test_router.py --visdom-config '{"server": "http://localhost", "env": "main"}' \
-	 -pref-branch 2 -router-name eg-router -api-server $(RUN_MODEL_IP) --num-reqs 200000
+	 -pref-branch 1 -router-name eg-router -api-server $(RUN_MODEL_IP) --num-reqs 20000
 
 .PHONY: gke-bastion
 gke-bastion: ## Run a gke-bastion container.
@@ -203,14 +202,15 @@ gke-proxy: ## Run kubectl proxy on gke container.
 gke-create-cluster: ## Create a kubernetes cluster on GKE.
 	@docker exec gke-bastion \
 	   sh -c "gcloud beta container --project $(GCP_PROJECT_ID) clusters create $(GKE_CLUSTER_NAME) --zone "$(GCP_ZONE)" \
-	          --username "admin" --cluster-version "$(GKE_CLUSTER_VERSION)" --machine-type "n1-standard-8" --image-type "COS" \
-	          --disk-type "pd-standard" --disk-size "100" --accelerator type=$(GKE_GPU_TYPE),count=$(GKE_GPU_AMOUNT) \
+	          --username "admin" --cluster-version "$(GKE_CLUSTER_VERSION)" --machine-type "n1-standard-8" \
+	          --image-type "COS" --disk-type "pd-standard" --disk-size "100" \
 	          --scopes "compute-rw","storage-rw","logging-write","monitoring","service-control","service-management","trace" \
 	          --num-nodes "5" --enable-cloud-logging --enable-cloud-monitoring --network "default" \
 	          --subnetwork "default" --addons HorizontalPodAutoscaling,HttpLoadBalancing,KubernetesDashboard \
-	          && gcloud container clusters get-credentials $(GKE_CLUSTER_NAME) --zone "$(GCP_ZONE)" --project $(GCP_PROJECT_ID)"
+	          --accelerator type=$(GKE_GPU_TYPE),count=$(GKE_GPU_AMOUNT)"
 	@docker exec gke-bastion \
-	   sh -c "kubectl config set-credentials gke_$(GCP_PROJECT_ID)_$(GCP_ZONE)_$(GKE_CLUSTER_NAME) --username=admin \
+	   sh -c "gcloud container clusters get-credentials $(GKE_CLUSTER_NAME) --zone "$(GCP_ZONE)" --project $(GCP_PROJECT_ID) \
+	          && kubectl config set-credentials gke_$(GCP_PROJECT_ID)_$(GCP_ZONE)_$(GKE_CLUSTER_NAME) --username=admin \
 	          --password=$$(gcloud container clusters describe $(GKE_CLUSTER_NAME) | grep password | awk '{print $$2}')"
 
 .PHONY: gke-delete-cluster
@@ -263,6 +263,11 @@ gke-seldon-install: ## Installing Seldon components
 gke-seldon-cartpole: ## Deploy cartpole model according to different seldon implementations (model, abtest, router)
 	@docker exec gke-bastion \
 	  sh -c "kubectl create -f /cartpole-rl-remote/test/e2e/k8s-resources/cartpole_$(SELDON_MODEL_TYPE).yaml -n seldon"
+
+.PHONY: gke-seldon-cartpole-delete
+gke-seldon-cartpole-delete: ## Delete cartpole model according to different seldon implementations (model, abtest, router)
+	@docker exec gke-bastion \
+	  sh -c "kubectl delete -f /cartpole-rl-remote/test/e2e/k8s-resources/cartpole_$(SELDON_MODEL_TYPE).yaml -n seldon"
 
 .PHONY: gke-seldon-uninstall
 gke-seldon-uninstall: ## Uninstalling Seldon components

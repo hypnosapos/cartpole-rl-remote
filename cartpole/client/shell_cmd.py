@@ -35,6 +35,8 @@ logging.basicConfig(
 LOG = logging.getLogger('cartpole')
 LOG.setLevel(logging.NOTSET)
 
+RESULTS = []
+
 
 def train(episodes, render=False, hparams={}, model_config={}, file_name='cartpole-rl-remote', vis_config={}):
     LOG.info("Training...")
@@ -70,13 +72,18 @@ def process_callback(callback_args, metrics_config={}):
     model_path = os.path.join(model_dir, model_file if model_dir else model_file)
     copy2(file_name[max_score_ind], model_path)
 
-    print(
-        json.dumps(
-            dict(
-                model=file_name[max_score_ind],
-                score=max_score,
-                hparams=hparams[max_score_ind]
-            )
+    result = dict(
+        model=file_name[max_score_ind],
+        score=max_score,
+        hparams=hparams[max_score_ind]
+    )
+    print(json.dumps(result))
+
+    RESULTS.append(
+        dict(
+            model=file_name[max_score_ind],
+            score=max_score,
+            hparams=hparams[max_score_ind]
         )
     )
 

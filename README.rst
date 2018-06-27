@@ -103,9 +103,8 @@ To run this stack type::
    make train-docker-efk
 
 
-Kibana URL would be: http://localhost:5601. Set the text ``cartpole-*`` for the index pattern, in **efk/kibana** directory you can find
-a kibana dashboard json file that you can import to view all graphics about cartpole model experiments.
-
+Kibana URL would be: http://localhost:5601. Set the text ``cartpole-*`` for the index pattern.
+In **efk/kibana** directory you can find a kibana dashboard json file that you can import to view all graphics about cartpole model experiments.
 
 Anybody could launch a docker compose with visdom and the EFK all-in-one by this command::
 
@@ -151,7 +150,6 @@ Deploy Seldon
 
 Deploy Seldon::
 
-   export GKE_CLUSTER_NAME=seldon
    make gke-bastion gke-create-cluster gke-ui-login-skip gke-proxy
    make gke-tiller-helm gke-seldon-install
 
