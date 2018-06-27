@@ -5,6 +5,7 @@
 !.dockerignore
 !.gitchangelog.rc
 !.changelog.tpl
+!.polyaxonignore
 
 #Ignore python reources
 *.pyc
