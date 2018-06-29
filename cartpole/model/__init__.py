@@ -12,7 +12,7 @@ def get_model(model_type='keras', model_spec={}):
 
 
 def get_keras_model(model_spec={}):
-    # TODO: model tunning, pass layers and other config to get custom models
+    # TODO: model tuning, pass layers and other config to get custom models
     model = Sequential()
     model.add(Dense(12, activation='relu', input_dim=4))
     model.add(Dense(12, activation='relu'))

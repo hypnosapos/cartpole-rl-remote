@@ -155,13 +155,13 @@ def main(argv=sys.argv[1:]):
 
     parser.add_argument('--metrics-engine',
                         default=None,
-                        choices=(None, 'visdom', 'kibana', 'sphinx',),
+                        choices=(None, 'visdom', 'tensorboard',),
                         help='Type of metrics visualizer engine.')
 
     parser.add_argument('--metrics-config', type=json.loads,
                         default={},
                         help='Metrics configuration. Contents are different accordign to "metrics-engine" arg'
-                             'Example {"server": "http://localhost"}.')
+                             'Visdom example: {"server": "http://localhost"}. Tensorboard example: {"logdir": "/tmp/logs/"}' )
 
     train_subcommand.add_argument('-f', '--file-name',
                                   default='cartpole-rl-remote',
