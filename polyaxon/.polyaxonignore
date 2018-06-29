@@ -1,6 +1,5 @@
 .*
-.git
-.eggs
+!.polyaxonignore
 eggs
 lib
 lib64
@@ -10,4 +9,3 @@ var
 *.pyc
 *.swp
 .DS_Store
-./.polyaxon
