@@ -1,7 +1,7 @@
 .DEFAULT_GOAL := help
 
 # Shell to use with Make
-SHELL := /bin/bash
+SHELL ?= /bin/bash
 
 DOCKER_ORG        ?= hypnosapos
 DOCKER_IMAGE      ?= cartpole-rl-remote
