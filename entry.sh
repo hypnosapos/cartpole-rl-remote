@@ -5,14 +5,7 @@ cd ${DIR}
 
 test() {
 
-    pytest --cov=cartpole --cov-report term-missing --pep8 ##--cov-fail-under 80
-
-}
-
-test_e2e() {
-
-    pip install -e .
-    cartpole --help
+    pytest --cov=cartpole --cov-report term-missing --pep8 ## --cov-fail-under 60
 
 }
 
@@ -53,11 +46,6 @@ case "$1" in
         test "$@"
         exit $?
         ;;
-  test_e2e)
-        shift
-        test_e2e "$@"
-        exit $?
-        ;;
   codecov)
         shift
         _codecov "$@"
@@ -84,6 +72,6 @@ case "$1" in
         exit $?
         ;;
   *)
-        echo "Usage: $0 {test|test_e2e|codecov|build|release|publish|docs}"
+        echo "Usage: $0 {test|codecov|build|release|publish|docs}"
         exit 1
 esac

@@ -1,89 +1,89 @@
-# NOTE: Activate 2 nodes in parallel on CircleCI
 version: 2
+
 jobs:
-  "3.5":
+
+  tests:
     docker:
-    - image: python:3.5-slim
-    working_directory: ~/repo
-    steps:
-      - checkout
-      - run:
-          name: install requirements
-          command: |
-            pip install -U pip ipdb tox tox-pyenv
-      - run:
-          name: test
-          command: |
-            tox -e py35
-      - run:
-          name: install and train
-          command: |
-            make TRAIN_EPISODES=${TRAIN_EPISODES} install train
-      - store_artifacts:
-          path: ~/repo/seldon/models
-      - run:
-          name: build and push seldon image
-          command: |
-            docker login -u=${DOCKER_USERNAME} -p=${DOCKER_PASSWORD}
-            VERSION="$(echo $CIRCLE_SHA1 | cut -c -7)" make seldon-build seldon-push
-  "3.6":
-    docker:
-    - image: python:3.6-slim
+    - image: docker
     working_directory: ~/repo
     steps:
     - checkout
-    - restore_cache:
-        keys:
-        - pip-cache-{{ arch }}-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}
+    - setup_remote_docker:
+        docker_layer_caching: true
     - run:
-        name: install dependencies
+        name: launch tests
         command: |
-          pip install -r requirements.txt -r requirements-dev.txt
-    - save_cache:
-        key: pip-cache-{{ arch }}-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}
-        paths:
-        - ~/.cache
-    - run:
-        name: test
-        command: |
-          ./entry.sh test
-    - run:
-        name: build
-        command: |
-          ./entry.sh build
-    - run:
-        name: install
-        command: |
-          pip install ~/repo
-  gce:
+          make test
+
+  gke_cluster:
     docker:
-    - image: google/cloud-sdk
+    - image: docker
     working_directory: ~/repo
     steps:
     - checkout
+    - setup_remote_docker:
+        docker_layer_caching: true
     - run:
-       name: configure gcloud client
+       name: GCP key file
        command: |
-         echo ${GOOGLE_AUTH} > ${HOME}/gcp-key.json
-         gcloud auth activate-service-account --key-file ${HOME}/gcp-key.json
-         gcloud --quiet config set project ${GOOGLE_PROJECT_ID}
-         gcloud --quiet config set compute/zone ${GOOGLE_COMPUTE_ZONE}
-         gcloud --quiet container clusters get-credentials ${GOOGLE_CLUSTER_NAME}
+         echo ${GOOGLE_AUTH} > ${HOME}/gcp.json
     - run:
-        name: Deploy SeldonDeployment
+       name: GKE cluster
+       command: |
+         make gke-bastion gke-create-cluster gke-tiller-helm
+
+  polyaxon:
+    docker:
+    - image: docker
+    working_directory: ~/repo
+    steps:
+    - checkout
+    - setup_remote_docker:
+        docker_layer_caching: true
+    - run:
+       name: Polyaxon installation
+       command: |
+         make -C polyaxon gke-polyaxon-preinstall gke-polyaxon-install
+    - run:
+       name: Polyaxon init for cartpole project
+       command: |
+         make -C polyaxon gke-polyaxon-cartpole-init
+    - run:
+       name: Cartpole training
+       command: |
+         make -C polyaxon gke-polyaxon-cartpole
+
+  seldon:
+    docker:
+    - image: docker
+    working_directory: ~/repo
+    steps:
+    - checkout
+    - setup_remote_docker:
+        docker_layer_caching: true
+    - run:
+       name: Seldon installation
+       command: |
+         make gke-seldon-install
+    - run:
+       name: Seldon build and push
+       command: |
+         make seldon-build seldon-push
+    - run:
+        name: Deploy Cartpole Seldon Model
         command: |
-          VERSION="$(echo $CIRCLE_SHA1 | cut -c -7)" && sed -ibak 's/VERSION/'"$VERSION"'/g' seldon/cartpole_seldon.json
-          kubectl apply -f seldon/cartpole_seldon.json -n seldon
+          MODEL_TYPE=model make gke-seldon-cartpole
+    - run:
+        name: Deploy Cartpole Seldon ABTest
+        command: |
+          MODEL_TYPE=abtest make gke-seldon-cartpole
+    - run:
+        name: Deploy Cartpole Seldon Router
+        command: |
+          MODEL_TYPE=router make gke-seldon-cartpole
 
 workflows:
   version: 2
   build:
     jobs:
-    - "3.6"
-    - "3.5"
-    - gce:
-        requires:
-        - "3.5"
-        filters:
-          branches:
-            only: master
+    - tests
