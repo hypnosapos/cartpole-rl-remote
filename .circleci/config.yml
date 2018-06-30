@@ -11,6 +11,10 @@ jobs:
     - setup_remote_docker:
         docker_layer_caching: true
     - run:
+        name: Install essentials
+        command: |
+          apk add --no-cache --virtual .build-deps make gcc
+    - run:
         name: launch tests
         command: |
           make test
