@@ -40,11 +40,11 @@ jobs:
     - run:
         name: docker build
         command: |
-          make docker-build
+          DOCKER_TAG="$(echo $CIRCLE_SHA1 | cut -c -7)" make docker-build
     - run:
         name: docker push
         command: |
-          make docker-push
+          DOCKER_TAG="$(echo $CIRCLE_SHA1 | cut -c -7)" make docker-push
 
   gke_cluster:
     <<: *container_config
