@@ -38,13 +38,10 @@ jobs:
     - *install_make
     - checkout
     - run:
-        name: docker build
+        name: docker build and push
         command: |
-          DOCKER_TAG="$(echo $CIRCLE_SHA1 | cut -c -7)" make docker-build
-    - run:
-        name: docker push
-        command: |
-          DOCKER_TAG="$(echo $CIRCLE_SHA1 | cut -c -7)" make docker-push
+          printf 'y' | docker login -u=${DOCKER_USERNAME} -p=${DOCKER_PASSWORD}
+          DOCKER_TAG="$(echo $CIRCLE_SHA1 | cut -c -7)" make docker-build docker-push
 
   gke_cluster:
     <<: *container_config
