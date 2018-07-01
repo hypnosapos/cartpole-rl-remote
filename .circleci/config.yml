@@ -4,9 +4,9 @@ references:
 
   container_config: &container_config
     docker:
-      - image: docker
-      environment:
-        SHELL: "/bin/sh"
+    - image: docker
+    environment:
+      SHELL: "/bin/sh"
     working_directory: ~/repo
   remote_docker_config: &remote_config_docker
     setup_remote_docker:
