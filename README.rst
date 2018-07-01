@@ -192,7 +192,7 @@ Take a look at file **test/e2e/k8s-resources**  (DOING: helm chart to deploy muc
 
 The idea is deploy a router component with three branches, two for "untrained" models ('cartpole-0' and 'cartpole-1', low score metric),
 and one branch with a "max_score" (''cartpole-2', score metric 7000, the max value in training).
-Default branch will be 0 ('cartpole-0') at the begining, as requests are received the router will be redirecting traffic to branch 2 ('cartpole-2') according to the best scored model.
+Default branch will be 0 ('cartpole-0') at the begining, as requests are received the router will be redirected traffic to branch 2 ('cartpole-2') according to the best scored model.
 
 Run remote agent
 ----------------
@@ -212,8 +212,6 @@ Take a look at the grafana dashboard to view seldon metrics. Since *seldon-core-
 
 License
 =======
-
-This project is under MIT License
 
 .. image:: https://app.fossa.io/api/projects/git%2Bgithub.com%2Fhypnosapos%2Fcartpole-rl-remote.svg?type=large
    :target: https://app.fossa.io/projects/git%2Bgithub.com%2Fhypnosapos%2Fcartpole-rl-remote?ref=badge_large

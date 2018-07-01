@@ -16,7 +16,7 @@ setup(name='cartpole-rl-remote',
       description="Cartpole: Remote RL Agent",
       author_email=["engapa@gmail.com ", "davsuacar@gmail.com"],
       maintainer_email="engapa@gmail.com",
-      license="Apache 2.0",
+      license="MIT",
       long_description=README,
       classifiers=[
           'Programming Language :: Python :: 3.5',
