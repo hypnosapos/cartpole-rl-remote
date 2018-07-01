@@ -8,7 +8,7 @@ references:
     environment:
       SHELL: "/bin/sh"
     working_directory: ~/repo
-  remote_docker_config: &remote_config_docker
+  remote_docker_config: &remote_docker_config
     setup_remote_docker:
       reusable: true
       docker_layer_caching: true
