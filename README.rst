@@ -1,7 +1,6 @@
-[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fhypnosapos%2Fcartpole-rl-remote.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fhypnosapos%2Fcartpole-rl-remote?ref=badge_shield)
-
 Cartpole RL Remote
 ==================
+
 .. image:: https://circleci.com/gh/hypnosapos/cartpole-rl-remote/tree/master.svg?style=svg
    :target: https://circleci.com/gh/hypnosapos/cartpole-rl-remote/tree/master
    :alt: Build Status
@@ -14,6 +13,10 @@ Cartpole RL Remote
 .. image:: https://codecov.io/gh/hypnosapos/cartpole-rl-remote/branch/master/graph/badge.svg
    :target: https://codecov.io/gh/hypnosapos/cartpole-rl-remote
    :alt: Coverage
+.. image:: https://app.fossa.io/api/projects/git%2Bgithub.com%2Fhypnosapos%2Fcartpole-rl-remote.svg?type=shield
+   :target: https://app.fossa.io/projects/git%2Bgithub.com%2Fhypnosapos%2Fcartpole-rl-remote?ref=badge_shield
+   :alt: License status
+
 
 This project is intended to play with `CartPole <https://gym.openai.com/envs/CartPole-v0/>`_ game using Reinforcement Learning.
 
