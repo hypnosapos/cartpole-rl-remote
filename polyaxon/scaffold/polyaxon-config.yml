@@ -1,0 +1,71 @@
+namespace: "polyaxon"
+
+rbac:
+  enabled: true
+#ingress:
+#  enabled: true
+#  annotations:
+#    ingress.kubernetes.io/ssl-redirect: "false"
+#    ingress.kubernetes.io/rewrite-target: /
+#    ingress.kubernetes.io/add-base-url: "true"
+#    kubernetes.io/ingress.class: polyaxon-ingress
+# If you enable ingress, please set this value to ClusterIP or NodePort
+# Otherwise you should set it to LoadBalancer
+serviceType: LoadBalancer
+
+user:
+  username: "root"
+  email: "root@polyaxon.local"
+  password: "laenk"
+
+postgresql:
+  persistence:
+      enabled: true
+      size: 5Gi
+persistence:
+  data:
+    enabled: true
+    existingClaim: polyaxon-pvc-data
+    mountPath: "/data"
+    accessMode: ReadWriteMany
+  outputs:
+    enabled: true
+    existingClaim: polyaxon-pvc-outputs
+    mountPath: "/outputs"
+    accessMode: ReadWriteMany
+  logs:
+    enabled: true
+    existingClaim: polyaxon-pvc-logs
+    mountPath: "/logs"
+    accessMode: ReadWriteMany
+  repos:
+    enabled: true
+    existingClaim: polyaxon-pvc-repos
+    mountPath: "/repos"
+    accessMode: ReadWriteMany
+  upload:
+    enabled: true
+    existingClaim: polyaxon-pvc-upload
+    mountPath: "/upload"
+    accessMode: ReadWriteMany
+
+dirs:
+  nvidia:
+    lib: "/home/kubernetes/bin/nvidia/lib64"
+    bin: "/home/kubernetes/bin/nvidia/bin"
+    libcuda: "/home/kubernetes/bin/nvidia/lib64/libcuda.so.1"
+  docker: "/var/run/docker.sock"
+
+# This is where we mount nvidia on pods
+mountPaths:
+  nvidia:
+    lib: ""
+    bin: ""
+    libcuda: ""
+  docker: "/var/run/docker.sock"
+
+#auth:
+#  github:
+#    enabled: true
+#    clientId: ""
+#    clientSecret: ""

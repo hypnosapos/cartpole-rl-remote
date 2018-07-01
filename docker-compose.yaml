@@ -1,6 +1,17 @@
 version: '3.3'
 services:
 
+  visdom:
+    environment:
+    - HOSTNAME=visdom
+    image: hypnosapos/visdom:latest
+    networks:
+      default:
+        aliases:
+        - visdom
+    ports:
+    - "8097:8097"
+
   fluentd:
     depends_on:
     - elasticsearch
@@ -37,15 +48,19 @@ services:
     depends_on:
       - elasticsearch
       - kibana
+      - visdom
     build: ./
     image: hypnosapos/${DOCKER_IMAGE:-cartpole-rl-remote}:${DOCKER_TAG:-latest}
     command: >-
       cartpole --log-level DEBUG -e ${TRAIN_EPISODES:-200}
+      --metrics-engine visdom --metrics-config '{"server": "http://visdom", "env": "main"}'
       train --gamma 0.095 0.099 0.001 --batch_size 32 33 -f /tmp/models/cartpole-rl-remote
     volumes:
     - ./.models:/tmp/models
     links:
+      - kibana
       - fluentd
+      - visdom
     logging:
       driver: "fluentd"
       options:

@@ -35,6 +35,8 @@ logging.basicConfig(
 LOG = logging.getLogger('cartpole')
 LOG.setLevel(logging.NOTSET)
 
+RESULTS = []
+
 
 def train(episodes, render=False, hparams={}, model_config={}, file_name='cartpole-rl-remote', vis_config={}):
     LOG.info("Training...")
@@ -70,13 +72,18 @@ def process_callback(callback_args, metrics_config={}):
     model_path = os.path.join(model_dir, model_file if model_dir else model_file)
     copy2(file_name[max_score_ind], model_path)
 
-    print(
-        json.dumps(
-            dict(
-                model=file_name[max_score_ind],
-                score=max_score,
-                hparams=hparams[max_score_ind]
-            )
+    result = dict(
+        model=file_name[max_score_ind],
+        score=max_score,
+        hparams=hparams[max_score_ind]
+    )
+    print(json.dumps(result))
+
+    RESULTS.append(
+        dict(
+            model=file_name[max_score_ind],
+            score=max_score,
+            hparams=hparams[max_score_ind]
         )
     )
 
@@ -148,13 +155,14 @@ def main(argv=sys.argv[1:]):
 
     parser.add_argument('--metrics-engine',
                         default=None,
-                        choices=(None, 'visdom', 'kibana', 'sphinx',),
+                        choices=(None, 'visdom', 'tensorboard',),
                         help='Type of metrics visualizer engine.')
 
     parser.add_argument('--metrics-config', type=json.loads,
                         default={},
-                        help='Metrics configuration. Contents are different accordign to "metrics-engine" arg'
-                             'Example {"server": "http://localhost"}.')
+                        help='Metrics configuration. Contents are different according to "metrics-engine" arg.'
+                             ' Visdom example: {"server": "http://localhost"}.'
+                             ' Tensorboard example: {"logdir": "/tmp/logs/"}.')
 
     train_subcommand.add_argument('-f', '--file-name',
                                   default='cartpole-rl-remote',
@@ -207,7 +215,6 @@ def main(argv=sys.argv[1:]):
         # TODO: auto-modeling by custom config (get_model(**config)), defaults to {}
         _args = [(args.episodes, args.render, dict(zip(hparams.keys(), hparam_values)),
                   {}, args.file_name, metrics_config['config']) for hparam_values in list(product(*hparams.values()))]
-
         with multiprocessing.Pool(len(_args)) as process_pool:
             results = process_pool.starmap_async(
                 args.func,
@@ -231,7 +238,6 @@ if __name__ == "__main__":
 
     try:
         main(sys.argv[1:])
-
     except KeyboardInterrupt:
         LOG.warning("... cartpole command was interrupted")
         sys.exit(2)

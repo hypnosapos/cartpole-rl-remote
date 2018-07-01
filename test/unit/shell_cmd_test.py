@@ -26,7 +26,7 @@ def test_help(scmd, capsys):
     assert se.value.code == 0
 
     out, _ = capsys.readouterr()
-    assert out.startswith('usage:') and 'optional arguments:' in out
+    assert out.startswith('usage:') and 'arguments:' in out
 
 
 def test_default_required_args(scmd, capsys):

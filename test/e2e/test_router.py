@@ -22,6 +22,7 @@ def main():
     parser.add_argument('-router-name',
                         help='Name of router.')
     parser.add_argument('-pref-branch',
+                        type=int,
                         help='The branch all traffic will be redirected to.')
     parser.add_argument('--num-reqs', type=int,
                         default=100,
