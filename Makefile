@@ -18,12 +18,12 @@ RUN_MODEL_IP      ?= localhost
 PY_ENVS           ?= 3.5 3.6
 DEFAULT_PY_ENV    ?= 3.5
 
-GCLOUD_IMAGE_TAG    ?= 203.0.0-alpine
+GCLOUD_IMAGE_TAG    ?= 206.0.0-alpine
 GCP_CREDENTIALS     ?= $$HOME/gcp.json
 GCP_ZONE            ?= my_zone
 GCP_PROJECT_ID      ?= my_project
 
-GKE_CLUSTER_VERSION ?= 1.9.7-gke.3
+GKE_CLUSTER_VERSION ?= 1.10.4-gke.2
 GKE_CLUSTER_NAME    ?= ml-demo
 GKE_GPU_AMOUNT      ?= 1
 GKE_GPU_NODES_MIN   ?= 0
