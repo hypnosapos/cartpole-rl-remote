@@ -23,13 +23,14 @@ class GymRunnerRemote:
     def __init__(self, name='gym_runner_remote',
                  gym_name='CartPoleExtra-v0',
                  max_timesteps=100000,
-                 vis_config={}):
+                 metrics_engine=None,
+                 metrics_config={}):
         self.name = name
         self.env = gym.make(gym_name)
         self.max_timesteps = max_timesteps
         self.seldon_client = None
         self.log = logging.getLogger(__name__)
-        if vis_config and self.log.isEnabledFor(logging.DEBUG):
+        if metrics_engine == 'visdom' and self.log.isEnabledFor(logging.DEBUG):
             vfmt = VisdomFormatter(['episode', 'score'])
             handler = VisdomPlotHandler(
                 self.name, 'scatter',
@@ -39,7 +40,7 @@ class GymRunnerRemote:
                     ylabel='score',
                     markersize=5
                 ),
-                opts=vis_config
+                opts=metrics_config
             )
             handler.setFormatter(vfmt)
             self.log.addHandler(handler)

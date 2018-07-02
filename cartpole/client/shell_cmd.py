@@ -10,6 +10,7 @@ import sys
 import uuid
 import logging
 import json
+import time
 from itertools import product
 import numpy as np
 from datetime import datetime
@@ -38,17 +39,22 @@ LOG.setLevel(logging.NOTSET)
 RESULTS = []
 
 
-def train(episodes, render=False, hparams={}, model_config={}, file_name='cartpole-rl-remote', vis_config={}):
+def train(episodes, render=False, hparams={}, model_config={}, file_name='cartpole-rl-remote',
+          metrics_engine=None, metrics_config={}):
     LOG.info("Training...")
-    gym = GymRunnerRemote(name=multiprocessing.current_process().name, vis_config=vis_config)
-    agent = Agent(hparams=hparams, model_config=model_config)
+    gym = GymRunnerRemote(name=multiprocessing.current_process().name,
+                          metrics_engine=metrics_engine, metrics_config=metrics_config)
+    agent = Agent(hparams=hparams, model_config=model_config,
+                  metrics_engine=metrics_engine, metrics_config=metrics_config)
     return gym.train(agent, episodes, render=render, file_name=file_name)
 
 
-def run(episodes, render=False, host='localhost', grpc_client=False, vis_config={}):
+def run(episodes, render=False, host='localhost', grpc_client=False,
+        metrics_engine=None, metrics_config={}):
     LOG.info("Running...")
-    gym = GymRunnerRemote(name=multiprocessing.current_process().name, vis_config=vis_config)
-    agent = Agent()
+    gym = GymRunnerRemote(name=multiprocessing.current_process().name,
+                          metrics_engine=metrics_engine, metrics_config=metrics_config)
+    agent = Agent(metrics_engine=metrics_engine, metrics_config=metrics_config)
     return gym.run(agent, episodes, render=render, host=host, grpc_client=grpc_client)
 
 
@@ -162,7 +168,7 @@ def main(argv=sys.argv[1:]):
                         default={},
                         help='Metrics configuration. Contents are different according to "metrics-engine" arg.'
                              ' Visdom example: {"server": "http://localhost"}.'
-                             ' Tensorboard example: {"logdir": "/tmp/logs/"}.')
+                             ' Tensorboard example: {"log_dir": "/tmp/logs/"}.')
 
     train_subcommand.add_argument('-f', '--file-name',
                                   default='cartpole-rl-remote',
@@ -201,6 +207,8 @@ def main(argv=sys.argv[1:]):
 
     if args.metrics_engine == 'visdom':
         metrics_config['config'].update(dict(server='http://localhost'))
+    elif args.metrics_engine == 'tensorboard':
+        metrics_config['config'].update(dict(log_dir="./.logs/"))
     metrics_config['config'].update(args.metrics_config)
 
     if args.func == train:
@@ -214,7 +222,8 @@ def main(argv=sys.argv[1:]):
 
         # TODO: auto-modeling by custom config (get_model(**config)), defaults to {}
         _args = [(args.episodes, args.render, dict(zip(hparams.keys(), hparam_values)),
-                  {}, args.file_name, metrics_config['config']) for hparam_values in list(product(*hparams.values()))]
+                  {}, args.file_name, args.metrics_engine, metrics_config['config'])
+                 for hparam_values in list(product(*hparams.values()))]
         with multiprocessing.Pool(len(_args)) as process_pool:
             results = process_pool.starmap_async(
                 args.func,
@@ -225,7 +234,8 @@ def main(argv=sys.argv[1:]):
 
     else:
         _args = [(args.episodes, args.render, args.host,
-                  args.grpc_client, metrics_config['config']) for _ in range(args.runners)]
+                  args.grpc_client, args.metrics_engine, metrics_config['config'])
+                 for _ in range(args.runners)]
         with multiprocessing.Pool(args.runners) as process_pool:
             results = process_pool.starmap_async(
                 args.func,

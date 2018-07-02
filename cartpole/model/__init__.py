@@ -4,6 +4,7 @@
 from keras.models import Sequential
 from keras.layers import Dense
 from keras.optimizers import Adam
+from keras.callbacks import TensorBoard
 
 
 def get_model(model_type='keras', model_spec={}):
@@ -19,3 +20,7 @@ def get_keras_model(model_spec={}):
     model.add(Dense(2))
     model.compile(Adam(lr=0.001), 'mse')
     return model
+
+
+def get_tensorboard_callback(**kwargs):
+    return TensorBoard(**kwargs)

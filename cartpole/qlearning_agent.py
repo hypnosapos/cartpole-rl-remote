@@ -7,7 +7,7 @@ import random
 import logging
 
 from .client.seldon.client import SeldonClient
-from .model import get_model
+from .model import get_model, get_tensorboard_callback
 
 
 HPARAMS_SCHEMA = {
@@ -40,7 +40,7 @@ DEFAULT_HPARAMS = {
 
 class QLearningAgent(object):
 
-    def __init__(self, state_size=4, action_size=2, hparams={}, model_config={}):
+    def __init__(self, state_size=4, action_size=2, hparams={}, model_config={}, metrics_engine=[], metrics_config={}):
 
         self.model = get_model(**model_config)
         self.state_size = state_size
@@ -59,6 +59,7 @@ class QLearningAgent(object):
         self.memory = deque(maxlen=2000)
         self.seldon_client = None
         self.host = None
+        self.callbacks = [get_tensorboard_callback(**metrics_config)] if metrics_engine == 'tensorboard' else []
         self.log = logging.getLogger(__name__)
         self.log.info('Hyperparams:: gamma: %(gamma)f epsilon: %(epsilon)f '
                       'epsilon_decay: %(epsilon_decay)f epsilon_min: %(epsilon_min)f batch_size: %(batch_size)i',
@@ -90,7 +91,7 @@ class QLearningAgent(object):
                           np.amax(self.model.predict(next_state)[0]))
             target_f = self.model.predict(state)
             target_f[0][action] = target
-            self.model.fit(state, target_f, epochs=1, verbose=0)
+            self.model.fit(state, target_f, epochs=1, verbose=0, callbacks=self.callbacks)
 
         if self.epsilon > self.epsilon_min:
             self.epsilon *= self.epsilon_decay
