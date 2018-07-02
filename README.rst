@@ -51,6 +51,8 @@ As result of the training we'll get out an **h5** file with the trained model an
 .. image:: assets/basic_scenario.png
    :alt: Basic Scenario
 
+*NOTE*: Yes, we could have tried tensorboard callbacks for Keras model (or tensorflow models), but we wanna be model framework agnostic.
+
 Collecting metrics with visdom
 ------------------------------
 
@@ -184,15 +186,30 @@ Deploy Seldon::
 Deploy CartPole within Seldon
 -----------------------------
 
-Deploy seldon graphs with the cartpole model with different implements (choose one value of: [model, abtest, router] for SELDON_MODEL_TYPE variable)::
+Deploy different seldon graphs for CartPole model, choose one value of: [model, abtest, router] for SELDON_MODEL_TYPE variable::
 
    SELDON_MODEL_TYPE=router make gke-seldon-cartpole
 
-Take a look at file **test/e2e/k8s-resources**  (DOING: helm chart to deploy much easier), the model is an PoC of the documented "Multi-armed bandit" by seldon team.
+Take a look at files under directory **test/e2e/k8s-resources** (DOING: helm charts to deploy much easier).
 
-The idea is deploy a router component with three branches, two for "untrained" models ('cartpole-0' and 'cartpole-1', low score metric),
-and one branch with a "max_score" (''cartpole-2', score metric 7000, the max value in training).
-Default branch will be 0 ('cartpole-0') at the begining, as requests are received the router will be redirected traffic to branch 2 ('cartpole-2') according to the best scored model.
+Let's deploy a router (epsilon greedy router by seldon team) with three branches: two for "untrained" models ('cartpole-0' and 'cartpole-1', low score metric),
+and one branch with a "max_score" ('cartpole-2', score metric 7000, the max value in training).
+Default branch will be 0 ('cartpole-0') at the beginning, as requests are received the router will redirect traffic to branch 2 ('cartpole-2') according to the best scored model.
+
+Check out that pods are ready::
+
+   docker exec -it gke-bastion sh -c "kubectl get pods -l seldon-app=cartpole-router -w -n seldon"
+   NAME                                               READY     STATUS    RESTARTS   AGE
+   cartpole-router-cartpole-router-6678798bf4-4sz7x   5/5       Running   0          2m
+
+   docker exec -it gke-bastion sh -c 'kubectl get pods -l seldon-app=cartpole-router -o jsonpath="{.items[*].spec.containers[*].image}" -n seldon | tr -s "[[:space:]]" "\n"'
+   hypnosapos/cartpolerlremoteagent:untrained
+   hypnosapos/cartpolerlremoteagent:untrained
+   hypnosapos/cartpolerlremoteagent:max_score
+   seldonio/mab_epsilon_greedy:1.1
+   seldonio/engine:0.1.6
+
+
 
 Run remote agent
 ----------------
@@ -201,14 +218,19 @@ You have to get external IP from svc/seldon-apiserver to set RUN_MODEL_IP variab
 
 In order to get model predictions launch this command in your shell::
 
-  export RUN_MODEL_IP=35.205.148.146
+  export RUN_MODEL_IP=$(docker exec -it gke-bastion sh -c \
+  'kubectl get svc seldon-apiserver -n seldon -o jsonpath="{.status.loadBalancer.ingress[0].ip}"')
+  make docker-visdom
   make run-dev
 
 
 Model metrics in running mode will be collected on a `local visdom server <http://localhost:8059>`_.
 
-Take a look at the grafana dashboard to view seldon metrics. Since *seldon-core-analytics* was installed with loadbalancer endpoint type, find the public ip to get access.
+Take a look at the grafana dashboard to view seldon metrics. Since *seldon-core-analytics* helm chart was installed
+with loadbalancer endpoint type, find the public ip to get access.
 
+.. image:: assets/seldon.png
+   :alt: Seldon router
 
 License
 =======
