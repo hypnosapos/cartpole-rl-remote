@@ -23,16 +23,6 @@ postgresql:
       enabled: true
       size: 5Gi
 persistence:
-  data:
-    enabled: true
-    existingClaim: polyaxon-pvc-data
-    mountPath: "/data"
-    accessMode: ReadWriteMany
-  outputs:
-    enabled: true
-    existingClaim: polyaxon-pvc-outputs
-    mountPath: "/outputs"
-    accessMode: ReadWriteMany
   logs:
     enabled: true
     existingClaim: polyaxon-pvc-logs
@@ -48,6 +38,37 @@ persistence:
     existingClaim: polyaxon-pvc-upload
     mountPath: "/upload"
     accessMode: ReadWriteMany
+  data:
+    data:
+      enabled: true
+      existingClaim: polyaxon-pvc-data
+      mountPath: "/data"
+      accessMode: ReadWriteMany
+  outputs:
+    outputs:
+      enabled: true
+      existingClaim: polyaxon-pvc-outputs
+      mountPath: "/outputs"
+      accessMode: ReadWriteMany
+
+# e.g.
+  # data:
+  #   data1:
+  #     mountPath: "/data/1"
+  #     hostPath: "/path/to/data"
+  #     readOnly: true
+  #   data2:
+  #     mountPath: "/data/2"
+  #     existingClaim: "data-2-pvc"
+  # outputs:
+  #   outputs1:
+  #      mountPath: "/outputs/1"
+  #     hostPath: "/path/to/outputs"
+  #     readOnly: true
+  #   outputs2:
+  #      mountPath: "/outputs/2"
+  #     existingClaim: "outputs-2-pvc"
+
 
 dirs:
   nvidia:
