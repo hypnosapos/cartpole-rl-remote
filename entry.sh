@@ -1,11 +1,8 @@
 #!/bin/sh -e
-DIR=$(dirname "$0")
-
-cd ${DIR}
 
 test() {
 
-    pytest --cov=cartpole --cov-report term-missing --pep8 ## --cov-fail-under 60
+    pytest --cov=cartpole --cov-report term-missing --pep8 ###--cov-fail-under 50
 
 }
 

@@ -14,7 +14,7 @@ hptuning:
 
 declarations:
   log_level: DEBUG
-  num_episodes: 250
+  num_episodes: 300
 
 build:
   image: hypnosapos/cartpole-rl-remote:latest

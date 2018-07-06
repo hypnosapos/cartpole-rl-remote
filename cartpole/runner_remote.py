@@ -16,6 +16,7 @@ register(
     reward_threshold=195.0
 )
 
+
 import gym
 
 
@@ -44,6 +45,7 @@ class GymRunnerRemote:
             )
             handler.setFormatter(vfmt)
             self.log.addHandler(handler)
+
         self.tstart = datetime.now()
 
     def train(self, agent, num_episodes, render=False, file_name='cartpole-rl-remote'):
@@ -104,7 +106,7 @@ class GymRunnerRemote:
 
         max_score = np.max(scores)
         _time = datetime.now() - self.tstart
-        self.log.info('Episodes: %(episodes)i  MaxScore: %(max_score)f'
+        self.log.info('Summary:: Episodes: %(episodes)i  MaxScore: %(max_score)f'
                       '  MinScore: %(min_score)f  AvgScore: %(avg_score)f'
                       '  SpentTime: %(time)s',
                       {'episodes': num_episodes,
@@ -113,6 +115,6 @@ class GymRunnerRemote:
                        'avg_score': np.average(scores),
                        'time': _time})
         if train:
-            return self.name, scores, agent.hparams, max_score, _time, file_name
+            return self.name, num_episodes, scores, agent.hparams, max_score, _time, file_name
         else:
-            return self.name, scores, agent.hparams, max_score, _time, None
+            return self.name, num_episodes, scores, agent.hparams, max_score, _time, None

@@ -1,4 +1,4 @@
-apiVersion: machinelearning.seldon.io/v1alpha1
+apiVersion: machinelearning.seldon.io/v1alpha2
 kind: SeldonDeployment
 metadata:
   labels:
@@ -12,16 +12,16 @@ spec:
   oauth_key: "oauth-key"
   oauth_secret: "oauth-secret"
   predictors:
-  - componentSpec:
-      spec:
-        containers:
-        - image: "hypnosapos/cartpolerlremoteagent:max_score"
-          imagePullPolicy: Always
-          name: cartpole
-          resources:
-            requests:
-              memory: "2Mi"
-        terminationGracePeriodSeconds: 20
+  - componentSpecs:
+      - spec:
+          containers:
+          - image: "hypnosapos/cartpolerlremoteagent:max_score"
+            imagePullPolicy: IfNotPresent
+            name: cartpole
+            resources:
+              requests:
+                memory: "2Mi"
+          terminationGracePeriodSeconds: 20
     graph:
       children: []
       name: cartpole
