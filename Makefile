@@ -156,19 +156,20 @@ train-docker-efk: clean-seldon-models ## Train by docker compose using EFK for m
 
 .PHONY: seldon-build
 seldon-build: clean-seldon ## Generate seldon resources
-	@cp -a requirements.txt seldon/
+	@cp -a $(ROOT_PATH)requirements.txt $(ROOT_PATH)scaffold/seldon/
+	@mkdir -p $(ROOT_PATH)scaffold/seldon/models
 ifeq ($(STORAGE_PROVIDER), gcs)
-	@curl https://storage.googleapis.com/cartpole/$(MODEL_FILE) $(ROOT_PATH)/seldon/models/$(MODEL_FILE)
+	@curl https://storage.googleapis.com/cartpole/$(MODEL_FILE) $(ROOT_PATH)scaffold/seldon/models/$(MODEL_FILE)
 else
-	@mv $(ROOT_PATH)/.models/$(MODEL_FILE).h5 $(ROOT_PATH)/seldon/models/
+	@mv $(ROOT_PATH).models/$(MODEL_FILE).h5 $(ROOT_PATH)scaffold/seldon/models/
 endif
-	@cd $(shell pwd)/seldon && \
-	 docker run -v $(ROOT_PATH)/seldon:/model $(SELDON_IMAGE) /model CartpoleRLRemoteAgent $(DOCKER_TAG) $(DOCKER_ORG) --force
-	@cd $(ROOT_PATH)/seldon/build && ./build_image.sh
+	@cd $(ROOT_PATH)scaffold/seldon && \
+	 docker run -v $(ROOT_PATH)scaffold/seldon:/model $(SELDON_IMAGE) /model CartpoleRLRemoteAgent $(DOCKER_TAG) $(DOCKER_ORG) --force
+	@cd $(ROOT_PATH)scaffold/seldon/build && ./build_image.sh
 
 .PHONY: seldon-push
 seldon-push:  ## Push docker image for seldon deployment
-	@cd $(ROOT_PATH)/seldon/build && ./push_image.sh
+	@cd $(ROOT_PATH)scaffold/seldon/build && ./push_image.sh
 
 .PHONY: run-dev
 run-dev: ## docker-visdom  (so lazy in DatioNet )## Run a remote agent in dev mode with render option and visdom reports (requires venv)

@@ -4,19 +4,10 @@ Cartpole RL Remote
 .. image:: https://circleci.com/gh/hypnosapos/cartpole-rl-remote/tree/master.svg?style=svg
    :target: https://circleci.com/gh/hypnosapos/cartpole-rl-remote/tree/master
    :alt: Build Status
-.. image:: https://img.shields.io/pypi/v/cartpole-rl-remote.svg?style=flat-square
-   :target: https://pypi.org/project/cartpole-rl-remote
-   :alt: Version
-.. image:: https://img.shields.io/pypi/pyversions/cartpole-rl-remote.svg?style=flat-square
-   :target: https://pypi.org/project/cartpole-rl-remote
-   :alt: Python versions
-.. image:: https://codecov.io/gh/hypnosapos/cartpole-rl-remote/branch/master/graph/badge.svg
-   :target: https://codecov.io/gh/hypnosapos/cartpole-rl-remote
-   :alt: Coverage
 .. image:: https://app.fossa.io/api/projects/git%2Bgithub.com%2Fhypnosapos%2Fcartpole-rl-remote.svg?type=shield
    :target: https://app.fossa.io/projects/git%2Bgithub.com%2Fhypnosapos%2Fcartpole-rl-remote?ref=badge_shield
    :alt: License status
-.. image:: https://badges.frapsoft.com/os/v1/open-source.png?v=103
+.. image:: https://badges.frapsoft.com/os/v1/open-source.svg?v=103
    :alt: We love OpenSource
 
 
@@ -172,6 +163,18 @@ Station #3: Model inference with Seldon
 The idea is to get trained models and deploy them within `Seldon <https://seldon.io>`_.
 Install this python module to train or run the RL model under the wood.
 
+In order to create your own seldon images use::
+
+    make seldon-build seldon-push
+
+This command uses the official seldon wrapper to build and push your docker images.
+Mainly the built image adds a python module with entry method "predict" to be use by the api microservice,
+besides the best scored model (h5 file) will be included as well at the same directory to be served.
+Note that training models are moved from default ".models" local directory to *scaffold/seldon* directory to be included into the docker image, but obviously you can choose another,
+even from a cloud storage such as S3, GCS, ... (probably you are thinking about the output directory used in training stage with polyaxon, you're right).
+
+We provide some docker images for this PoC with different scores under the `dockerhub org hypnosapos <https://hub.docker.com/r/hypnosapos/cartpolerlremoteagent/tags/>`_.
+
 Deploy Seldon
 -------------
 
@@ -189,11 +192,11 @@ Deploy different seldon graphs for CartPole model, choose one value of: [model, 
 
    SELDON_MODEL_TYPE=router make gke-seldon-cartpole
 
-Take a look at files under directory **test/e2e/k8s-resources** (DOING: helm charts to deploy much easier).
+Take a look at files under directory **scaffold/k8s/seldon** .
 
-Let's deploy a router (epsilon greedy router by seldon team) with three branches: two for "untrained" models ('cartpole-0' and 'cartpole-1', low score metric),
+Let's deploy a router (it'll use an epsilon greedy router by seldon team) with three branches: two for "untrained" models ('cartpole-0' and 'cartpole-1', low score metric),
 and one branch with a "max_score" ('cartpole-2', score metric 7000, the max value in training).
-Default branch will be 0 ('cartpole-0') at the beginning, as requests are received the router will redirect traffic to branch 2 ('cartpole-2') according to the best scored model.
+Default branch will be 0 ('cartpole-0') at the beginning, as requests are received the router will redirect traffic automatically to branch 2 ('cartpole-2') according to the best scored model.
 
 Check out that pods are ready::
 
@@ -223,13 +226,14 @@ In order to get model predictions launch this command in your shell::
   make run-dev
 
 
-Model metrics in running mode will be collected on a `local visdom server <http://localhost:8059>`_.
+Model metrics in running mode will be collected on `local visdom server <http://localhost:8059>`_.
 
 Take a look at the grafana dashboard to view seldon metrics. Since *seldon-core-analytics* helm chart was installed
 with loadbalancer endpoint type, find the public ip to get access.
 
 .. image:: assets/seldon.png
    :alt: Seldon router
+
 
 License
 =======
