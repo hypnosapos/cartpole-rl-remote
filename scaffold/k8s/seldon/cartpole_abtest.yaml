@@ -1,5 +1,5 @@
 ---
-apiVersion: machinelearning.seldon.io/v1alpha1
+apiVersion: machinelearning.seldon.io/v1alpha2
 kind: SeldonDeployment
 metadata:
   labels:
@@ -16,13 +16,13 @@ spec:
   - componentSpec:
       spec:
         containers:
-        - image: hypnosapos/cartpolerlremoteagent:849bf7a
+        - image: hypnosapos/cartpolerlremoteagent:untrained
           imagePullPolicy: Always
           name: cartpole-a
           resources:
             requests:
               memory: 2Mi
-        - image: hypnosapos/cartpolerlremoteagent:c26d35c
+        - image: hypnosapos/cartpolerlremoteagent:max_score
           imagePullPolicy: Always
           name: cartpole-b
           resources:

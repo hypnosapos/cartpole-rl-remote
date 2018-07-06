@@ -23,6 +23,9 @@ from cartpole.qlearning_agent import (
 from cartpole.metrics import get_visdom_conn
 import cartpole.hparam as hp
 
+from modeldb.basic.Structs import Model, ModelConfig, ModelMetrics, Dataset
+from modeldb.basic.ModelDbSyncerBase import Syncer
+
 STR_NOW = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 EXPERIMENT_GROUP = uuid.uuid1()
 
@@ -58,19 +61,24 @@ def run(episodes, render=False, host='localhost', grpc_client=False,
     return gym.run(agent, episodes, render=render, host=host, grpc_client=grpc_client)
 
 
-def process_callback(callback_args, metrics_config={}):
+def process_callback(callback_args, metrics_engine=None, metrics_config={}):
 
     LOG.debug("Processing callbacks ...")
-    exp_ids, scores, hparams, max_scores, _time, file_name = list(zip(*callback_args))
+    exp_ids, num_episodes, scores, hparams, max_scores, _time, file_name = list(zip(*callback_args))
     max_score = np.max(max_scores)
     max_score_ind = np.argmax(max_scores)
 
-    metrics_engine = metrics_config.get('engine')
+    result = dict(
+        model=file_name[max_score_ind],
+        score=max_score,
+        hparams=hparams[max_score_ind]
+    )
+
     if metrics_engine:
         getattr(sys.modules[__name__],
                 ('process_callback_%s' % metrics_engine))(
-                    exp_ids, scores, hparams, max_scores, _time, max_score,
-                    max_score_ind, metrics_config.get('config', {}))
+                    exp_ids, num_episodes, scores, hparams, max_scores, _time, max_score,
+                    max_score_ind, metrics_config)
 
     model_dir = os.path.dirname(file_name[max_score_ind])
     _, file_extension = os.path.splitext(file_name[max_score_ind])
@@ -78,23 +86,43 @@ def process_callback(callback_args, metrics_config={}):
     model_path = os.path.join(model_dir, model_file if model_dir else model_file)
     copy2(file_name[max_score_ind], model_path)
 
-    result = dict(
-        model=file_name[max_score_ind],
-        score=max_score,
-        hparams=hparams[max_score_ind]
-    )
     print(json.dumps(result))
 
-    RESULTS.append(
-        dict(
-            model=file_name[max_score_ind],
-            score=max_score,
-            hparams=hparams[max_score_ind]
+    RESULTS.append(result)
+
+
+def process_callback_modeldb(exp_ids, num_episodes, scores, hparams,
+                             max_scores, _time, max_score, max_score_ind, config={}):
+
+    opts_syncer_path = config.get("syncer_conf")
+    if opts_syncer_path:
+        syncer_path = os.path.abspath(opts_syncer_path)
+        LOG.debug("ModelDB callback - Loading config from file {}".format(syncer_path))
+    else:
+        syncer_path = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), '../../scaffold/modeldb/syncer.json'))
+        LOG.debug("ModelDB callback - Loading default config from file {}".format(syncer_path))
+
+    for _arg in list(zip(exp_ids, hparams, max_scores, _time)):
+
+        syncer = Syncer.create_syncer_from_config(syncer_path)
+        model = Model("RL", 'CartPole-{}'.format(_arg[0]), "/path/to/{}".format(_arg[0]))
+
+        syncer.sync_datasets(
+            dict(gym=Dataset("/path/to/gym", {"episodes": num_episodes[0]}))
         )
-    )
+
+        model_config = ModelConfig("RL", _arg[1])
+        syncer.sync_model("gym", model_config, model)
+
+        model_metrics = ModelMetrics({'score': _arg[2]})
+        syncer.sync_metrics("gym", model, model_metrics)
+
+        syncer.sync()
 
 
-def process_callback_visdom(exp_ids, scores, hparams, max_scores, _time, max_score, max_score_ind, config={}):
+def process_callback_visdom(exp_ids, num_episodes, scores, hparams,
+                            max_scores, _time, max_score, max_score_ind, config={}):
 
     vis = get_visdom_conn(**config)
 
@@ -161,14 +189,15 @@ def main(argv=sys.argv[1:]):
 
     parser.add_argument('--metrics-engine',
                         default=None,
-                        choices=(None, 'visdom', 'tensorboard',),
+                        choices=(None, 'visdom', 'tensorboard', 'modeldb'),
                         help='Type of metrics visualizer engine.')
 
     parser.add_argument('--metrics-config', type=json.loads,
                         default={},
                         help='Metrics configuration. Contents are different according to "metrics-engine" arg.'
                              ' Visdom example: {"server": "http://localhost"}.'
-                             ' Tensorboard example: {"log_dir": "/tmp/logs/"}.')
+                             ' Tensorboard example: {"log_dir": "/tmp/logs/"}.'
+                             ' ModelDB example: {}.')
 
     train_subcommand.add_argument('-f', '--file-name',
                                   default='cartpole-rl-remote',
@@ -200,16 +229,16 @@ def main(argv=sys.argv[1:]):
         fh.setFormatter(logging.Formatter(LOG_FORMAT))
         LOG.addHandler(fh)
 
-    metrics_config = dict(
-        engine=args.metrics_engine,
-        config=dict()
-    )
+    metrics_engine = args.metrics_engine
+    metrics_config = {}
 
     if args.metrics_engine == 'visdom':
-        metrics_config['config'].update(dict(server='http://localhost'))
+        metrics_config['server'] = 'http://localhost'
     elif args.metrics_engine == 'tensorboard':
-        metrics_config['config'].update(dict(log_dir="./.logs/"))
-    metrics_config['config'].update(args.metrics_config)
+        metrics_config['log_dir'] = "./.logs/"
+    elif args.metrics_engine == 'modeldb':
+        pass
+    metrics_config.update(args.metrics_config)
 
     if args.func == train:
 
@@ -222,19 +251,19 @@ def main(argv=sys.argv[1:]):
 
         # TODO: auto-modeling by custom config (get_model(**config)), defaults to {}
         _args = [(args.episodes, args.render, dict(zip(hparams.keys(), hparam_values)),
-                  {}, args.file_name, args.metrics_engine, metrics_config['config'])
+                  {}, args.file_name, metrics_engine, metrics_config)
                  for hparam_values in list(product(*hparams.values()))]
         with multiprocessing.Pool(len(_args)) as process_pool:
             results = process_pool.starmap_async(
                 args.func,
                 _args,
-                callback=lambda callback_args: process_callback(callback_args, metrics_config)
+                callback=lambda callback_args: process_callback(callback_args, metrics_engine, metrics_config)
             )
             results.get()
 
     else:
         _args = [(args.episodes, args.render, args.host,
-                  args.grpc_client, args.metrics_engine, metrics_config['config'])
+                  args.grpc_client, metrics_engine, metrics_config)
                  for _ in range(args.runners)]
         with multiprocessing.Pool(args.runners) as process_pool:
             results = process_pool.starmap_async(

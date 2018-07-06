@@ -16,6 +16,8 @@ Cartpole RL Remote
 .. image:: https://app.fossa.io/api/projects/git%2Bgithub.com%2Fhypnosapos%2Fcartpole-rl-remote.svg?type=shield
    :target: https://app.fossa.io/projects/git%2Bgithub.com%2Fhypnosapos%2Fcartpole-rl-remote?ref=badge_shield
    :alt: License status
+.. image:: https://badges.frapsoft.com/os/v1/open-source.png?v=103
+   :alt: We love OpenSource
 
 
 This project is intended to play with `CartPole <https://gym.openai.com/envs/CartPole-v0/>`_ game using Reinforcement Learning.
@@ -113,11 +115,6 @@ To run this stack type::
 Kibana URL would be: http://localhost:5601. Set the text ``cartpole-*`` for the index pattern.
 In **efk/kibana** directory you can find a kibana dashboard json file that you can import to view all graphics about cartpole model experiments.
 
-Anybody could launch a docker compose with visdom and the EFK all-in-one by this command::
-
-   make train-docker-visdom-efk
-
-
 Station #2: Advanced training with Polyaxon
 ===========================================
 
@@ -140,22 +137,24 @@ Follow this command sequence to get a kubernetes cluster with all polyaxon compo
 
 We'll use the default one node ZFS server as polyaxon docs shows us (feel free to change de volume driver)::
 
-   make -C polyaxon gke-polyaxon-nfs
-   make -C polyaxon gke-polyaxon-nfs-grafana
+   make -C scaffold/polyaxon gke-polyaxon-nfs
+   make -C scaffold/polyaxon gke-polyaxon-nfs-grafana
 
 In
 
 Install polyaxon components on kubernetes and configure the polyaxon client on gke-bastion container ::
 
-   make -C polyaxon gke-polyaxon-preinstall gke-polyaxon-install gke-polyaxon-cartpole-init
+   make -C scaffold/polyaxon gke-polyaxon-preinstall gke-polyaxon-install gke-polyaxon-cartpole-init
 
 
 Finally, let's deploy our experiments groups by this command::
 
-   make  gke-polyaxon-cartpole
+   make  -C scaffold/polyaxon gke-polyaxon-cartpole
 
 
-Kubernetes web console should be ready at: http://localhost:8001/ui
+Kubernetes web console should be ready by command::
+
+   make gke-ui
 
 You can use the gke-bastion container as proxy for gcloud, kubectl or polyaxon commands directly, i.e::
 

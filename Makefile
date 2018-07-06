@@ -2,6 +2,7 @@
 
 # Shell to use with Make
 SHELL ?= /bin/bash
+ROOT_PATH := $(PWD)/$({0%/*})
 
 DOCKER_ORG        ?= hypnosapos
 DOCKER_IMAGE      ?= cartpole-rl-remote
@@ -23,7 +24,7 @@ GCP_CREDENTIALS     ?= $$HOME/gcp.json
 GCP_ZONE            ?= my_zone
 GCP_PROJECT_ID      ?= my_project
 
-GKE_CLUSTER_VERSION ?= 1.10.4-gke.2
+GKE_CLUSTER_VERSION ?= 1.9.7-gke.3
 GKE_CLUSTER_NAME    ?= ml-demo
 GKE_GPU_AMOUNT      ?= 1
 GKE_GPU_NODES_MIN   ?= 0
@@ -35,6 +36,13 @@ GITHUB_TOKEN        ?= githubtoken
 
 SELDON_MODEL_TYPE   ?= model
 
+UNAME := $(shell uname -s)
+ifeq ($(UNAME),Linux)
+OPEN := xdg-open
+else
+OPEN := open
+endif
+
 .PHONY: help
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
@@ -44,51 +52,51 @@ clean: clean-build clean-py clean-test clean-docker clean-seldon clean-seldon-mo
 
 .PHONY: clean-build
 clean-build: ## Remove build files
-	@rm -rf build dist .eggs .models *.egg-info *.egg.cache docs/build
+	@cd $(ROOT_PATH) && rm -rf build dist .eggs .models *.egg-info *.egg.cache docs/build
 
 .PHONY: clean-py
 clean-py: ## Remove Python build files
-	@rm -rf .venv
-	@find . -name '*.pyc' -exec rm -f {} +
-	@find . -name '*.pyo' -exec rm -f {} +
-	@find . -name '*~' -exec rm -f {} +
-	@find . -name '__pycache__' -exec rm -fr {} +
+	@rm -rf $(ROOT_PATH)/.venv
+	@find $(ROOT_PATH) -name '*.pyc' -exec rm -f {} +
+	@find $(ROOT_PATH) -name '*.pyo' -exec rm -f {} +
+	@find $(ROOT_PATH) -name '*~' -exec rm -f {} +
+	@find $(ROOT_PATH) -name '__pycache__' -exec rm -fr {} +
 
 .PHONY: clean-test
 clean-test: ## Remove test and coverage generated resources
-	@rm -rf .coverage htmlcov coverage-reports
+	@cd $(ROOT_PATH) && rm -rf .coverage htmlcov coverage-reports
 
 .PHONY: clean-seldon-models
 clean-seldon-models:
-	@rm -rf seldon/models
-	@mkdir -p seldon/models
+	@rm -rf $(ROOT_PATH)scaffold/seldon/models
+	@mkdir -p $(ROOT_PATH).models
 
 .PHONY: clean-seldon
 clean-seldon: clean-seldon-models ## Remove seldon resources
-	@rm -rf seldon/build
+	@rm -rf $(ROOT_PATH)/seldon/build
 
 .PHONY: clean-docker
 clean-docker: ## Remove docker containers and their images
 	@$(foreach tag,\
 	  $(DOCKER_TAGS),\
-	  @docker rm -f $$(docker ps -a -f "ancestor=$(DOCKER_ORG)/$(DOCKER_IMAGE):$(tag)" --format '{{.Names}}') > /dev/null 2>&1 || echo "No docker containers for ancestor $(DOCKER_ORG)/$(DOCKER_IMAGE):$(tag)";\
-	  @docker rmi -f $(DOCKER_ORG)/$(DOCKER_IMAGE):$(tag) > /dev/null 2>&1 || echo "Not found image $(DOCKER_ORG)/$(DOCKER_IMAGE):$(tag)";)
+	  docker rm -f $$(docker ps -a -f "ancestor=$(DOCKER_ORG)/$(DOCKER_IMAGE):$(tag)" --format '{{.Names}}') > /dev/null 2>&1 || true;\
+	  docker rmi -f $(DOCKER_ORG)/$(DOCKER_IMAGE):$(tag) > /dev/null 2>&1 ] || true;)
 	@$(foreach py_env,\
 	  $(PY_ENVS),\
-	  @docker rm -f $$(docker ps -a -f "ancestor=$(DOCKER_ORG)/$(DOCKER_IMAGE)-test:py$(py_env)" --format '{{.Names}}') > /dev/null 2>&1 || echo "No docker containers for ancestor $(DOCKER_ORG)/$(DOCKER_IMAGE)-test:py$(py_env)";\
-	  @docker rmi -f $(DOCKER_ORG)/$(DOCKER_IMAGE)-test:py$(py_env) > /dev/null 2>&1 || echo "Not found image $(DOCKER_ORG)/$(DOCKER_IMAGE)-test:py$(py_env)";)
+	  docker rm -f $$(docker ps -a -f "ancestor=$(DOCKER_ORG)/$(DOCKER_IMAGE)-test:py$(py_env)" --format '{{.Names}}') > /dev/null 2>&1 || true;\
+	  docker rmi -f $(DOCKER_ORG)/$(DOCKER_IMAGE)-test:py$(py_env) > /dev/null 2>&1 || true;)
 
 .PHONY: docker-test-build
 docker-test-build:
 	@for i in $(PY_ENVS); do\
-	  docker build --build-arg PY_VERSION=$${i} -t $(DOCKER_ORG)/$(DOCKER_IMAGE)-test:py$${i} -f Dockerfile.test .;\
+	  docker build --build-arg PY_VERSION=$${i} -t $(DOCKER_ORG)/$(DOCKER_IMAGE)-test:py$${i} -f Dockerfile.test $(ROOT_PATH);\
 	done
 
 .PHONY: venv
 venv: ## Create a local virtualenv with default python version (supported 3.5 and 3.6)
 	@python -m venv .venv
-	@. .venv/bin/activate && pip install -U pip && pip install .
-	@echo -e "\033[32m[[ Type '. .venv/bin/activate' to activate virtualenv ]]\033[0m"
+	@. $(ROOT_PATH)/.venv/bin/activate && pip install -U pip && pip install $(ROOT_PATH)
+	@echo -e "\033[32m[[ Type '. $(ROOT_PATH)/.venv/bin/activate' to activate virtualenv ]]\033[0m"
 
 .PHONY: test
 test: docker-test-build
@@ -98,7 +106,7 @@ test: docker-test-build
 docker-build: ## Build docker images
 	@$(foreach tag,\
 	    $(DOCKER_TAGS),\
-	    docker build -t $(DOCKER_ORG)/$(DOCKER_IMAGE):$(tag) .;)
+	    docker build -t $(DOCKER_ORG)/$(DOCKER_IMAGE):$(tag) $(ROOT_PATH);)
 
 .PHONY: docker-push
 docker-push: ## Push docker images
@@ -113,53 +121,54 @@ docker-visdom: ## Run a visdom server
 .PHONY: train
 train: clean-seldon-models## Train model
 	@cartpole -e $(EPISODES) \
-	  train --gamma 0.095 0.099 0.001 -f ./.models/$(MODEL_FILE)
+	  train --gamma 0.095 0.099 0.001 -f $(ROOT_PATH).models/$(MODEL_FILE)
 
 .PHONY: train-dev
 train-dev: docker-visdom clean-seldon-models ## Train a model in dev mode with render option and visdom reports (requires venv)
-	@. .venv/bin/activate && \
+	@. $(ROOT_PATH).venv/bin/activate && \
 	 cartpole -e $(TRAIN_EPISODES) -r --log-level DEBUG \
 	   --metrics-engine visdom --metrics-config '{"server": "http://127.0.0.1", "env": "main"}' \
-	   train --gamma 0.095 0.099 0.001 -f ./.models/$(MODEL_FILE)
+	   train --gamma 0.095 0.099 0.001 -f $(ROOT_PATH)/.models/$(MODEL_FILE)
 	@docker rm -f local-visdom
 
 .PHONY: train-docker
 train-docker: clean-seldon-models ## Train by docker container
-	@docker run -it -v $(shell pwd)/.models:/tmp/models $(DOCKER_ORG)/$(DOCKER_IMAGE):$(DOCKER_TAG)\
+	@docker run -it -v $(ROOT_PATH).models:/tmp/models $(DOCKER_ORG)/$(DOCKER_IMAGE):$(DOCKER_TAG)\
 	 cartpole -e $(TRAIN_EPISODES) --log-level DEBUG \
 	   train --gamma 0.095 0.099 0.001 -f /tmp/models/$(MODEL_FILE)
 
+.PHONY: train-docker-modeldb
+train-docker-modeldb: clean-seldon-models ## Train by docker compose using modeldb server for metrics
+	## @docker-compose -f docker-compose-modeldb.yaml up --exit-code-from cartpole
+	@docker-compose -f scaffold/docker-compose-modeldb.yaml up
+	@docker-compose -f scaffold/docker-compose-modeldb.yaml down
+
 .PHONY: train-docker-visdom
 train-docker-visdom: clean-seldon-models ## Train by docker compose using visdom server for metrics
-	## @docker-compose -f docker-compose-visdom.yaml up --exit-code-from train-cartpole
-	@docker-compose -f docker-compose-visdom.yaml up
-	@docker-compose -f docker-compose-visdom.yaml down
+	## @docker-compose -f docker-compose-visdom.yaml up --exit-code-from cartpole
+	@docker-compose -f scaffold/docker-compose-visdom.yaml up
+	@docker-compose -f scaffold/docker-compose-visdom.yaml down
 
 .PHONY: train-docker-efk
 train-docker-efk: clean-seldon-models ## Train by docker compose using EFK for metrics and monitoring
-	@docker-compose -f docker-compose-efk.yaml up
-	@docker-compose -f docker-compose-efk.yaml down
-
-.PHONY: train-docker-visdom-efk
-train-docker-visdom-efk: clean-seldon-models ## Train by docker compose using EFK and visdom for metrics and monitoring
-	@docker-compose -f docker-compose.yaml up
-	@docker-compose -f docker-compose.yaml down
+	@docker-compose -f $(ROOT_PATH)/scaffold/docker-compose-efk.yaml up
+	@docker-compose -f $(ROOT_PATH)/scaffold/docker-compose-efk.yaml down
 
 .PHONY: seldon-build
 seldon-build: clean-seldon ## Generate seldon resources
 	@cp -a requirements.txt seldon/
 ifeq ($(STORAGE_PROVIDER), gcs)
-	@curl https://storage.googleapis.com/cartpole/$(MODEL_FILE) $(shell pwd)/seldon/models/$(MODEL_FILE)
+	@curl https://storage.googleapis.com/cartpole/$(MODEL_FILE) $(ROOT_PATH)/seldon/models/$(MODEL_FILE)
 else
-	@mv $(shell pwd)/.models/$(MODEL_FILE).h5 $(shell pwd)/seldon/models/
+	@mv $(ROOT_PATH)/.models/$(MODEL_FILE).h5 $(ROOT_PATH)/seldon/models/
 endif
 	@cd $(shell pwd)/seldon && \
-	 docker run -v $(shell pwd)/seldon:/model $(SELDON_IMAGE) /model CartpoleRLRemoteAgent $(DOCKER_TAG) $(DOCKER_ORG) --force
-	@cd $(shell pwd)/seldon/build && ./build_image.sh
+	 docker run -v $(ROOT_PATH)/seldon:/model $(SELDON_IMAGE) /model CartpoleRLRemoteAgent $(DOCKER_TAG) $(DOCKER_ORG) --force
+	@cd $(ROOT_PATH)/seldon/build && ./build_image.sh
 
 .PHONY: seldon-push
 seldon-push:  ## Push docker image for seldon deployment
-	@cd $(shell pwd)/seldon/build && ./push_image.sh
+	@cd $(ROOT_PATH)/seldon/build && ./push_image.sh
 
 .PHONY: run-dev
 run-dev: ## docker-visdom  (so lazy in DatioNet )## Run a remote agent in dev mode with render option and visdom reports (requires venv)
@@ -172,7 +181,7 @@ run-dev: ## docker-visdom  (so lazy in DatioNet )## Run a remote agent in dev mo
 .PHONY: run-dev-router-agent
 run-dev-router-agent: ## Run a router agent to change the default behaviour
 	@. .venv/bin/activate && \
-	 python ./test/e2e/test_router.py --visdom-config '{"server": "http://127.0.0.1", "env": "main"}' \
+	 python $(ROOT_PATH)/test/e2e/test_router.py --visdom-config '{"server": "http://127.0.0.1", "env": "main"}' \
 	 -pref-branch 1 -router-name eg-router -api-server $(RUN_MODEL_IP) --num-reqs 20000
 
 .PHONY: gke-bastion
@@ -180,7 +189,7 @@ gke-bastion: ## Run a gke-bastion container.
 	@docker run -it -d --name gke-bastion \
 	   -p 8001:8001 -p 3000:3000 -p 8888:80 \
 	   -v $(GCP_CREDENTIALS):/tmp/gcp.json \
-	   -v $(shell pwd):/cartpole-rl-remote \
+	   -v $(ROOT_PATH):/cartpole-rl-remote \
 	   google/cloud-sdk:$(GCLOUD_IMAGE_TAG) \
 	   sh
 	@docker exec gke-bastion \
@@ -203,7 +212,7 @@ gke-create-cluster: ## Create a kubernetes cluster on GKE.
 
 .PHONY: gke-ui-login-skip
 gke-ui-login-skip: ## TRICK: Grant complete access to dashboard. Be careful, anyone could enter into your dashboard and execute admin ops.
-	@docker cp $(shell pwd)/skip_login.yml gke-bastion:/tmp/skip_login.yml
+	@docker cp $(ROOT_PATH)/scaffold/k8s/skip_login.yml gke-bastion:/tmp/skip_login.yml
 	@docker exec gke-bastion \
 	  sh -c "kubectl create -f /tmp/skip_login.yml"
 
@@ -240,11 +249,11 @@ gke-seldon-install: ## Installing Seldon components
 	@docker exec gke-bastion \
 	  sh -c "helm repo add seldon https://storage.googleapis.com/seldon-charts \
 	         && helm repo update \
-	         && helm install seldon/seldon-core-crd --name seldon-core-crd --version 0.1.6 \
+	         && helm install seldon/seldon-core-crd --name seldon-core-crd --version 0.2.0 \
 	         && kubectl create namespace seldon \
 	         && helm install seldon/seldon-core --name seldon-core \
 	            --set apife_service_type=LoadBalancer \
-	            --version 0.1.6 --namespace seldon \
+	            --version 0.2.0 --namespace seldon \
 	         && helm install seldon/seldon-core-analytics --name seldon-core-analytics \
                 --set grafana_prom_admin_password=password \
                 --set persistence.enabled=false \
@@ -254,12 +263,12 @@ gke-seldon-install: ## Installing Seldon components
 .PHONY: gke-seldon-cartpole
 gke-seldon-cartpole: ## Deploy cartpole model according to different seldon implementations (SELDON_MODEL_TYPE = [model|abtest|router])
 	@docker exec gke-bastion \
-	  sh -c "kubectl create -f /cartpole-rl-remote/test/e2e/k8s-resources/cartpole_$(SELDON_MODEL_TYPE).yaml -n seldon"
+	  sh -c "kubectl create -f /cartpole-rl-remote/scaffold/k8s/seldon/cartpole_$(SELDON_MODEL_TYPE).yaml -n seldon"
 
 .PHONY: gke-seldon-cartpole-delete
 gke-seldon-cartpole-delete: ## Delete cartpole model according to different seldon implementations (model, abtest, router)
 	@docker exec gke-bastion \
-	  sh -c "kubectl delete -f /cartpole-rl-remote/test/e2e/k8s-resources/cartpole_$(SELDON_MODEL_TYPE).yaml -n seldon"
+	  sh -c "kubectl delete -f /cartpole-rl-remote/scaffold/k8s/seldon/cartpole_$(SELDON_MODEL_TYPE).yaml -n seldon"
 
 .PHONY: gke-seldon-uninstall
 gke-seldon-uninstall: ## Uninstalling Seldon components
@@ -274,3 +283,8 @@ gke-delete-cluster: ## Delete a kubernetes cluster on GKE.
 	   sh -c "gcloud config set project $(GCP_PROJECT_ID) \
 	          && gcloud container --project $(GCP_PROJECT_ID) clusters delete $(GKE_CLUSTER_NAME) \
 	          --zone $(GCP_ZONE) --quiet"
+
+.PHONY: gke-ui
+gke-ui: ## Launch kubernetes dashboard through the proxy.
+	$(OPEN) http://localhost:8001/ui
+	##http://localhost:8001/api/v1/namespaces/kube-system/services/https:kubernetes-dashboard:/proxy/

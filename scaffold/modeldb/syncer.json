@@ -1,0 +1,31 @@
+{
+  "thrift": {
+    "host": "backend",
+    "port": 6543
+  },
+  "syncingStrategy": "eager",
+  "project": {
+    "name": "Cartpole RL Remote Agent",
+    "author": "hypnosapos",
+    "description": "CartPole game by reinforcement learning"
+  },
+  "experiment": {
+    "name": "Default Experiment",
+    "description": " Experiment"
+  },
+  "experimentRun": {
+    "description": "Experiment Run"
+  },
+  "shouldCountRows": false,
+  "shouldStoreGSCVE": false,
+  "shouldStoreSpecificModels": false,
+  "git": {
+    "versionCode": "yes",
+    "username": null,
+    "accessToken": null,
+    "repo": null,
+    "exptDir": null,
+    "repoDir": null
+  }
+}
+

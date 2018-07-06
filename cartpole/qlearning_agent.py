@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 
-from collections import deque, OrderedDict
+from collections import deque
 import numpy as np
 import random
 import logging
@@ -40,7 +40,8 @@ DEFAULT_HPARAMS = {
 
 class QLearningAgent(object):
 
-    def __init__(self, state_size=4, action_size=2, hparams={}, model_config={}, metrics_engine=[], metrics_config={}):
+    def __init__(self, state_size=4, action_size=2, hparams={}, model_config={},
+                 metrics_engine=None, metrics_config={}):
 
         self.model = get_model(**model_config)
         self.state_size = state_size

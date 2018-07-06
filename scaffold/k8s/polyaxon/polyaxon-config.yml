@@ -24,15 +24,17 @@ postgresql:
       size: 5Gi
 persistence:
   data:
-    enabled: true
-    existingClaim: polyaxon-pvc-data
-    mountPath: "/data"
-    accessMode: ReadWriteMany
+    data:
+      enabled: true
+      existingClaim: polyaxon-pvc-data
+      mountPath: "/data"
+      accessMode: ReadWriteMany
   outputs:
-    enabled: true
-    existingClaim: polyaxon-pvc-outputs
-    mountPath: "/outputs"
-    accessMode: ReadWriteMany
+    outputs:
+      enabled: true
+      existingClaim: polyaxon-pvc-outputs
+      mountPath: "/outputs"
+      accessMode: ReadWriteMany
   logs:
     enabled: true
     existingClaim: polyaxon-pvc-logs

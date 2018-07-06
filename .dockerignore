@@ -1,9 +1,6 @@
 #Ignore metafiles
 .*
 
-*.md
-tox*
-
 #Ignore python reources
 *.pyc
 *.pyo
@@ -11,7 +8,8 @@ tox*
 /dist/
 /doc/
 *.egg-info
-/seldon
-*.h5
+/scaffold
+/assets
 *.egg-*/
+/test
 __pycache__

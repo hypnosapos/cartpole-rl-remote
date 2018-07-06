@@ -27,7 +27,7 @@ setup(name='cartpole-rl-remote',
           'License :: OSI Approved :: MIT License',
       ],
       url='https://github.com/hypnosapos/cartpole-rl-remote',
-      packages=find_packages(exclude=["tests", "docs", "seldon"]),
+      packages=find_packages(exclude=["tests", "docs", "scaffold"]),
       include_package_data=True,
       install_requires=requirements,
       entry_points={

@@ -3,7 +3,7 @@ version: 1
 
 kind: group
 
-settings:
+hptuning:
   concurrency: 2
 
   matrix:
@@ -14,11 +14,13 @@ settings:
 
 declarations:
   log_level: DEBUG
-  num_episodes: 250
+  num_episodes: 300
 
-run:
+build:
   image: hypnosapos/cartpole-rl-remote:latest
   build_steps:
   - pip install --no-cache-dir -U polyaxon-helper
+
+run:
   cmd: python model.py -e {{num_episodes}} \
        --log-level {{log_level }} train --gamma {{gamma}} --batch_size {{batch_size}}

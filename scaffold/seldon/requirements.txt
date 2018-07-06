@@ -21,5 +21,4 @@ Werkzeug==0.14.1
 argparse>=1.4
 grpcio
 grpcio-tools
-modeldb-basic
 visdom
