@@ -24,7 +24,7 @@ GCP_CREDENTIALS     ?= $$HOME/gcp.json
 GCP_ZONE            ?= my_zone
 GCP_PROJECT_ID      ?= my_project
 
-GKE_CLUSTER_VERSION ?= 1.9.7-gke.3
+GKE_CLUSTER_VERSION ?= 1.10.4-gke.2
 GKE_CLUSTER_NAME    ?= ml-demo
 GKE_GPU_AMOUNT      ?= 1
 GKE_GPU_NODES_MIN   ?= 0
@@ -286,5 +286,4 @@ gke-delete-cluster: ## Delete a kubernetes cluster on GKE.
 
 .PHONY: gke-ui
 gke-ui: ## Launch kubernetes dashboard through the proxy.
-	$(OPEN) http://localhost:8001/ui
-	##http://localhost:8001/api/v1/namespaces/kube-system/services/https:kubernetes-dashboard:/proxy/
+	$(OPEN) http://localhost:8001/api/v1/namespaces/kube-system/services/https:kubernetes-dashboard:/proxy/

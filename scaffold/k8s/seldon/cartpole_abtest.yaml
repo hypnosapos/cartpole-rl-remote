@@ -1,4 +1,3 @@
----
 apiVersion: machinelearning.seldon.io/v1alpha2
 kind: SeldonDeployment
 metadata:
@@ -13,22 +12,22 @@ spec:
   oauth_key: oauth-key
   oauth_secret: oauth-secret
   predictors:
-  - componentSpec:
-      spec:
-        containers:
-        - image: hypnosapos/cartpolerlremoteagent:untrained
-          imagePullPolicy: Always
-          name: cartpole-a
-          resources:
-            requests:
-              memory: 2Mi
-        - image: hypnosapos/cartpolerlremoteagent:max_score
-          imagePullPolicy: Always
-          name: cartpole-b
-          resources:
-            requests:
-              memory: 2Mi
-        terminationGracePeriodSeconds: 20
+  - componentSpecs:
+      - spec:
+          containers:
+          - image: hypnosapos/cartpolerlremoteagent:untrained
+            imagePullPolicy: IfNotPresent
+            name: cartpole-a
+            resources:
+              requests:
+                memory: 2Mi
+          - image: hypnosapos/cartpolerlremoteagent:max_score
+            imagePullPolicy: IfNotPresent
+            name: cartpole-b
+            resources:
+              requests:
+                memory: 2Mi
+          terminationGracePeriodSeconds: 20
     name: cartpole-abtest
     replicas: 1
     annotations:
