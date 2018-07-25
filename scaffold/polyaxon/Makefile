@@ -5,6 +5,7 @@ SHELL ?= /bin/bash
 
 GCP_ZONE            ?= my_zone
 GCP_PROJECT_ID      ?= my_project
+PLX_VERSION         ?= 0.1.5
 
 UNAME := $(shell uname -s)
 ifeq ($(UNAME),Linux)
@@ -55,7 +56,7 @@ gke-polyaxon-install: ## Install polyaxon
 	          && helm install polyaxon/polyaxon \
 	           --name=polyaxon \
 	           --namespace=polyaxon \
-	           --version 0.1.3 \
+	           --version $(PLX_VERSION) \
 	           -f /cartpole-rl-remote/scaffold/k8s/polyaxon/polyaxon-config.yml"
 
 .PHONY: gke-polyaxon-uninstall

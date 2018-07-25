@@ -24,7 +24,7 @@ GCP_CREDENTIALS     ?= $$HOME/gcp.json
 GCP_ZONE            ?= my_zone
 GCP_PROJECT_ID      ?= my_project
 
-GKE_CLUSTER_VERSION ?= 1.10.4-gke.2
+GKE_CLUSTER_VERSION ?= 1.10.5-gke.3
 GKE_CLUSTER_NAME    ?= ml-demo
 GKE_GPU_AMOUNT      ?= 1
 GKE_GPU_NODES_MIN   ?= 0
@@ -35,6 +35,8 @@ GKE_GPU_TYPE        ?= nvidia-tesla-k80
 GITHUB_TOKEN        ?= githubtoken
 
 SELDON_MODEL_TYPE   ?= model
+
+SELDON_VERSION      ?= 0.2.0
 
 UNAME := $(shell uname -s)
 ifeq ($(UNAME),Linux)
@@ -250,16 +252,16 @@ gke-seldon-install: ## Installing Seldon components
 	@docker exec gke-bastion \
 	  sh -c "helm repo add seldon https://storage.googleapis.com/seldon-charts \
 	         && helm repo update \
-	         && helm install seldon/seldon-core-crd --name seldon-core-crd --version 0.2.0 \
+	         && helm install seldon/seldon-core-crd --name seldon-core-crd --version $(SELDON_VERSION) \
 	         && kubectl create namespace seldon \
 	         && helm install seldon/seldon-core --name seldon-core \
 	            --set apife_service_type=LoadBalancer \
-	            --version 0.2.0 --namespace seldon \
+	            --version $(SELDON_VERSION) --namespace seldon \
 	         && helm install seldon/seldon-core-analytics --name seldon-core-analytics \
                 --set grafana_prom_admin_password=password \
                 --set persistence.enabled=false \
                 --set grafana_prom_service_type=LoadBalancer \
-                --version 0.2 --namespace seldon"
+                --version $(SELDON_VERSION) --namespace seldon"
 
 .PHONY: gke-seldon-cartpole
 gke-seldon-cartpole: ## Deploy cartpole model according to different seldon implementations (SELDON_MODEL_TYPE = [model|abtest|router])
