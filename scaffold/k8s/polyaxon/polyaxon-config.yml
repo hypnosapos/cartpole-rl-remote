@@ -2,8 +2,8 @@ namespace: "polyaxon"
 
 rbac:
   enabled: true
-#ingress:
-#  enabled: true
+ingress:
+  enabled: false
 #  annotations:
 #    ingress.kubernetes.io/ssl-redirect: "false"
 #    ingress.kubernetes.io/rewrite-target: /
