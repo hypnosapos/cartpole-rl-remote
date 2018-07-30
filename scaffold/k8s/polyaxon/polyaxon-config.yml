@@ -20,8 +20,9 @@ user:
 
 postgresql:
   persistence:
-      enabled: true
-      size: 5Gi
+    enabled: true
+    size: 5Gi
+
 persistence:
   logs:
     enabled: true
@@ -90,3 +91,15 @@ mountPaths:
 #    enabled: true
 #    clientId: ""
 #    clientSecret: ""
+
+tolerations:
+  resourcesDeamon:
+  - key: "nvidia.com/gpu"
+    operator: "Equal"
+    value: "present"
+    effect: "NoSchedule"
+
+# Fix, expected 0.1.6 tag for image doesn't exist yet.
+job:
+  image: polyaxon/polyaxon-lib
+  imageTag: 0.1.4

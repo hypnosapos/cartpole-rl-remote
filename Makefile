@@ -27,16 +27,16 @@ GCP_PROJECT_ID      ?= my_project
 GKE_CLUSTER_VERSION ?= 1.10.5-gke.3
 GKE_CLUSTER_NAME    ?= ml-demo
 GKE_GPU_AMOUNT      ?= 1
-GKE_GPU_NODES_MIN   ?= 0
-GKE_GPU_NODES       ?= 0
+GKE_GPU_NODES_MIN   ?= 1
+GKE_GPU_NODES       ?= 1
 GKE_GPU_NODES_MAX   ?= 3
-GKE_GPU_TYPE        ?= nvidia-tesla-k80
+GKE_GPU_TYPE        ?= nvidia-tesla-v100
 
 GITHUB_TOKEN        ?= githubtoken
 
 SELDON_MODEL_TYPE   ?= model
 
-SELDON_VERSION      ?= 0.2.0
+SELDON_VERSION      ?= 0.2.2
 
 UNAME := $(shell uname -s)
 ifeq ($(UNAME),Linux)
@@ -98,7 +98,7 @@ docker-test-build:
 venv: ## Create a local virtualenv with default python version (supported 3.5 and 3.6)
 	@python -m venv .venv
 	@. $(ROOT_PATH)/.venv/bin/activate && pip install -U pip && pip install $(ROOT_PATH)
-	@echo -e "\033[32m[[ Type '. $(ROOT_PATH)/.venv/bin/activate' to activate virtualenv ]]\033[0m"
+	@echo -e "\033[32m[[ Type '. $(ROOT_PATH).venv/bin/activate' to activate virtualenv ]]\033[0m"
 
 .PHONY: test
 test: docker-test-build
@@ -242,10 +242,10 @@ gke-create-gpu-nvidia-driver:
 .PHONY: gke-create-gpu-group
 gke-create-gpu-group: ## Create a GPU group for kubernetes cluster on GKE.
 	@docker exec gke-bastion \
-	  sh -c "gcloud beta container node-pools create $(GKE_CLUSTER_NAME)-gpu-pool \
-	         --accelerator type=$(GKE_GPU_TYPE),count=$(GKE_GPU_AMOUNT) --zone "$(GCP_ZONE)" \
+	  sh -c "gcloud config set project $(GCP_PROJECT_ID) && gcloud container node-pools create $(GKE_CLUSTER_NAME)-gpu-pool \
+	         --accelerator type=$(GKE_GPU_TYPE),count=$(GKE_GPU_AMOUNT) --zone $(GCP_ZONE) \
 	         --cluster $(GKE_CLUSTER_NAME) --num-nodes $(GKE_GPU_NODES) --min-nodes $(GKE_GPU_NODES_MIN) \
-	         --max-nodes $(GKE_GPU_NODES_MAX) --enable-autoscaling"
+	         --max-nodes $(GKE_GPU_NODES_MAX) --enable-autoscaling --preemptible"
 
 .PHONY: gke-seldon-install
 gke-seldon-install: ## Installing Seldon components
@@ -261,7 +261,7 @@ gke-seldon-install: ## Installing Seldon components
                 --set grafana_prom_admin_password=password \
                 --set persistence.enabled=false \
                 --set grafana_prom_service_type=LoadBalancer \
-                --version $(SELDON_VERSION) --namespace seldon"
+                --version 0.2 --namespace seldon"
 
 .PHONY: gke-seldon-cartpole
 gke-seldon-cartpole: ## Deploy cartpole model according to different seldon implementations (SELDON_MODEL_TYPE = [model|abtest|router])

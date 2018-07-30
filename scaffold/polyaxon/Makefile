@@ -5,7 +5,7 @@ SHELL ?= /bin/bash
 
 GCP_ZONE            ?= my_zone
 GCP_PROJECT_ID      ?= my_project
-PLX_VERSION         ?= 0.1.5
+PLX_VERSION         ?= 0.1.6
 
 UNAME := $(shell uname -s)
 ifeq ($(UNAME),Linux)
@@ -71,7 +71,7 @@ gke-polyaxon-uninstall: ## Uninstall polyaxon
 gke-polyaxon-cartpole-init:
 	docker exec gke-bastion \
 	   sh -c 'apk --update add py-pip python-dev build-base && pip install polyaxon-cli \
-	          && export POLYAXON_IP="$$(kubectl get svc --namespace polyaxon polyaxon-polyaxon-ingress -o jsonpath="'"{.status.loadBalancer.ingress[0].ip}"'")" \
+	          && export POLYAXON_IP="$$(kubectl get svc --namespace polyaxon polyaxon-polyaxon-api -o jsonpath="'"{.status.loadBalancer.ingress[0].ip}"'")" \
 	          && export POLYAXON_HTTP_PORT=80 \
 	          && export POLYAXON_WS_PORT=80 \
 	          && echo http://$$POLYAXON_IP:$$POLYAXON_HTTP_PORT \
