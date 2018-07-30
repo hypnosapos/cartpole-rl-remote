@@ -26,6 +26,8 @@ GCP_PROJECT_ID      ?= my_project
 
 GKE_CLUSTER_VERSION ?= 1.10.5-gke.3
 GKE_CLUSTER_NAME    ?= ml-demo
+GKE_NODES           ?= 2
+GKE_IMAGE_TYPE      ?= n1-standard-8
 GKE_GPU_AMOUNT      ?= 1
 GKE_GPU_NODES_MIN   ?= 1
 GKE_GPU_NODES       ?= 1
@@ -203,15 +205,15 @@ gke-bastion: ## Run a gke-bastion container.
 gke-create-cluster: ## Create a kubernetes cluster on GKE.
 	@docker exec gke-bastion \
 	   sh -c "gcloud beta container --project $(GCP_PROJECT_ID) clusters create $(GKE_CLUSTER_NAME) --zone "$(GCP_ZONE)" \
-	          --username "admin" --cluster-version "$(GKE_CLUSTER_VERSION)" --machine-type "n1-standard-8" \
+	          --username "admin" --cluster-version "$(GKE_CLUSTER_VERSION)" --machine-type "$(GKE_IMAGE_TYPE)" \
 	          --image-type "COS" --disk-type "pd-standard" --disk-size "100" \
 	          --scopes "compute-rw","storage-rw","logging-write","monitoring","service-control","service-management","trace" \
-	          --num-nodes "5" --enable-cloud-logging --enable-cloud-monitoring --network "default" \
+	          --num-nodes "$(GKE_NODES)" --enable-cloud-logging --enable-cloud-monitoring --network "default" \
 	          --subnetwork "default" --addons HorizontalPodAutoscaling,HttpLoadBalancing,KubernetesDashboard"
 	@docker exec gke-bastion \
 	   sh -c "gcloud container clusters get-credentials $(GKE_CLUSTER_NAME) --zone "$(GCP_ZONE)" --project $(GCP_PROJECT_ID) \
 	          && kubectl config set-credentials gke_$(GCP_PROJECT_ID)_$(GCP_ZONE)_$(GKE_CLUSTER_NAME) --username=admin \
-	          --password=$$(gcloud container clusters describe $(GKE_CLUSTER_NAME) | grep password | awk '{print $$2}')"
+	          --password=$$(gcloud container clusters describe --zone "$(GCP_ZONE)" $(GKE_CLUSTER_NAME) | grep password | awk '{print $$2}')"
 
 .PHONY: gke-ui-login-skip
 gke-ui-login-skip: ## TRICK: Grant complete access to dashboard. Be careful, anyone could enter into your dashboard and execute admin ops.
@@ -245,7 +247,7 @@ gke-create-gpu-group: ## Create a GPU group for kubernetes cluster on GKE.
 	  sh -c "gcloud config set project $(GCP_PROJECT_ID) && gcloud container node-pools create $(GKE_CLUSTER_NAME)-gpu-pool \
 	         --accelerator type=$(GKE_GPU_TYPE),count=$(GKE_GPU_AMOUNT) --zone $(GCP_ZONE) \
 	         --cluster $(GKE_CLUSTER_NAME) --num-nodes $(GKE_GPU_NODES) --min-nodes $(GKE_GPU_NODES_MIN) \
-	         --max-nodes $(GKE_GPU_NODES_MAX) --enable-autoscaling --preemptible"
+	         --max-nodes $(GKE_GPU_NODES_MAX) --image-type "$(GKE_IMAGE_TYPE)" --enable-autoscaling --preemptible"
 
 .PHONY: gke-seldon-install
 gke-seldon-install: ## Installing Seldon components
