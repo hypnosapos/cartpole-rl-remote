@@ -42,7 +42,7 @@ gke-polyaxon-preinstall: ## Get a docker image list of all nodes
 	   sh -c 'gcloud config set project $(GCP_PROJECT_ID) \
 	          && kubectl create namespace polyaxon \
 	          && export IP="$$(gcloud compute instances describe polyaxon-nfs-vm \
-	            --zone=$(GCP_ZONE) --format="'"value(networkInterfaces[0].networkIP)"'")" \
+	            --zone=europe-west1-b --format="'"value(networkInterfaces[0].networkIP)"'")" \
 	          && find /cartpole-rl-remote/scaffold/k8s/polyaxon -name "'"*-pvc.yml"'" \
 	              -exec sed -i s/NFS_HOST/$$IP/g {} \;\
 	          && for file in data logs outputs repos upload; \
@@ -62,10 +62,10 @@ gke-polyaxon-install: ## Install polyaxon
 .PHONY: gke-polyaxon-uninstall
 gke-polyaxon-uninstall: ## Uninstall polyaxon
 	@docker exec gke-bastion \
-	   sh -c "helm del --purge polyaxon \
+	   sh -c 'helm del --purge polyaxon \
 	         && for file in data logs outputs repos upload; \
 	         do kubectl delete -f /cartpole-rl-remote/scaffold/k8s/polyaxon/$$file-pvc.yml; done \
-	         && kubectl delete ns polyaxon"
+	         && kubectl delete ns polyaxon'
 
 .PHONY: gke-polyaxon-cartpole-init ## Initialize cartpole experiment group
 gke-polyaxon-cartpole-init:
