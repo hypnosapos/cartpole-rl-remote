@@ -15,16 +15,15 @@ from itertools import product
 import numpy as np
 from datetime import datetime
 
+import cartpole.metrics.callbacks as callbacks
+
+import cartpole.hparam as hp
 from cartpole.runner_remote import GymRunnerRemote
 from cartpole.qlearning_agent import (
     QLearningAgent as Agent,
     HPARAMS_SCHEMA
 )
-from cartpole.metrics import get_visdom_conn
-import cartpole.hparam as hp
 
-from modeldb.basic.Structs import Model, ModelConfig, ModelMetrics, Dataset
-from modeldb.basic.ModelDbSyncerBase import Syncer
 
 STR_NOW = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 EXPERIMENT_GROUP = uuid.uuid1()
@@ -44,24 +43,23 @@ RESULTS = []
 
 def train(episodes, render=False, hparams={}, model_config={}, file_name='cartpole-rl-remote',
           metrics_engine=None, metrics_config={}):
-    LOG.info("Training...")
+    LOG.info("Training ...")
     gym = GymRunnerRemote(name=multiprocessing.current_process().name,
                           metrics_engine=metrics_engine, metrics_config=metrics_config)
-    agent = Agent(hparams=hparams, model_config=model_config,
-                  metrics_engine=metrics_engine, metrics_config=metrics_config)
+    agent = Agent(hparams=hparams, model_config=model_config)
     return gym.train(agent, episodes, render=render, file_name=file_name)
 
 
 def run(episodes, render=False, host='localhost', grpc_client=False,
         metrics_engine=None, metrics_config={}):
-    LOG.info("Running...")
+    LOG.info("Running ...")
     gym = GymRunnerRemote(name=multiprocessing.current_process().name,
                           metrics_engine=metrics_engine, metrics_config=metrics_config)
     agent = Agent(metrics_engine=metrics_engine, metrics_config=metrics_config)
     return gym.run(agent, episodes, render=render, host=host, grpc_client=grpc_client)
 
 
-def process_callback(callback_args, metrics_engine=None, metrics_config={}):
+def process_callback(callback_args, callback_metrics):
 
     LOG.debug("Processing callbacks ...")
     exp_ids, num_episodes, scores, hparams, max_scores, _time, file_name = list(zip(*callback_args))
@@ -74,11 +72,8 @@ def process_callback(callback_args, metrics_engine=None, metrics_config={}):
         hparams=hparams[max_score_ind]
     )
 
-    if metrics_engine:
-        getattr(sys.modules[__name__],
-                ('process_callback_%s' % metrics_engine))(
-                    exp_ids, num_episodes, scores, hparams, max_scores, _time, max_score,
-                    max_score_ind, metrics_config)
+    callback_metrics.callback(
+        exp_ids, num_episodes, scores, hparams, max_scores, _time, max_score, max_score_ind)
 
     model_dir = os.path.dirname(file_name[max_score_ind])
     _, file_extension = os.path.splitext(file_name[max_score_ind])
@@ -89,73 +84,6 @@ def process_callback(callback_args, metrics_engine=None, metrics_config={}):
     print(json.dumps(result))
 
     RESULTS.append(result)
-
-
-def process_callback_modeldb(exp_ids, num_episodes, scores, hparams,
-                             max_scores, _time, max_score, max_score_ind, config={}):
-
-    opts_syncer_path = config.get("syncer_conf")
-    if opts_syncer_path:
-        syncer_path = os.path.abspath(opts_syncer_path)
-        LOG.debug("ModelDB callback - Loading config from file {}".format(syncer_path))
-    else:
-        syncer_path = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), '../../scaffold/modeldb/syncer.json'))
-        LOG.debug("ModelDB callback - Loading default config from file {}".format(syncer_path))
-
-    for _arg in list(zip(exp_ids, hparams, max_scores, _time)):
-
-        syncer = Syncer.create_syncer_from_config(syncer_path)
-        model = Model("RL", 'CartPole-{}'.format(_arg[0]), "/path/to/{}".format(_arg[0]))
-
-        syncer.sync_datasets(
-            dict(gym=Dataset("/path/to/gym", {"episodes": num_episodes[0]}))
-        )
-
-        model_config = ModelConfig("RL", _arg[1])
-        syncer.sync_model("gym", model_config, model)
-
-        model_metrics = ModelMetrics({'score': _arg[2]})
-        syncer.sync_metrics("gym", model, model_metrics)
-
-        syncer.sync()
-
-
-def process_callback_visdom(exp_ids, num_episodes, scores, hparams,
-                            max_scores, _time, max_score, max_score_ind, config={}):
-
-    vis = get_visdom_conn(**config)
-
-    vis.boxplot(
-        X=np.column_stack(scores),
-        opts=dict(
-            title='Experiment Scores',
-            legend=exp_ids,
-            width=1200,
-            height=500,
-            marginleft=60,
-            marginright=60,
-            marginbottom=80,
-            margintop=60,
-            fillarea=True,
-            xlabel='Workers',
-            boxpoints='all',
-            ylabel='score'
-        )
-    )
-
-    text = "".join(["<b>%s</b>:&nbsp;%s;&nbsp;Spent time:%s<br/>"
-                    "" % (arg[0], arg[1], arg[2]) for arg in list(zip(exp_ids, hparams, _time))])
-    text += ("<br/><br/>Best score: <b>%.3f</b>"
-             " was reached with worker <b>%s</b>" % (max_score, exp_ids[max_score_ind]))
-    vis.text(
-        text,
-        opts=dict(
-            title='Hyperparameters',
-            width=1200,
-            height=200
-        )
-    )
 
 
 def main(argv=sys.argv[1:]):
@@ -189,15 +117,14 @@ def main(argv=sys.argv[1:]):
 
     parser.add_argument('--metrics-engine',
                         default=None,
-                        choices=(None, 'visdom', 'tensorboard', 'modeldb'),
+                        choices=(None, 'visdom', 'modeldb'),  # TODO: Add tensorboard callbacks
                         help='Type of metrics visualizer engine.')
 
     parser.add_argument('--metrics-config', type=json.loads,
                         default={},
                         help='Metrics configuration. Contents are different according to "metrics-engine" arg.'
                              ' Visdom example: {"server": "http://localhost"}.'
-                             ' Tensorboard example: {"log_dir": "/tmp/logs/"}.'
-                             ' ModelDB example: {}.')
+                             ' ModelDB example: {}.')  # TODO: ' Tensorboard example: {"log_dir": "/tmp/logs/"}.'
 
     train_subcommand.add_argument('-f', '--file-name',
                                   default='cartpole-rl-remote',
@@ -230,15 +157,8 @@ def main(argv=sys.argv[1:]):
         LOG.addHandler(fh)
 
     metrics_engine = args.metrics_engine
-    metrics_config = {}
-
-    if args.metrics_engine == 'visdom':
-        metrics_config['server'] = 'http://localhost'
-    elif args.metrics_engine == 'tensorboard':
-        metrics_config['log_dir'] = "./.logs/"
-    elif args.metrics_engine == 'modeldb':
-        pass
-    metrics_config.update(args.metrics_config)
+    metrics_config = args.metrics_config
+    callback_metrics = callbacks.create_callback(metrics_engine, **metrics_config)
 
     if args.func == train:
 
@@ -257,7 +177,7 @@ def main(argv=sys.argv[1:]):
             results = process_pool.starmap_async(
                 args.func,
                 _args,
-                callback=lambda callback_args: process_callback(callback_args, metrics_engine, metrics_config)
+                callback=lambda callback_args: process_callback(callback_args, callback_metrics)
             )
             results.get()
 
@@ -276,6 +196,7 @@ def main(argv=sys.argv[1:]):
 if __name__ == "__main__":
 
     try:
+        import cartpole.metrics.callbacks as callbacks
         main(sys.argv[1:])
     except KeyboardInterrupt:
         LOG.warning("... cartpole command was interrupted")

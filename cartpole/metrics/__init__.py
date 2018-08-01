@@ -3,11 +3,15 @@
 
 import visdom
 import time
+import logging
+
+LOG = logging.getLogger(__name__)
 
 
 def get_visdom_conn(**opts):
     vis = visdom.Visdom(**opts)
     startup_sec = 15
+    LOG.debug("Checking visdom connectivity ...")
     while not vis.check_connection() and startup_sec > 0:
         time.sleep(1)
         startup_sec -= 1
