@@ -247,7 +247,7 @@ gke-create-gpu-group: ## Create a GPU group for kubernetes cluster on GKE.
 	  sh -c "gcloud config set project $(GCP_PROJECT_ID) && gcloud container node-pools create $(GKE_CLUSTER_NAME)-gpu-pool \
 	         --accelerator type=$(GKE_GPU_TYPE),count=$(GKE_GPU_AMOUNT) --zone $(GCP_ZONE) \
 	         --cluster $(GKE_CLUSTER_NAME) --num-nodes $(GKE_GPU_NODES) --min-nodes $(GKE_GPU_NODES_MIN) \
-	         --max-nodes $(GKE_GPU_NODES_MAX) --image-type "$(GKE_IMAGE_TYPE)" --enable-autoscaling --preemptible"
+	         --max-nodes $(GKE_GPU_NODES_MAX) --machine-type "$(GKE_IMAGE_TYPE)" --enable-autoscaling --preemptible"
 
 .PHONY: gke-seldon-install
 gke-seldon-install: ## Installing Seldon components
