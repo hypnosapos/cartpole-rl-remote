@@ -32,13 +32,14 @@ class GymRunnerRemote:
         self.seldon_client = None
         self.log = logging.getLogger(__name__)
         if metrics_engine == 'visdom' and self.log.isEnabledFor(logging.DEBUG):
-            vfmt = VisdomFormatter(['episode', 'score'])
+            metric_names = {'y': 'score', 'x': 'episode'}
+            vfmt = VisdomFormatter(metric_names)
             handler = VisdomPlotHandler(
                 self.name, 'scatter',
                 plot_opts=dict(
                     title=self.name,
-                    xlabels='episodes',
-                    ylabel='score',
+                    xlabels=metric_names['x'],
+                    ylabel=metric_names['y'],
                     markersize=5
                 ),
                 opts=metrics_config

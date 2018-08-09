@@ -4,7 +4,7 @@
 from logging import Handler, Formatter
 import numpy as np
 import re
-
+import collections
 
 from cartpole.metrics import get_visdom_conn
 
@@ -72,6 +72,7 @@ class VisdomPlotHandler(BaseVisdomHandler):
         if metric_entry:
             x_y = (np.array(metric_entry.get('x')),
                    np.array(metric_entry.get('y')),)
+
             if self.plot_type == 'line':
                 data = {'Y': x_y[1], 'X': x_y[0]}
             else:
@@ -96,33 +97,29 @@ class VisdomPlotHandler(BaseVisdomHandler):
 class VisdomFormatter(Formatter):
 
     def __init__(self, metric_names, pattern=r"^(Metrics -)(.+)"):
-        assert metric_names and type(metric_names) is list, "It's required the metric name list"
+        assert metric_names and type(metric_names) is dict, "It's required the metric name dict"
         assert pattern, "It's required a pattern to match entries to process."
         super(VisdomFormatter, self).__init__()
         self.metric_names = metric_names
         self.re = re.compile(pattern)
         self.re_metrics = [
-            (metric_name, re.compile(r"\s+%s:\s+(?P<%s>\d*\.?\d*)" % (metric_name, metric_name)),)
-            for metric_name in metric_names
+            (metric_name_coor, re.compile(r"\s+%s:\s+(?P<%s>\d*\.?\d*)" % (metric_name, metric_name)),)
+            for metric_name_coor, metric_name in metric_names.items()
         ]
 
     def format(self, record):
         s2match = super(VisdomFormatter, self).format(record)
-        data = {}
         if s2match:
             metrics_match = self.re.match(s2match)
             if metrics_match and metrics_match.group(2):
-                metric_matches = {re_metric[0]: re_metric[1].findall(metrics_match.group(2))
-                                  for re_metric in self.re_metrics}
-                metric_values = []
-                for metric_name, re_metric_matches in metric_matches.items():
+                metric_values_dict = {}
+                for metric_name_coor, metric_re in self.re_metrics:
+                    re_metric_matches = metric_re.findall(metrics_match.group(2))
                     if re_metric_matches:
-                        metric_value = re_metric_matches[0]
-                        metric_values.append(float(metric_value))
-                    else:
-                        break
-                if len(metric_values) == len(self.metric_names):
+                        metric_values_dict[metric_name_coor] = float(re_metric_matches[0])
+                if len(metric_values_dict.values()) == len(self.re_metrics):
                     # Skip entries if not all metrics are present
-                    data.update({'x': [metric_values]})
+                    return {'x': [list(collections.OrderedDict(sorted(metric_values_dict.items(),
+                                                                      key=lambda t: t[0])).values())]}
 
-        return data
+        return {}

@@ -24,8 +24,8 @@ class VisdomCallback(SummaryCallback):
             opts=dict(
                 title='Experiment Scores',
                 legend=exp_ids,
-                width=1200,
-                height=500,
+                width=2000,
+                height=400,
                 marginleft=60,
                 marginright=60,
                 marginbottom=80,
@@ -45,7 +45,7 @@ class VisdomCallback(SummaryCallback):
             text,
             opts=dict(
                 title='Hyperparameters',
-                width=1200,
+                width=2000,
                 height=200
             )
         )
