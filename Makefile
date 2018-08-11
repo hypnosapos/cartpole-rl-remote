@@ -19,13 +19,13 @@ RUN_MODEL_IP      ?= localhost
 PY_ENVS           ?= 3.5 3.6
 DEFAULT_PY_ENV    ?= 3.5
 
-GCLOUD_IMAGE_TAG    ?= 206.0.0-alpine
+GCLOUD_IMAGE_TAG    ?= alpine
 GCP_CREDENTIALS     ?= $$HOME/gcp.json
 GCP_ZONE            ?= my_zone
 GCP_PROJECT_ID      ?= my_project
 
-GKE_CLUSTER_VERSION ?= 1.10.5-gke.3
-GKE_CLUSTER_NAME    ?= ml-demo
+GKE_CLUSTER_VERSION ?= 1.10.5-gke.4
+GKE_CLUSTER_NAME    ?= cartpole
 GKE_NODES           ?= 2
 GKE_IMAGE_TYPE      ?= n1-standard-8
 GKE_GPU_AMOUNT      ?= 1
@@ -118,8 +118,9 @@ docker-push: ## Push docker images
 	    $(DOCKER_TAGS),\
 	    docker push $(DOCKER_ORG)/$(DOCKER_IMAGE):$(tag);)
 
-.PHONY: visdom
+.PHONY: docker-visdom
 docker-visdom: ## Run a visdom server
+	@docker rm -f $$(docker ps -a -f "name=local-visdom" --format "{{.Names}}") $^ 2>/dev/null ; true
 	@docker run -d --name local-visdom -p 8097:8097 hypnosapos/visdom:latest
 
 .PHONY: train
@@ -130,10 +131,14 @@ train: clean-seldon-models## Train model
 .PHONY: train-dev
 train-dev: docker-visdom clean-seldon-models ## Train a model in dev mode with render option and visdom reports (requires venv)
 	@. $(ROOT_PATH).venv/bin/activate && \
+	 until curl --output /dev/null -f --silent http://localhost:8097; do \
+	   sleep 5; \
+	 done && \
 	 cartpole -e $(TRAIN_EPISODES) -r --log-level DEBUG \
 	   --metrics-engine visdom --metrics-config '{"server": "http://127.0.0.1", "env": "main"}' \
 	   train --gamma 0.095 0.099 0.001 -f $(ROOT_PATH)/.models/$(MODEL_FILE)
-	@docker rm -f local-visdom
+	## Sleep 30 seg to get data on visdom web dashboard before delete the container
+	@sleep 30 && docker rm -f local-visdom
 
 .PHONY: train-docker
 train-docker: clean-seldon-models ## Train by docker container
@@ -149,6 +154,7 @@ train-docker-modeldb: clean-seldon-models ## Train by docker compose using model
 
 .PHONY: train-docker-visdom
 train-docker-visdom: clean-seldon-models ## Train by docker compose using visdom server for metrics
+	@docker rm -f $$(docker ps -a -f "name=local-visdom" --format "{{.Names}}") $^ 2>/dev/null ; true
 	## @docker-compose -f docker-compose-visdom.yaml up --exit-code-from cartpole
 	@docker-compose -f scaffold/docker-compose-visdom.yaml up
 	@docker-compose -f scaffold/docker-compose-visdom.yaml down

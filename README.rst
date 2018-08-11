@@ -11,7 +11,8 @@ Cartpole RL Remote
    :alt: We love OpenSource
 
 
-This project is intended to play with `CartPole <https://gym.openai.com/envs/CartPole-v0/>`_ game using Reinforcement Learning.
+This project is intended to play with `CartPole <https://gym.openai.com/envs/CartPole-v0/>`_ game using Reinforcement Learning
+and to know how we may train a different model experiments with enough observability (metrics/monitoring).
 
 The model is divided basically in three parts: Neural network model, QLearning algorithm and application runner.
 
@@ -28,8 +29,8 @@ Basic scenario (Station #1):
 
 Advanced scenarios (Station #2 and #3):
 
-- kubernetes (1.8+)
-- polyaxon (0.1.4)
+- kubernetes (1.9+)
+- polyaxon (0.1.7)
 - seldon (0.2.2)
 
 Station #1: Custom trainer and metrics collection
@@ -41,12 +42,7 @@ It's very important to have on mind that our code should be run on any environme
 First attempt was to train CartPole model with our own trainer by a multiprocessor python module,
 by default it'll try to use one processor for each hyperparameter combination (model experiment).
 
-As result of the training we'll get out an **h5** file with the trained model and all metrics about the training process.
-
-.. image:: assets/basic_scenario.png
-   :alt: Basic Scenario
-
-*NOTE*: Yes, we could have tried tensorboard callbacks for Keras model (or tensorflow models), but we wanna be model framework agnostic.
+*NOTE*: Yes, we could have tried tensorboard callbacks for background Keras model (or tensorflow models), but we wanna explore other ways too.
 
 Collecting metrics with visdom
 ------------------------------
@@ -65,48 +61,72 @@ To create a local virtual env for python, type::
 
    make venv
 
-When this virtual env is activated, we can use the ``cartpole`` command client directly, type::
+When this virtual env is activated, we can use the ``cartpole`` command client directly::
 
+   source .venv/bin/activate
    cartpole --help
 
-for more information about how to use it.
 
-We have a couple of arguments to provide visdom configuration to send metrics: ``--metrics-engine`` and ``--metrics-config``.
+We have a couple of arguments to setup metrics collection: ``--metrics-engine`` and ``--metrics-config``.
 
-The simplest way to train the model and collect metrics with visdom is next command::
+The simplest way to train the model and collect metrics with visdom (trough docker container) is next command ::
 
    make train-dev
 
-Change default values for hyperparameters in Makefile file if you wish another combination. Note that render mode is activated by default (``-r`` argument)
+Change default values for hyperparameters in Makefile file if you wish another combination.
+
+*NOTE*: Render mode is activated with ``-r`` argument if you want to see CartPole game training.
+
 so many windows, one per experiment, will show the CartPole game in action while is training.
 
-Visdom server must be ready at: http://localhost:8097
+Visdom server might be ready at: http://localhost:8097 with metrics and evaluation model results, this process gets out an **h5** file with the best trained model as well.
+
 
 Using docker compose
 ^^^^^^^^^^^^^^^^^^^^
 
-If you prefer use docker containers for everything launch this command::
+If you prefer use docker containers for everything launch this command (powered by docker-compose)::
 
    make train-docker-visdom
 
 
 
+.. image:: assets/cartpole-visdom.gif
+   :alt: Basic Scenario - Visdom
+
 Using docker log drivers, EFK in action
 ---------------------------------------
 
-Ok, it's possible to implement our metrics collector, but as we are using containers, couldn't we use docker log drivers to extract metrics from log lines?
+Ok, it's possible to implement our own metrics collector, but as we are using containers, couldn't we use docker log drivers to extract metrics from log lines?
 Yes, of course.
 
-We've created a fluentd conf file to specify the regex pattern of searched lines in logs, and fluentd will send metrics to elasticsearch,
-finally visualizations of metricswill be available through kibana dashboard.
+We've created a fluentd conf file (under directory **scaffold/efk/fluentd**) to specify the regex pattern of searched lines in logs, and fluentd will send metrics to elasticsearch,
+finally visualizations of metrics will be available through kibana dashboard.
 
 To run this stack type::
 
    make train-docker-efk
 
 
-Kibana URL would be: http://localhost:5601. Set the text ``cartpole-*`` for the index pattern.
-In **efk/kibana** directory you can find a kibana dashboard json file that you can import to view all graphics about cartpole model experiments.
+Kibana URL would be: http://localhost:5601. Set the text ``cartpole-*`` as the index pattern.
+In **scaffold/efk/kibana** directory you can find a kibana dashboard json file that you can import to view all graphics about cartpole model experiments.
+
+.. image:: assets/cartpole-efk.gif
+   :alt: Basic Scenario - EFK
+
+Using ModelDB as experiment repository
+--------------------------------------
+
+ModelDB is a MIT licensed project that let's track our model experiments pretty easy.
+
+Check out typing::
+
+   make train-docker-modeldb
+
+Frontend is available at: http://localhost:3000
+
+.. image:: assets/cartpole-efk.gif
+   :alt: Basic Scenario - ModelDB
 
 Station #2: Advanced training with Polyaxon
 ===========================================
@@ -126,14 +146,12 @@ Follow this command sequence to get a kubernetes cluster with all polyaxon compo
    export GCP_PROJECT_ID=<my_project>
    export GKE_CLUSTER_NAME=cartpole
    export GITHUB_TOKEN=<githubtoken>
-   make gke-bastion gke-create-cluster gke-tiller-helm gke-proxy gke-ui-login-skip
+   make gke-bastion gke-create-cluster gke-tiller-helm gke-proxy gke-ui-login-skip gke-ui
 
 We'll use the default one node ZFS server as polyaxon docs shows us (feel free to change de volume driver)::
 
    make -C scaffold/polyaxon gke-polyaxon-nfs
-   make -C scaffold/polyaxon gke-polyaxon-nfs-grafana
 
-In
 
 Install polyaxon components on kubernetes and configure the polyaxon client on gke-bastion container ::
 
@@ -144,10 +162,6 @@ Finally, let's deploy our experiments groups by this command::
 
    make  -C scaffold/polyaxon gke-polyaxon-cartpole
 
-
-Kubernetes web console should be ready by command::
-
-   make gke-ui
 
 You can use the gke-bastion container as proxy for gcloud, kubectl or polyaxon commands directly, i.e::
 

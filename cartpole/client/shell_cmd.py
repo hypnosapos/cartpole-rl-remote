@@ -72,8 +72,9 @@ def process_callback(callback_args, callback_metrics):
         hparams=hparams[max_score_ind]
     )
 
-    callback_metrics.callback(
-        exp_ids, num_episodes, scores, hparams, max_scores, _time, max_score, max_score_ind)
+    if callback_metrics:
+        callback_metrics.callback(
+            exp_ids, num_episodes, scores, hparams, max_scores, _time, max_score, max_score_ind)
 
     model_dir = os.path.dirname(file_name[max_score_ind])
     _, file_extension = os.path.splitext(file_name[max_score_ind])
@@ -117,14 +118,14 @@ def main(argv=sys.argv[1:]):
 
     parser.add_argument('--metrics-engine',
                         default=None,
-                        choices=(None, 'visdom', 'modeldb'),  # TODO: Add tensorboard callbacks
+                        choices=(None, 'visdom', 'modeldb'),
                         help='Type of metrics visualizer engine.')
 
     parser.add_argument('--metrics-config', type=json.loads,
                         default={},
                         help='Metrics configuration. Contents are different according to "metrics-engine" arg.'
                              ' Visdom example: {"server": "http://localhost"}.'
-                             ' ModelDB example: {}.')  # TODO: ' Tensorboard example: {"log_dir": "/tmp/logs/"}.'
+                             ' ModelDB example: {}.')
 
     train_subcommand.add_argument('-f', '--file-name',
                                   default='cartpole-rl-remote',
@@ -158,7 +159,7 @@ def main(argv=sys.argv[1:]):
 
     metrics_engine = args.metrics_engine
     metrics_config = args.metrics_config
-    callback_metrics = callbacks.create_callback(metrics_engine, **metrics_config)
+    callback_metrics = callbacks.create_callback(metrics_engine, **metrics_config) if metrics_engine else None
 
     if args.func == train:
 

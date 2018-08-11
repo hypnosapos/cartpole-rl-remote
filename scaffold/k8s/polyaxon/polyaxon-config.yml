@@ -99,7 +99,22 @@ tolerations:
     value: "present"
     effect: "NoSchedule"
 
-# Fix, expected 0.1.6 tag for image doesn't exist yet.
-job:
-  image: polyaxon/polyaxon-lib
-  imageTag: 0.1.4
+#email:
+#  host: smtp
+#  port: 25
+#  useTls: false
+#  hostUser: ""
+#  hostPassword: ""
+#
+#integrations:
+#  slack:
+#  hipchat:
+#  mattermost:
+#  discord:
+#  pagerduty:
+#  webhooks:
+# e.g.
+  # slack:
+  #   - url: https://hooks.slack.com/services/T6QR3FYN7/BC34VRP/7KRWJAtQWOxjxYgee
+  #   - url: https://hooks.slack.com/services/FGDR3FD34/BC34VRP/7KRWDSFSD3xjxYgee
+  #     channel: channel12

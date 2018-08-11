@@ -5,7 +5,9 @@ SHELL ?= /bin/bash
 
 GCP_ZONE            ?= my_zone
 GCP_PROJECT_ID      ?= my_project
-PLX_VERSION         ?= 0.1.6
+PLX_VERSION         ?= 0.1.7
+
+ZFS_VM              ?= polyaxon-zfs-vm
 
 UNAME := $(shell uname -s)
 ifeq ($(UNAME),Linux)
@@ -27,16 +29,16 @@ venv: ## Create a local virtualenv with polyaxon packages installed
 .PHONY: gke-polyaxon-nfs
 gke-polyaxon-nfs: ## Create a NFS server by ZFS single Node
 	@echo "Visit https://console.cloud.google.com/launcher/details/click-to-deploy-images/singlefs?q=zfs"
-	@echo "VM name must be: polyaxon-nfs-vm"
+	@echo "VM name must be: $(ZFS_VM)"
 	@docker exec gke-bastion \
 	   sh -c "gcloud config set project $(GCP_PROJECT_ID) \
-	           && gcloud --project $(GCP_PROJECT_ID) compute ssh --zone=$(GCP_ZONE) polyaxon-nfs-vm \
+	           && gcloud --project $(GCP_PROJECT_ID) compute ssh --zone=$(GCP_ZONE) $(ZFS_VM) \
 	         --command 'for dir_name in data outputs logs repos upload;do mkdir -m 777 /data/$$dir_name;done'"
 
 .PHONY: gke-polyaxon-nfs-grafana
 gke-polyaxon-nfs-grafana: ## Create a machine to serve NFS storage
 	@docker exec gke-bastion \
-	   sh -c "gcloud --project $(GCP_PROJECT_ID) compute ssh --ssh-flag=-L3000:localhost:3000 --zone=$(GCP_ZONE) polyaxon-nfs-vm"
+	   sh -c "gcloud --project $(GCP_PROJECT_ID) compute ssh --ssh-flag=-L3000:localhost:3000 --zone=$(GCP_ZONE) $(ZFS_VM)"
 
 
 .PHONY: gke-polyaxon-preinstall
@@ -44,7 +46,7 @@ gke-polyaxon-preinstall: ## Get a docker image list of all nodes
 	@docker exec gke-bastion \
 	   sh -c 'gcloud config set project $(GCP_PROJECT_ID) \
 	          && kubectl create namespace polyaxon \
-	          && export IP="$$(gcloud compute instances describe polyaxon-nfs-vm \
+	          && export IP="$$(gcloud compute instances describe $(ZFS_VM) \
 	            --zone=$(GCP_ZONE) --format="'"value(networkInterfaces[0].networkIP)"'")" \
 	          && find /cartpole-rl-remote/scaffold/k8s/polyaxon -name "'"*-pvc.yml"'" \
 	              -exec sed -i s/NFS_HOST/$$IP/g {} \;\

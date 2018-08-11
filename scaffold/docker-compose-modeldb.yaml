@@ -50,7 +50,7 @@ services:
       until curl --output /dev/null -f --silent --head --fail http://frontend:3000; do
         sleep 5
       done &&
-      cartpole --log-level DEBUG -e ${TRAIN_EPISODES:-200}
+      cartpole -e ${TRAIN_EPISODES:-200}
       --metrics-engine modeldb --metrics-config '{\"syncer_conf\": \"/tmp/modeldb/syncer.json\"}'
       train --gamma 0.095 0.099 0.001 -f /tmp/models/cartpole-rl-remote"
     volumes:
