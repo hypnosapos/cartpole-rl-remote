@@ -125,7 +125,7 @@ Check out typing::
 
 Frontend is available at: http://localhost:3000
 
-.. image:: assets/cartpole-efk.gif
+.. image:: assets/cartpole-modeldb.gif
    :alt: Basic Scenario - ModelDB
 
 Station #2: Advanced training with Polyaxon
