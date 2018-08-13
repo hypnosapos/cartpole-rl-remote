@@ -77,8 +77,6 @@ Change default values for hyperparameters in Makefile file if you wish another c
 
 *NOTE*: Render mode is activated with ``-r`` argument if you want to see CartPole game training.
 
-so many windows, one per experiment, will show the CartPole game in action while is training.
-
 Visdom server might be ready at: http://localhost:8097 with metrics and evaluation model results, this process gets out an **h5** file with the best trained model as well.
 
 
