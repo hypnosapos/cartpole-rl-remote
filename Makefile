@@ -122,6 +122,10 @@ docker-push: ## Push docker images
 docker-visdom: ## Run a visdom server
 	@docker rm -f $$(docker ps -a -f "name=local-visdom" --format "{{.Names}}") $^ 2>/dev/null ; true
 	@docker run -d --name local-visdom -p 8097:8097 hypnosapos/visdom:latest
+	@until curl --output /dev/null -f --silent http://localhost:8097; do \
+	   echo "Trying connect to visdom server at http://localhost:8097 ..."; \
+	   sleep 5; \
+	 done
 
 .PHONY: train
 train: clean-seldon-models## Train model
@@ -130,15 +134,10 @@ train: clean-seldon-models## Train model
 
 .PHONY: train-dev
 train-dev: docker-visdom clean-seldon-models ## Train a model in dev mode with render option and visdom reports (requires venv)
-	@. $(ROOT_PATH).venv/bin/activate && \
-	 until curl --output /dev/null -f --silent http://localhost:8097; do \
-	   sleep 5; \
-	 done && \
+	@. $(ROOT_PATH).venv/bin/activate
 	 cartpole -e $(TRAIN_EPISODES) -r --log-level DEBUG \
 	   --metrics-engine visdom --metrics-config '{"server": "http://127.0.0.1", "env": "main"}' \
 	   train --gamma 0.095 0.099 0.001 -f $(ROOT_PATH)/.models/$(MODEL_FILE)
-	## Sleep 30 seg to get data on visdom web dashboard before delete the container
-	@sleep 30 && docker rm -f local-visdom
 
 .PHONY: train-docker
 train-docker: clean-seldon-models ## Train by docker container
@@ -182,12 +181,11 @@ seldon-push:  ## Push docker image for seldon deployment
 	@cd $(ROOT_PATH)scaffold/seldon/build && ./push_image.sh
 
 .PHONY: run-dev
-run-dev: ## docker-visdom  (so lazy in DatioNet )## Run a remote agent in dev mode with render option and visdom reports (requires venv)
+run-dev: docker-visdom ## Run a remote agent in dev mode with render option and visdom reports (requires venv)
 	@. .venv/bin/activate && \
-	 cartpole -e $(RUN_EPISODES) -r --log-level DEBUG \
+	 cartpole -e $(RUN_EPISODES) --log-level DEBUG \
 	   --metrics-engine visdom --metrics-config '{"server": "http://127.0.0.1", "env": "main"}' \
 	   run --host "$(RUN_MODEL_IP)" --runners 5
-	@docker rm -f local-visdom
 
 .PHONY: run-dev-router-agent
 run-dev-router-agent: ## Run a router agent to change the default behaviour

@@ -35,7 +35,7 @@ class SeldonClient(object):
             http_adapter = requests.adapters.HTTPAdapter(
                 pool_connections=pool_connections,
                 pool_maxsize=poll_maxsize,
-                max_retries= max_retries
+                max_retries=max_retries
             )
             session.mount('http://', http_adapter)
             session.mount('https://', http_adapter)
@@ -83,7 +83,7 @@ class SeldonClient(object):
         if done:
             reward = 0
         feedback = {"request": request, "response": response, "reward": reward}
-        self.log.debug("Sending feedback...")
+        self.log.debug("Sending feedback ...\n{}".format(feedback))
         ret = self.get_session().post("http://{}:8080/api/v0.1/feedback".format(self.host), json=feedback)
         return ret.text
 

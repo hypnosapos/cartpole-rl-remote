@@ -10,12 +10,9 @@ import sys
 import uuid
 import logging
 import json
-import time
 from itertools import product
 import numpy as np
 from datetime import datetime
-
-import cartpole.metrics.callbacks as callbacks
 
 import cartpole.hparam as hp
 from cartpole.runner_remote import GymRunnerRemote
@@ -23,7 +20,6 @@ from cartpole.qlearning_agent import (
     QLearningAgent as Agent,
     HPARAMS_SCHEMA
 )
-
 
 STR_NOW = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 EXPERIMENT_GROUP = uuid.uuid1()
@@ -55,7 +51,7 @@ def run(episodes, render=False, host='localhost', grpc_client=False,
     LOG.info("Running ...")
     gym = GymRunnerRemote(name=multiprocessing.current_process().name,
                           metrics_engine=metrics_engine, metrics_config=metrics_config)
-    agent = Agent(metrics_engine=metrics_engine, metrics_config=metrics_config)
+    agent = Agent()
     return gym.run(agent, episodes, render=render, host=host, grpc_client=grpc_client)
 
 
