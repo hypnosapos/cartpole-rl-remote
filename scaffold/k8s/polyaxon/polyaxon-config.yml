@@ -4,13 +4,7 @@ rbac:
   enabled: true
 ingress:
   enabled: false
-#  annotations:
-#    ingress.kubernetes.io/ssl-redirect: "false"
-#    ingress.kubernetes.io/rewrite-target: /
-#    ingress.kubernetes.io/add-base-url: "true"
-#    kubernetes.io/ingress.class: polyaxon-ingress
-# If you enable ingress, please set this value to ClusterIP or NodePort
-# Otherwise you should set it to LoadBalancer
+
 serviceType: LoadBalancer
 
 user:
@@ -21,7 +15,7 @@ user:
 postgresql:
   persistence:
     enabled: true
-    size: 5Gi
+    size: 10Gi
 
 persistence:
   logs:
@@ -52,25 +46,6 @@ persistence:
       mountPath: "/outputs"
       accessMode: ReadWriteMany
 
-# e.g.
-  # data:
-  #   data1:
-  #     mountPath: "/data/1"
-  #     hostPath: "/path/to/data"
-  #     readOnly: true
-  #   data2:
-  #     mountPath: "/data/2"
-  #     existingClaim: "data-2-pvc"
-  # outputs:
-  #   outputs1:
-  #      mountPath: "/outputs/1"
-  #     hostPath: "/path/to/outputs"
-  #     readOnly: true
-  #   outputs2:
-  #      mountPath: "/outputs/2"
-  #     existingClaim: "outputs-2-pvc"
-
-
 dirs:
   nvidia:
     lib: "/home/kubernetes/bin/nvidia/lib64"
@@ -86,35 +61,9 @@ mountPaths:
     libcuda: ""
   docker: "/var/run/docker.sock"
 
-#auth:
-#  github:
-#    enabled: true
-#    clientId: ""
-#    clientSecret: ""
-
 tolerations:
   resourcesDeamon:
   - key: "nvidia.com/gpu"
     operator: "Equal"
     value: "present"
     effect: "NoSchedule"
-
-#email:
-#  host: smtp
-#  port: 25
-#  useTls: false
-#  hostUser: ""
-#  hostPassword: ""
-#
-#integrations:
-#  slack:
-#  hipchat:
-#  mattermost:
-#  discord:
-#  pagerduty:
-#  webhooks:
-# e.g.
-  # slack:
-  #   - url: https://hooks.slack.com/services/T6QR3FYN7/BC34VRP/7KRWJAtQWOxjxYgee
-  #   - url: https://hooks.slack.com/services/FGDR3FD34/BC34VRP/7KRWDSFSD3xjxYgee
-  #     channel: channel12

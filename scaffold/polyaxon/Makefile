@@ -5,9 +5,9 @@ SHELL ?= /bin/bash
 
 GCP_ZONE            ?= my_zone
 GCP_PROJECT_ID      ?= my_project
-PLX_VERSION         ?= 0.1.7
+PLX_VERSION         ?= 0.1.8
 
-ZFS_VM              ?= polyaxon-zfs-vm
+ZFS_VM              ?= polyaxon-nfs-vm
 
 UNAME := $(shell uname -s)
 ifeq ($(UNAME),Linux)
