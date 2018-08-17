@@ -16,7 +16,7 @@ and to know how we may train a different model experiments with enough observabi
 
 The model is divided basically in three parts: Neural network model, QLearning algorithm and application runner.
 
-We want to show you a journey from custom model trainer to a productive platform based on open source (training/inference).
+We want to show you a journey from custom training of models to a productive platform based on open source  (training/inference).
 
 Requirements
 ============
@@ -36,8 +36,8 @@ Advanced scenarios (Station #2 and #3):
 Station #1: Custom trainer and metrics collection
 =================================================
 
-As with any other software development, machine learning code must follow the same best practices.
-It's very important to have on mind that our code should be run on any environment, on my laptop or on any cloud.
+As with any other software development, machine learning code must follow the same best practices, so
+it's very important to have on mind that our code should be run on any environment, on my laptop or on any cloud (avoid vendor services, and ensuring portability anywhere).
 
 First attempt was to train CartPole model with our own trainer by a multiprocessor python module,
 by default it'll try to use one processor for each hyperparameter combination (model experiment).
@@ -175,17 +175,15 @@ Station #3: Model inference with Seldon
 =======================================
 
 The idea is to get trained models and deploy them within `Seldon <https://seldon.io>`_.
-Install this python module to train or run the RL model under the wood.
 
 In order to create your own seldon images use::
 
     make seldon-build seldon-push
 
 This command uses the official seldon wrapper to build and push your docker images.
-Mainly the built image adds a python module with entry method "predict" to be use by the api microservice,
-besides the best scored model (h5 file) will be included as well at the same directory to be served.
+Mainly the built image process attaches the best scored model (h5 file) to be served through the entry method "predict" for client requests when the seldon microservice is ready.
 Note that training models are moved from default ".models" local directory to *scaffold/seldon* directory to be included into the docker image, but obviously you can choose another,
-even from a cloud storage such as S3, GCS, ... (probably you are thinking about the output directory used in training stage with polyaxon, you're right).
+even from a cloud storage such as S3, GCS, ... (probably you are thinking about linking the output directory used in training stage with polyaxon, you're right).
 
 We provide some docker images for this PoC with different scores under the `dockerhub org hypnosapos <https://hub.docker.com/r/hypnosapos/cartpolerlremoteagent/tags/>`_.
 
