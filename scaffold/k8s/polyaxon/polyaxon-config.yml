@@ -67,3 +67,8 @@ tolerations:
     operator: "Equal"
     value: "present"
     effect: "NoSchedule"
+
+integrations:
+  webhook:
+  - url: http://internalwebhook
+    method: POST
