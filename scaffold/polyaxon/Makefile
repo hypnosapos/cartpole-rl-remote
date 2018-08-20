@@ -88,4 +88,4 @@ gke-polyaxon-cartpole-init:
 
 .PHONY: gke-polyaxon-cartpole ## Upload and run cartpole experiment group
 gke-polyaxon-cartpole:
-	@docker exec gke-bastion sh -c "cd /cartpole-rl-remote/scaffold/polyaxon && polyaxon run -u"
+	@docker exec gke-bastion sh -c "cd /cartpole-rl-remote/scaffold/polyaxon && polyaxon run -u --name 'cartpole' --description 'CartPole game by RL'"
