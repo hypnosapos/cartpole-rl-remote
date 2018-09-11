@@ -5,7 +5,7 @@ SHELL ?= /bin/bash
 
 GCP_ZONE            ?= my_zone
 GCP_PROJECT_ID      ?= my_project
-PLX_VERSION         ?= 0.1.8
+PLX_VERSION         ?= 0.2.1
 
 ZFS_VM              ?= polyaxon-nfs-vm
 
@@ -74,7 +74,7 @@ gke-polyaxon-uninstall: ## Uninstall polyaxon
 
 .PHONY: gke-polyaxon-cartpole-init ## Initialize cartpole experiment group
 gke-polyaxon-cartpole-init:
-	docker exec gke-bastion \
+	@docker exec gke-bastion \
 	   sh -c 'apk --update add py-pip python-dev build-base && pip install polyaxon-cli \
 	          && export POLYAXON_IP="$$(kubectl get svc --namespace polyaxon polyaxon-polyaxon-api -o jsonpath="'"{.status.loadBalancer.ingress[0].ip}"'")" \
 	          && export POLYAXON_HTTP_PORT=80 \
@@ -82,7 +82,7 @@ gke-polyaxon-cartpole-init:
 	          && echo http://$$POLYAXON_IP:$$POLYAXON_HTTP_PORT \
 	          && cd /cartpole-rl-remote/scaffold/polyaxon \
 	          && polyaxon config set --host=$$POLYAXON_IP --http_port=$$POLYAXON_HTTP_PORT  --ws_port=$$POLYAXON_WS_PORT \
-	          && polyaxon login --username root --password $$(kubectl get secret --namespace polyaxon polyaxon-polyaxon-secret -o jsonpath="'"{.data.user-password}"'" | base64 -d) \
+	          && polyaxon login --username root --password $$(kubectl get secret --namespace polyaxon polyaxon-polyaxon-secret -o jsonpath="'"{.data.POLYAXON_ADMIN_PASSWORD}"'" | base64 -d) \
 	          && polyaxon project create --name cartpole --description "Cartpole RL Remote Agent" \
 	          && polyaxon init cartpole'
 
