@@ -69,6 +69,6 @@ tolerations:
     effect: "NoSchedule"
 
 integrations:
-  webhook:
+  webhooks:
   - url: http://internalwebhook
     method: POST
