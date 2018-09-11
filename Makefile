@@ -24,7 +24,7 @@ GCP_CREDENTIALS     ?= $$HOME/gcp.json
 GCP_ZONE            ?= my_zone
 GCP_PROJECT_ID      ?= my_project
 
-GKE_CLUSTER_VERSION ?= 1.10.5-gke.4
+GKE_CLUSTER_VERSION ?= 1.10.7-gke.1
 GKE_CLUSTER_NAME    ?= cartpole
 GKE_NODES           ?= 2
 GKE_IMAGE_TYPE      ?= n1-standard-8
