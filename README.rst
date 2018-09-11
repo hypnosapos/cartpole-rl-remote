@@ -30,7 +30,7 @@ Basic scenario (Station #1):
 Advanced scenarios (Station #2 and #3):
 
 - kubernetes (1.9+)
-- polyaxon (0.1.7)
+- polyaxon (0.2.1)
 - seldon (0.2.2)
 
 Station #1: Custom trainer and metrics collection
@@ -140,7 +140,7 @@ Under the directory **polyaxon** you can find all resources related to it.
 Follow this command sequence to get a kubernetes cluster with all polyaxon components installed (we'll use GKE service)::
 
    export GCP_CREDENTIALS=/tmp/gcp.json
-   export GCP_ZONE=europe-west1-b
+   export GCP_ZONE=europe-west4-a
    export GCP_PROJECT_ID=<my_project>
    export GKE_CLUSTER_NAME=cartpole
    export GITHUB_TOKEN=<githubtoken>
@@ -166,10 +166,13 @@ You can use the gke-bastion container as proxy for gcloud, kubectl or polyaxon c
    docker exec -it gke-bastion sh -c "kubectl get pods -w -n polyaxon"
 
 
-Here you have some screen shots
+Here you have some screen shots of web console and command client
 
 .. image:: assets/polyaxon.png
    :alt: Polyaxon
+
+.. image:: assets/polyaxon-cli.png
+   :alt: Polyaxon Command Client
 
 Station #3: Model inference with Seldon
 =======================================
