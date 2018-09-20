@@ -5,16 +5,10 @@ SHELL ?= /bin/bash
 
 GCP_ZONE            ?= my_zone
 GCP_PROJECT_ID      ?= my_project
+
 PLX_VERSION         ?= 0.2.2
 
 ZFS_VM              ?= polyaxon-nfs-vm
-
-UNAME := $(shell uname -s)
-ifeq ($(UNAME),Linux)
-OPEN := xdg-open
-else
-OPEN := open
-endif
 
 .PHONY: help
 help: ## Show this help
@@ -43,15 +37,15 @@ gke-polyaxon-nfs-grafana: ## Create a machine to serve NFS storage
 
 .PHONY: gke-polyaxon-preinstall
 gke-polyaxon-preinstall: ## Get a docker image list of all nodes
+	@docker cp ../k8s/polyaxon gke-bastion:/polyaxon-k8s
 	@docker exec gke-bastion \
-	   sh -c 'gcloud config set project $(GCP_PROJECT_ID) \
-	          && kubectl create namespace polyaxon \
+	   sh -c 'kubectl create namespace polyaxon \
 	          && export IP="$$(gcloud compute instances describe $(ZFS_VM) \
-	            --zone=$(GCP_ZONE) --format="'"value(networkInterfaces[0].networkIP)"'")" \
-	          && find /cartpole-rl-remote/scaffold/k8s/polyaxon -name "'"*-pvc.yml"'" \
+	            --zone=$(GCP_ZONE) --project $(GCP_PROJECT_ID) --format="'"value(networkInterfaces[0].networkIP)"'")" \
+	          && find /polyaxon-k8s -name "'"*-pvc.yml"'" \
 	              -exec sed -i s/NFS_HOST/$$IP/g {} \;\
 	          && for file in data logs outputs repos upload; \
-	          do kubectl apply -f /cartpole-rl-remote/scaffold/k8s/polyaxon/$$file-pvc.yml; done'
+	          do kubectl apply -f //polyaxon-k8s/$$file-pvc.yml; done'
 
 .PHONY: gke-polyaxon-install
 gke-polyaxon-install: ## Install polyaxon
@@ -62,14 +56,14 @@ gke-polyaxon-install: ## Install polyaxon
 	           --name=polyaxon \
 	           --namespace=polyaxon \
 	           --version $(PLX_VERSION) \
-	           -f /cartpole-rl-remote/scaffold/k8s/polyaxon/polyaxon-config.yml"
+	           -f /polyaxon-k8s/polyaxon-config.yml"
 
 .PHONY: gke-polyaxon-uninstall
 gke-polyaxon-uninstall: ## Uninstall polyaxon
 	@docker exec gke-bastion \
 	   sh -c 'helm del --purge polyaxon \
 	         && for file in data logs outputs repos upload; \
-	         do kubectl delete -f /cartpole-rl-remote/scaffold/k8s/polyaxon/$$file-pvc.yml; done \
+	         do kubectl delete -f /polyaxon-k8s/$$file-pvc.yml; done \
 	         && kubectl delete ns polyaxon'
 
 .PHONY: gke-polyaxon-cartpole-init ## Initialize cartpole experiment group
@@ -78,9 +72,9 @@ gke-polyaxon-cartpole-init:
 	   sh -c 'apk --update add py-pip python-dev build-base && pip install polyaxon-cli \
 	          && export POLYAXON_IP="$$(kubectl get svc --namespace polyaxon polyaxon-polyaxon-api -o jsonpath="'"{.status.loadBalancer.ingress[0].ip}"'")" \
 	          && export POLYAXON_HTTP_PORT=80 \
-	          && export POLYAXON_WS_PORT=80 \
+	          && export POLYAXON_WS_PORT=1337 \
 	          && echo http://$$POLYAXON_IP:$$POLYAXON_HTTP_PORT \
-	          && cd /cartpole-rl-remote/scaffold/polyaxon \
+	          && mkdir -p /polyaxon && cd /polyaxon \
 	          && polyaxon config set --host=$$POLYAXON_IP --http_port=$$POLYAXON_HTTP_PORT  --ws_port=$$POLYAXON_WS_PORT \
 	          && polyaxon login --username root --password $$(kubectl get secret --namespace polyaxon polyaxon-polyaxon-secret -o jsonpath="'"{.data.POLYAXON_ADMIN_PASSWORD}"'" | base64 -d) \
 	          && polyaxon project create --name cartpole --description "Cartpole RL Remote Agent" \
@@ -88,4 +82,15 @@ gke-polyaxon-cartpole-init:
 
 .PHONY: gke-polyaxon-cartpole ## Upload and run cartpole experiment group
 gke-polyaxon-cartpole:
-	@docker exec gke-bastion sh -c "cd /cartpole-rl-remote/scaffold/polyaxon && polyaxon run -u --name 'cartpole' --description 'CartPole game by RL'"
+	@docker cp polyaxonfile_grp.yml gke-bastion:/polyaxon/
+	@docker exec gke-bastion sh -c "cd /polyaxon && polyaxon run -f polyaxonfile_grp.yml -u --name 'cartpole' --description 'CartPole game by RL'"
+
+.PHONY: gke-polyaxon-notebook ## Launch jupyter
+gke-polyaxon-notebook:
+	@docker cp polyaxonfile_notebook.yml gke-bastion:/polyaxon/
+	@docker exec gke-bastion sh -c "cd /polyaxon && polyaxon notebook start -f polyaxonfile_notebook.yml"
+
+.PHONY: gke-polyaxon-tensorboard ## Launch tensorboard
+gke-polyaxon-tensorboard:
+	@docker cp polyaxonfile_tensorboard.yml gke-bastion:/polyaxon/
+	@docker exec gke-bastion sh -c "cd /polyaxon && polyaxon tensorboard start -f polyaxonfile_tensorboard.yml"

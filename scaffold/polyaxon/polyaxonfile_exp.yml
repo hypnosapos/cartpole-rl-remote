@@ -1,0 +1,19 @@
+---
+version: 1
+
+kind: experiment
+
+declarations:
+  log_level: DEBUG
+  num_episodes: 100
+  gamma: 0.098
+  batch_size: 32
+
+build:
+  image: hypnosapos/cartpole-rl-remote:latest
+  build_steps:
+  - pip install --no-cache-dir -U polyaxon-helper
+
+run:
+  cmd: python model.py -e {{num_episodes}} \
+       --log-level {{log_level}} train --gamma {{gamma}} --batch_size {{batch_size}}

@@ -1,0 +1,7 @@
+---
+version: 1
+
+kind: notebook
+
+build:
+  image: tensorflow/tensorflow:latest-py3
