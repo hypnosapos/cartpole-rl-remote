@@ -30,7 +30,7 @@ Basic scenario (Station #1):
 Advanced scenarios (Station #2 and #3):
 
 - kubernetes (1.9+)
-- polyaxon (0.2.1)
+- polyaxon (0.2.2)
 - seldon (0.2.2)
 
 Station #1: Custom trainer and metrics collection
@@ -130,23 +130,22 @@ Station #2: Advanced training with Polyaxon
 ===========================================
 
 Well, we have a simple model trainer with simple hyperparameter tuning implementation (something like a well known grid algorithm).
-But we have too few hands on the code, and few weeks ago i discovered `polyaxon <http://polyaxon.com>`_.
-It uses kubernetes as platform where all resources will be deployed.
 
-The challenge now is try to create a polyaxon wrapper to take the CartPole model and train multiple experiments.
+Few weeks ago I discovered `polyaxon <http://polyaxon.com>`_ which goal is to train models seamlessly.
+The challenge now would be create a polyaxon wrapper to train multiple experiments.
 
-Under the directory **polyaxon** you can find all resources related to it.
+It uses kubernetes as platform so first thing we need is create one cluster (take a look at `k8s-gke <https://github.com/hypnosapos/k8s-gke>`_)::
 
-Follow this command sequence to get a kubernetes cluster with all polyaxon components installed (we'll use GKE service)::
-
-   export GCP_CREDENTIALS=/tmp/gcp.json
+   export GCP_CREDENTIALS=/your_path/gcp.json
    export GCP_ZONE=europe-west4-a
    export GCP_PROJECT_ID=<my_project>
    export GKE_CLUSTER_NAME=cartpole
    export GITHUB_TOKEN=<githubtoken>
-   make gke-bastion gke-create-cluster gke-tiller-helm gke-proxy gke-ui-login-skip gke-ui
+   git clone https://github.com/hypnosapos/k8s-gke.git
+   make -C k8s-gke gke-bastion gke-create-cluster gke-tiller-helm gke-proxy gke-ui-login-skip gke-ui
 
-We'll use the default one node ZFS server as polyaxon docs shows us (feel free to change de volume driver)::
+
+We'll use a ZFS server to create shared volumes in the same GCP_ZONE (feel free to change de volume driver)::
 
    make -C scaffold/polyaxon gke-polyaxon-nfs
 
@@ -156,7 +155,7 @@ Install polyaxon components on kubernetes and configure the polyaxon client on g
    make -C scaffold/polyaxon gke-polyaxon-preinstall gke-polyaxon-install gke-polyaxon-cartpole-init
 
 
-Finally, let's deploy our experiments groups by this command::
+Finally, let's deploy our experiment group by this command::
 
    make  -C scaffold/polyaxon gke-polyaxon-cartpole
 
@@ -164,7 +163,7 @@ Finally, let's deploy our experiments groups by this command::
 You can use the gke-bastion container as proxy for gcloud, kubectl or polyaxon commands directly, i.e::
 
    docker exec -it gke-bastion sh -c "kubectl get pods -w -n polyaxon"
-
+   docker exec -it gke-bastion sh -c "polyaxon project experiments"
 
 Here you have some screen shots of web console and command client
 

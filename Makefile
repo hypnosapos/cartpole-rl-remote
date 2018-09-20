@@ -10,35 +10,20 @@ DOCKER_TAG        ?= $(shell git rev-parse --short HEAD)
 DOCKER_TAGS       ?= $(DOCKER_TAG) latest
 DOCKER_USERNAME   ?= engapa
 DOCKER_PASSWORD   ?= secretito
+
 SELDON_IMAGE      ?= seldonio/core-python-wrapper
+SELDON_MODEL_TYPE ?= model
+SELDON_VERSION    ?= 0.2.2
 STORAGE_PROVIDER  ?= local
+
 MODEL_FILE        ?= cartpole-rl-remote
 TRAIN_EPISODES    ?= 500
 RUN_EPISODES      ?= 200
 RUN_MODEL_IP      ?= localhost
+
 PY_ENVS           ?= 3.5 3.6
 DEFAULT_PY_ENV    ?= 3.5
 
-GCLOUD_IMAGE_TAG    ?= alpine
-GCP_CREDENTIALS     ?= $$HOME/gcp.json
-GCP_ZONE            ?= my_zone
-GCP_PROJECT_ID      ?= my_project
-
-GKE_CLUSTER_VERSION ?= 1.10.7-gke.1
-GKE_CLUSTER_NAME    ?= cartpole
-GKE_NODES           ?= 2
-GKE_IMAGE_TYPE      ?= n1-standard-8
-GKE_GPU_AMOUNT      ?= 1
-GKE_GPU_NODES_MIN   ?= 1
-GKE_GPU_NODES       ?= 1
-GKE_GPU_NODES_MAX   ?= 3
-GKE_GPU_TYPE        ?= nvidia-tesla-v100
-
-GITHUB_TOKEN        ?= githubtoken
-
-SELDON_MODEL_TYPE   ?= model
-
-SELDON_VERSION      ?= 0.2.2
 
 UNAME := $(shell uname -s)
 ifeq ($(UNAME),Linux)
@@ -52,7 +37,7 @@ help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
 .PHONY: clean
-clean: clean-build clean-py clean-test clean-docker clean-seldon clean-seldon-models## remove all build, test, coverage and Python artifacts
+clean: clean-build clean-py clean-test clean-docker clean-seldon clean-seldon-models ## remove all build, test, coverage and Python artifacts
 
 .PHONY: clean-build
 clean-build: ## Remove build files
@@ -193,66 +178,6 @@ run-dev-router-agent: ## Run a router agent to change the default behaviour
 	 python $(ROOT_PATH)/test/e2e/test_router.py --visdom-config '{"server": "http://127.0.0.1", "env": "main"}' \
 	 -pref-branch 1 -router-name eg-router -api-server $(RUN_MODEL_IP) --num-reqs 20000
 
-.PHONY: gke-bastion
-gke-bastion: ## Run a gke-bastion container.
-	@docker run -it -d --name gke-bastion \
-	   -p 8001:8001 -p 3000:3000 -p 8888:80 \
-	   -v $(GCP_CREDENTIALS):/tmp/gcp.json \
-	   -v $(ROOT_PATH):/cartpole-rl-remote \
-	   google/cloud-sdk:$(GCLOUD_IMAGE_TAG) \
-	   sh
-	@docker exec gke-bastion \
-	   sh -c "gcloud components install kubectl beta --quiet \
-	          && gcloud auth activate-service-account --key-file=/tmp/gcp.json"
-
-.PHONY: gke-create-cluster
-gke-create-cluster: ## Create a kubernetes cluster on GKE.
-	@docker exec gke-bastion \
-	   sh -c "gcloud beta container --project $(GCP_PROJECT_ID) clusters create $(GKE_CLUSTER_NAME) --zone "$(GCP_ZONE)" \
-	          --username "admin" --cluster-version "$(GKE_CLUSTER_VERSION)" --machine-type "$(GKE_IMAGE_TYPE)" \
-	          --image-type "COS" --disk-type "pd-standard" --disk-size "100" \
-	          --scopes "compute-rw","storage-rw","logging-write","monitoring","service-control","service-management","trace" \
-	          --num-nodes "$(GKE_NODES)" --enable-cloud-logging --enable-cloud-monitoring --network "default" \
-	          --subnetwork "default" --addons HorizontalPodAutoscaling,HttpLoadBalancing,KubernetesDashboard"
-	@docker exec gke-bastion \
-	   sh -c "gcloud container clusters get-credentials $(GKE_CLUSTER_NAME) --zone "$(GCP_ZONE)" --project $(GCP_PROJECT_ID) \
-	          && kubectl config set-credentials gke_$(GCP_PROJECT_ID)_$(GCP_ZONE)_$(GKE_CLUSTER_NAME) --username=admin \
-	          --password=$$(gcloud container clusters describe --zone "$(GCP_ZONE)" $(GKE_CLUSTER_NAME) | grep password | awk '{print $$2}')"
-
-.PHONY: gke-ui-login-skip
-gke-ui-login-skip: ## TRICK: Grant complete access to dashboard. Be careful, anyone could enter into your dashboard and execute admin ops.
-	@docker cp $(ROOT_PATH)/scaffold/k8s/skip_login.yml gke-bastion:/tmp/skip_login.yml
-	@docker exec gke-bastion \
-	  sh -c "kubectl create -f /tmp/skip_login.yml"
-
-.PHONY: gke-proxy
-gke-proxy: ## Run kubectl proxy on gke container.
-	@docker exec -it -d gke-bastion \
-	   sh -c "kubectl proxy --address='0.0.0.0'"
-
-.PHONY: gke-tiller-helm
-gke-tiller-helm: ## Install Helm on GKE cluster.
-	@docker exec gke-bastion \
-	  sh -c "apk --update add openssl \
-	         && curl  -H 'Cache-Control: no-cache' -H 'Authorization: token $(GITHUB_TOKEN)' https://raw.githubusercontent.com/kubernetes/helm/master/scripts/get | bash \
-	         && kubectl -n kube-system create sa tiller \
-	         && kubectl create clusterrolebinding tiller --clusterrole cluster-admin --serviceaccount=kube-system:tiller \
-	         && helm init --wait --service-account tiller"
-
-.PHONY: gke-create-gpu-nvidia-driver
-gke-create-gpu-nvidia-driver:
-	@docker exec gke-bastion \
-	  sh -c "kubectl apply -f \
-	    https://raw.githubusercontent.com/GoogleCloudPlatform/container-engine-accelerators/stable/nvidia-driver-installer/cos/daemonset-preloaded.yaml"
-
-.PHONY: gke-create-gpu-group
-gke-create-gpu-group: ## Create a GPU group for kubernetes cluster on GKE.
-	@docker exec gke-bastion \
-	  sh -c "gcloud config set project $(GCP_PROJECT_ID) && gcloud container node-pools create $(GKE_CLUSTER_NAME)-gpu-pool \
-	         --accelerator type=$(GKE_GPU_TYPE),count=$(GKE_GPU_AMOUNT) --zone $(GCP_ZONE) \
-	         --cluster $(GKE_CLUSTER_NAME) --num-nodes $(GKE_GPU_NODES) --min-nodes $(GKE_GPU_NODES_MIN) \
-	         --max-nodes $(GKE_GPU_NODES_MAX) --machine-type "$(GKE_IMAGE_TYPE)" --enable-autoscaling --preemptible"
-
 .PHONY: gke-seldon-install
 gke-seldon-install: ## Installing Seldon components
 	@docker exec gke-bastion \
@@ -285,14 +210,3 @@ gke-seldon-uninstall: ## Uninstalling Seldon components
 	  sh -c "helm del --purge seldon-core \
 	         && helm del --purge seldon-core-analytics \
 	         && helm del --purge seldon-core-crd"
-
-.PHONY: gke-delete-cluster
-gke-delete-cluster: ## Delete a kubernetes cluster on GKE.
-	@docker exec gke-bastion \
-	   sh -c "gcloud config set project $(GCP_PROJECT_ID) \
-	          && gcloud container --project $(GCP_PROJECT_ID) clusters delete $(GKE_CLUSTER_NAME) \
-	          --zone $(GCP_ZONE) --quiet"
-
-.PHONY: gke-ui
-gke-ui: ## Launch kubernetes dashboard through the proxy.
-	$(OPEN) http://localhost:8001/api/v1/namespaces/kube-system/services/https:kubernetes-dashboard:/proxy/
