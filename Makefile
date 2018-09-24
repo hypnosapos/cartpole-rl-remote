@@ -13,7 +13,7 @@ DOCKER_PASSWORD   ?= secretito
 
 SELDON_IMAGE      ?= seldonio/core-python-wrapper
 SELDON_MODEL_TYPE ?= model
-SELDON_VERSION    ?= 0.2.2
+SELDON_VERSION    ?= 0.2.3
 STORAGE_PROVIDER  ?= local
 
 MODEL_FILE        ?= cartpole-rl-remote
@@ -119,10 +119,10 @@ train: clean-seldon-models## Train model
 
 .PHONY: train-dev
 train-dev: docker-visdom clean-seldon-models ## Train a model in dev mode with render option and visdom reports (requires venv)
-	@. $(ROOT_PATH).venv/bin/activate
+	@. $(ROOT_PATH).venv/bin/activate && \
 	 cartpole -e $(TRAIN_EPISODES) -r --log-level DEBUG \
 	   --metrics-engine visdom --metrics-config '{"server": "http://127.0.0.1", "env": "main"}' \
-	   train --gamma 0.095 0.099 0.001 -f $(ROOT_PATH)/.models/$(MODEL_FILE)
+	   train --gamma 0.095 0.099 0.001 -f $(ROOT_PATH).models/$(MODEL_FILE)
 
 .PHONY: train-docker
 train-docker: clean-seldon-models ## Train by docker container
@@ -192,17 +192,18 @@ gke-seldon-install: ## Installing Seldon components
                 --set grafana_prom_admin_password=password \
                 --set persistence.enabled=false \
                 --set grafana_prom_service_type=LoadBalancer \
-                --version 0.2 --namespace seldon"
+                --version $(SELDON_VERSION) --namespace seldon"
 
 .PHONY: gke-seldon-cartpole
 gke-seldon-cartpole: ## Deploy cartpole model according to different seldon implementations (SELDON_MODEL_TYPE = [model|abtest|router])
+	@docker cp scaffold/k8s/seldon gke-bastion:/seldon
 	@docker exec gke-bastion \
-	  sh -c "kubectl create -f /cartpole-rl-remote/scaffold/k8s/seldon/cartpole_$(SELDON_MODEL_TYPE).yaml -n seldon"
+	  sh -c "kubectl create -f /seldon/cartpole_$(SELDON_MODEL_TYPE).yaml -n seldon"
 
 .PHONY: gke-seldon-cartpole-delete
 gke-seldon-cartpole-delete: ## Delete cartpole model according to different seldon implementations (model, abtest, router)
 	@docker exec gke-bastion \
-	  sh -c "kubectl delete -f /cartpole-rl-remote/scaffold/k8s/seldon/cartpole_$(SELDON_MODEL_TYPE).yaml -n seldon"
+	  sh -c "kubectl delete -f /seldon/cartpole_$(SELDON_MODEL_TYPE).yaml -n seldon"
 
 .PHONY: gke-seldon-uninstall
 gke-seldon-uninstall: ## Uninstalling Seldon components

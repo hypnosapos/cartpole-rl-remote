@@ -15,6 +15,8 @@ import numpy as np
 from datetime import datetime
 
 import cartpole.hparam as hp
+import cartpole.metrics.callbacks as callbacks
+
 from cartpole.runner_remote import GymRunnerRemote
 from cartpole.qlearning_agent import (
     QLearningAgent as Agent,
@@ -193,7 +195,6 @@ def main(argv=sys.argv[1:]):
 if __name__ == "__main__":
 
     try:
-        import cartpole.metrics.callbacks as callbacks
         main(sys.argv[1:])
     except KeyboardInterrupt:
         LOG.warning("... cartpole command was interrupted")

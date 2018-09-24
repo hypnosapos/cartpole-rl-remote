@@ -31,7 +31,7 @@ Advanced scenarios (Station #2 and #3):
 
 - kubernetes (1.9+)
 - polyaxon (0.2.2)
-- seldon (0.2.2)
+- seldon (0.2.3)
 
 Station #1: Custom trainer and metrics collection
 =================================================
@@ -230,7 +230,7 @@ Check out that pods are ready::
 Run remote agent
 ----------------
 
-You have to get external IP from svc/seldon-apiserver to set RUN_MODEL_IP variable.
+You have to get the external IP from svc/seldon-apiserver to set RUN_MODEL_IP variable.
 
 In order to get model predictions launch this command in your shell::
 
