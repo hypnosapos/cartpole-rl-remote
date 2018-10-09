@@ -6,7 +6,7 @@ SHELL ?= /bin/bash
 GCP_ZONE            ?= my_zone
 GCP_PROJECT_ID      ?= my_project
 
-PLX_VERSION         ?= 0.2.2
+PLX_VERSION         ?= 0.2.6
 
 ZFS_VM              ?= polyaxon-nfs-vm
 
@@ -69,7 +69,7 @@ gke-polyaxon-uninstall: ## Uninstall polyaxon
 .PHONY: gke-polyaxon-cartpole-init ## Initialize cartpole experiment group
 gke-polyaxon-cartpole-init:
 	@docker exec gke-bastion \
-	   sh -c 'apk --update add py-pip python-dev build-base && pip install polyaxon-cli \
+	   sh -c 'apk --upgrade add py-pip python-dev build-base linux-headers musl-dev && pip install -U pip && pip install -U polyaxon-cli \
 	          && export POLYAXON_IP="$$(kubectl get svc --namespace polyaxon polyaxon-polyaxon-api -o jsonpath="'"{.status.loadBalancer.ingress[0].ip}"'")" \
 	          && export POLYAXON_HTTP_PORT=80 \
 	          && export POLYAXON_WS_PORT=1337 \
@@ -83,6 +83,7 @@ gke-polyaxon-cartpole-init:
 .PHONY: gke-polyaxon-cartpole ## Upload and run cartpole experiment group
 gke-polyaxon-cartpole:
 	@docker cp polyaxonfile_grp.yml gke-bastion:/polyaxon/
+	@docker cp model.py gke-bastion:/polyaxon/
 	@docker exec gke-bastion sh -c "cd /polyaxon && polyaxon run -f polyaxonfile_grp.yml -u --name 'cartpole' --description 'CartPole game by RL'"
 
 .PHONY: gke-polyaxon-notebook ## Launch jupyter

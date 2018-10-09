@@ -8,7 +8,7 @@ RUN pip install -r requirements.txt
 FROM python:${PY_VERSION}-${DIST}
 COPY --from=0 /root/.cache /root/.cache
 
-RUN apt-get update && apt-get install curl --yes
+RUN apt-get update && apt-get install curl cmake --yes
 
 WORKDIR /cartpole-rl-remote
 
