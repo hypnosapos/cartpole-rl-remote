@@ -168,9 +168,13 @@ You can use the gke-bastion container as proxy for gcloud, kubectl or polyaxon c
 Here you have some screen shots of web console and command client
 
 .. image:: assets/polyaxon.png
+   :align: middle
+   :scale: 50 %
    :alt: Polyaxon
 
 .. image:: assets/polyaxon_chart.png
+   :align: middle
+   :scale: 50 %
    :alt: Polyaxon Chart
 
 .. image:: assets/polyaxon-cli.png
