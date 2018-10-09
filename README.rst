@@ -170,6 +170,9 @@ Here you have some screen shots of web console and command client
 .. image:: assets/polyaxon.png
    :alt: Polyaxon
 
+.. image:: assets/polyaxon_chart.png
+   :alt: Polyaxon Chart
+
 .. image:: assets/polyaxon-cli.png
    :alt: Polyaxon Command Client
 
