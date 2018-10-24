@@ -196,7 +196,7 @@ gke-seldon-install: ## Installing Seldon components
 
 .PHONY: gke-seldon-cartpole
 gke-seldon-cartpole: ## Deploy cartpole model according to different seldon implementations (SELDON_MODEL_TYPE = [model|abtest|router])
-	@docker cp scaffold/k8s/seldon gke-bastion:/seldon
+	@docker cp scaffold/k8s/seldon/cartpole_$(SELDON_MODEL_TYPE).yaml gke-bastion:/seldon/cartpole_$(SELDON_MODEL_TYPE).yaml
 	@docker exec gke-bastion \
 	  sh -c "kubectl create -f /seldon/cartpole_$(SELDON_MODEL_TYPE).yaml -n seldon"
 
