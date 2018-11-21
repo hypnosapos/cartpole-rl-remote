@@ -6,7 +6,7 @@ SHELL ?= /bin/bash
 GCP_ZONE            ?= my_zone
 GCP_PROJECT_ID      ?= my_project
 
-PLX_VERSION         ?= 0.3.1
+PLX_VERSION         ?= 0.3.2
 
 ZFS_VM              ?= polyaxon-nfs-vm
 
@@ -77,8 +77,7 @@ gke-polyaxon-cartpole-init:
 	          && mkdir -p /polyaxon && cd /polyaxon \
 	          && polyaxon config set --host=$$POLYAXON_IP --http_port=$$POLYAXON_HTTP_PORT  --ws_port=$$POLYAXON_WS_PORT \
 	          && polyaxon login --username root --password $$(kubectl get secret --namespace polyaxon polyaxon-polyaxon-secret -o jsonpath="'"{.data.POLYAXON_ADMIN_PASSWORD}"'" | base64 -d) \
-	          && polyaxon project create --name cartpole --description "Cartpole RL Remote Agent" \
-	          && polyaxon init cartpole'
+	          && polyaxon project create --name cartpole --description "Cartpole RL Remote Agent" --init'
 
 .PHONY: gke-polyaxon-cartpole ## Upload and run cartpole experiment group
 gke-polyaxon-cartpole:
