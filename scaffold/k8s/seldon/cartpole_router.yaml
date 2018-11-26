@@ -48,7 +48,7 @@ spec:
         value: '3'
         type: INT
       - name: epsilon
-        value: '0.05'
+        value: '0.1'
         type: FLOAT
       - name: verbose
         value: '1'

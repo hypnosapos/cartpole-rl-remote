@@ -13,7 +13,7 @@ DOCKER_PASSWORD   ?= secretito
 
 SELDON_IMAGE      ?= seldonio/core-python-wrapper
 SELDON_MODEL_TYPE ?= model
-SELDON_VERSION    ?= 0.2.3
+SELDON_VERSION    ?= 0.2.4
 STORAGE_PROVIDER  ?= local
 
 MODEL_FILE        ?= cartpole-rl-remote
@@ -113,7 +113,7 @@ docker-visdom: ## Run a visdom server
 	 done
 
 .PHONY: train
-train: clean-seldon-models## Train model
+train: clean-seldon-models ## Train model
 	@cartpole -e $(EPISODES) \
 	  train --gamma 0.095 0.099 0.001 -f $(ROOT_PATH).models/$(MODEL_FILE)
 
@@ -155,7 +155,7 @@ seldon-build: clean-seldon ## Generate seldon resources
 ifeq ($(STORAGE_PROVIDER), gcs)
 	@curl https://storage.googleapis.com/cartpole/$(MODEL_FILE) $(ROOT_PATH)scaffold/seldon/models/$(MODEL_FILE)
 else
-	@mv $(ROOT_PATH).models/$(MODEL_FILE).h5 $(ROOT_PATH)scaffold/seldon/models/
+	@cp -f $(ROOT_PATH).models/$(MODEL_FILE).h5 $(ROOT_PATH)scaffold/seldon/models/
 endif
 	@cd $(ROOT_PATH)scaffold/seldon && \
 	 docker run -v $(ROOT_PATH)scaffold/seldon:/model $(SELDON_IMAGE) /model CartpoleRLRemoteAgent $(DOCKER_TAG) $(DOCKER_ORG) --force
@@ -192,18 +192,18 @@ gke-seldon-install: ## Installing Seldon components
                 --set grafana_prom_admin_password=password \
                 --set persistence.enabled=false \
                 --set grafana_prom_service_type=LoadBalancer \
-                --version $(SELDON_VERSION) --namespace seldon"
+                --version 0.2.3 --namespace seldon"
 
 .PHONY: gke-seldon-cartpole
 gke-seldon-cartpole: ## Deploy cartpole model according to different seldon implementations (SELDON_MODEL_TYPE = [model|abtest|router])
-	@docker cp scaffold/k8s/seldon/cartpole_$(SELDON_MODEL_TYPE).yaml gke-bastion:/seldon/cartpole_$(SELDON_MODEL_TYPE).yaml
+	@docker cp scaffold/k8s/seldon/cartpole_$(SELDON_MODEL_TYPE).yaml gke-bastion:cartpole_$(SELDON_MODEL_TYPE).yaml
 	@docker exec gke-bastion \
-	  sh -c "kubectl create -f /seldon/cartpole_$(SELDON_MODEL_TYPE).yaml -n seldon"
+	  sh -c "kubectl create -f cartpole_$(SELDON_MODEL_TYPE).yaml -n seldon"
 
 .PHONY: gke-seldon-cartpole-delete
 gke-seldon-cartpole-delete: ## Delete cartpole model according to different seldon implementations (model, abtest, router)
 	@docker exec gke-bastion \
-	  sh -c "kubectl delete -f /seldon/cartpole_$(SELDON_MODEL_TYPE).yaml -n seldon"
+	  sh -c "kubectl delete -f cartpole_$(SELDON_MODEL_TYPE).yaml -n seldon"
 
 .PHONY: gke-seldon-uninstall
 gke-seldon-uninstall: ## Uninstalling Seldon components
