@@ -6,7 +6,7 @@ SHELL ?= /bin/bash
 GCP_ZONE            ?= my_zone
 GCP_PROJECT_ID      ?= my_project
 
-PLX_VERSION         ?= 0.3.4
+PLX_VERSION         ?= 0.3.5
 
 ZFS_VM              ?= polyaxon-nfs-vm
 
