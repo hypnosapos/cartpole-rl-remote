@@ -1,6 +1,6 @@
 ARG PY_ORG="pypy"
 ARG PY_VERSION="3-6"
-ARG DIST="slim"
+ARG DIST="slim-stretch"
 
 FROM ${PY_ORG}:${PY_VERSION}-${DIST}
 COPY requirements.txt .

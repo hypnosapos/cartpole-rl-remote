@@ -1,5 +1,5 @@
 ARG PY_VERSION="3.5"
-ARG DIST="slim"
+ARG DIST="slim-stretch"
 
 FROM python:${PY_VERSION}-${DIST}
 COPY requirements.txt .

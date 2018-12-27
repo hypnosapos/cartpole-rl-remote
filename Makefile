@@ -13,7 +13,7 @@ DOCKER_PASSWORD   ?= secretito
 
 SELDON_IMAGE      ?= seldonio/core-python-wrapper
 SELDON_MODEL_TYPE ?= model
-SELDON_VERSION    ?= 0.2.4
+SELDON_VERSION    ?= 0.2.5
 STORAGE_PROVIDER  ?= local
 
 MODEL_FILE        ?= cartpole-rl-remote
@@ -22,7 +22,6 @@ RUN_EPISODES      ?= 200
 RUN_MODEL_IP      ?= localhost
 
 PY_ENVS           ?= 3.5 3.6
-DEFAULT_PY_ENV    ?= 3.5
 
 
 UNAME := $(shell uname -s)
@@ -82,7 +81,8 @@ docker-test-build:
 	done
 
 .PHONY: venv
-venv: ## Create a local virtualenv with default python version (supported 3.5 and 3.6)
+venv: ## Create a local virtualenv with default python version
+	@rm -rf .venv
 	@python -m venv .venv
 	@. $(ROOT_PATH)/.venv/bin/activate && pip install -U pip && pip install $(ROOT_PATH)
 	@echo -e "\033[32m[[ Type '. $(ROOT_PATH).venv/bin/activate' to activate virtualenv ]]\033[0m"
@@ -192,7 +192,7 @@ gke-seldon-install: ## Installing Seldon components
                 --set grafana_prom_admin_password=password \
                 --set persistence.enabled=false \
                 --set grafana_prom_service_type=LoadBalancer \
-                --version 0.2.3 --namespace seldon"
+                --version $(SELDON_VERSION) --namespace seldon"
 
 .PHONY: gke-seldon-cartpole
 gke-seldon-cartpole: ## Deploy cartpole model according to different seldon implementations (SELDON_MODEL_TYPE = [model|abtest|router])
