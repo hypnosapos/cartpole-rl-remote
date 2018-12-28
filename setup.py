@@ -12,7 +12,7 @@ with open(os.path.join(BASE_DIR, 'requirements.txt')) as f:
 
 setup(name='cartpole-rl-remote',
       python_requires='>=3.5',
-      version="1.0.0",
+      version=__import__("cartpole").VERSION,
       description="Cartpole: Remote RL Agent",
       author_email=["engapa@gmail.com ", "davsuacar@gmail.com"],
       maintainer_email="engapa@gmail.com",
