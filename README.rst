@@ -31,7 +31,7 @@ Basic scenario (Station #1):
 Advanced scenarios (Station #2 and #3):
 
 - kubernetes (1.9+)
-- polyaxon (0.3.5)
+- polyaxon (0.3.7)
 - seldon (0.2.5)
 
 Station #1: Custom trainer and metrics collection
