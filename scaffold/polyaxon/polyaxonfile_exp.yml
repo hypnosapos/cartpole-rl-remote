@@ -12,7 +12,7 @@ declarations:
 build:
   image: hypnosapos/cartpole-rl-remote:latest
   build_steps:
-  - pip install --no-cache-dir -U polyaxon-helper
+  - pip install --no-cache-dir -U polyaxon-client
 
 run:
   cmd: python model.py -e {{num_episodes}} \

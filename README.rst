@@ -31,7 +31,7 @@ Basic scenario (Station #1):
 Advanced scenarios (Station #2 and #3):
 
 - kubernetes (1.9+)
-- polyaxon (0.3.8)
+- polyaxon (0.3.9)
 - seldon (0.2.5)
 
 Station #1: Custom trainer and metrics collection
@@ -171,10 +171,10 @@ Here you have some screen shots of web console and command client
 .. image:: assets/polyaxon.png
    :alt: Polyaxon
 
-.. image:: assets/polyaxon_chart.png
+.. image:: assets/polyaxon_charts.png
    :alt: Polyaxon Chart
 
-.. image:: assets/polyaxon-cli.png
+.. image:: assets/polyaxon_cli.png
    :alt: Polyaxon Command Client
 
 Station #3: Model inference with Seldon
