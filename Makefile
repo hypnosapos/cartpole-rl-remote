@@ -13,7 +13,7 @@ DOCKER_PASSWORD   ?= secretito
 
 SELDON_IMAGE      ?= seldonio/core-python-wrapper
 SELDON_MODEL_TYPE ?= model
-SELDON_VERSION    ?= 0.2.5
+SELDON_VERSION    ?= 0.2.6
 STORAGE_PROVIDER  ?= local
 
 MODEL_FILE        ?= cartpole-rl-remote

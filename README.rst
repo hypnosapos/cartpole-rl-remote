@@ -24,15 +24,15 @@ Requirements
 Basic scenario (Station #1):
 
 - Make (gcc)
-- Docker (17+)
+- Docker (18+)
 - Docker compose (version 17.06.+, compose file format 3.3)
 - python 3.5 or 3.6
 
 Advanced scenarios (Station #2 and #3):
 
-- kubernetes (1.9+)
+- kubernetes (1.10+)
 - polyaxon (0.4.0)
-- seldon (0.2.5)
+- seldon (0.2.6)
 
 Station #1: Custom trainer and metrics collection
 =================================================
