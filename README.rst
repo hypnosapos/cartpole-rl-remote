@@ -252,6 +252,13 @@ with loadbalancer endpoint type, find the public ip to get access.
 .. image:: assets/seldon.png
    :alt: Seldon router
 
+Open-source platforms
+=====================
+
+We love OSS, we're K8S lovers and we think that this container orchestration engine is a key for the future of hybrid-clouds or multi-cloud strategies.
+Imagine you are capable to specify an AI pipeline (gathering ETL or another intensive tasks of pre-processing stages, model evaluation, serving, etc) via declarative or programmatic DSL
+
+We recommend to take a look at one of the most widely contributed OSS project: `kubeflow <https://www.kubeflow.org/>`_ (we're focused on it today), some of the products shown above can be integrated within and you could be able to contribute or extend for your needs.
 
 License
 =======

@@ -13,7 +13,7 @@ DOCKER_PASSWORD   ?= secretito
 
 SELDON_IMAGE      ?= seldonio/core-python-wrapper
 SELDON_MODEL_TYPE ?= model
-SELDON_VERSION    ?= 0.2.6
+SELDON_VERSION    ?= 0.3.0
 STORAGE_PROVIDER  ?= local
 
 MODEL_FILE        ?= cartpole-rl-remote
@@ -183,10 +183,10 @@ gke-seldon-install: ## Installing Seldon components
 	@docker exec gke-bastion \
 	  sh -c "helm repo add seldon https://storage.googleapis.com/seldon-charts \
 	         && helm repo update \
-	         && helm install seldon/seldon-core-crd --name seldon-core-crd --version $(SELDON_VERSION) \
+	         && helm install seldon/seldon-core-operator --name seldon-core-operator --version $(SELDON_VERSION) \
 	         && kubectl create namespace seldon \
-	         && helm install seldon/seldon-core --name seldon-core \
-	            --set apife_service_type=LoadBalancer \
+	         && helm install seldon/seldon-core-oauth-gateway --name seldon-core \
+	            --set serviceType=LoadBalancer \
 	            --version $(SELDON_VERSION) --namespace seldon \
 	         && helm install seldon/seldon-core-analytics --name seldon-core-analytics \
                 --set grafana_prom_admin_password=password \

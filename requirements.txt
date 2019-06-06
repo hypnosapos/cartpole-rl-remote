@@ -15,7 +15,7 @@ PyYAML==3.13
 requests==2.20
 scipy==1.0.0
 six==1.11.0
-tensorflow==1.8.0
+-e "git+git://github.com/tensorflow/tensorflow.git@v1.8.0#egg=tensorflow"
 urllib3==1.23
 Werkzeug==0.14.1
 argparse>=1.4
