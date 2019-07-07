@@ -50,8 +50,10 @@ class SeldonClient(object):
             payload = {'grant_type': 'client_credentials'}
             response = requests.post(
                     "http://{}:8080/oauth/token".format(self.host),
-                    auth=HTTPBasicAuth('oauth-key', 'oauth-secret'),
+                    headers={"Accept": "application/json"},
+                    auth=HTTPBasicAuth('oauth-keyseldon', 'oauth-secret'),
                     data=payload)
+            print(response.json())
             self.token = response.json()["access_token"]
         return self.token
 

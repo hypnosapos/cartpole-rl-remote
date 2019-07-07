@@ -7,13 +7,13 @@ ROOT_PATH := $(PWD)/$({0%/*})
 DOCKER_ORG        ?= hypnosapos
 DOCKER_IMAGE      ?= cartpole-rl-remote
 DOCKER_TAG        ?= $(shell git rev-parse --short HEAD)
-DOCKER_TAGS       ?= $(DOCKER_TAG) latest
+DOCKER_TAGS       ?= $(DOCKER_TAG)
 DOCKER_USERNAME   ?= engapa
 DOCKER_PASSWORD   ?= secretito
 
 SELDON_IMAGE      ?= seldonio/core-python-wrapper
 SELDON_MODEL_TYPE ?= model
-SELDON_VERSION    ?= 0.3.0
+SELDON_VERSION    ?= 0.3.1
 STORAGE_PROVIDER  ?= local
 
 MODEL_FILE        ?= cartpole-rl-remote
@@ -21,7 +21,7 @@ TRAIN_EPISODES    ?= 500
 RUN_EPISODES      ?= 200
 RUN_MODEL_IP      ?= localhost
 
-PY_ENVS           ?= 3.5 3.6
+PY_ENVS           ?= 3.5 3.6 3.7
 
 
 UNAME := $(shell uname -s)
@@ -84,7 +84,7 @@ docker-test-build:
 venv: ## Create a local virtualenv with default python version
 	@rm -rf .venv
 	@python -m venv .venv
-	@. $(ROOT_PATH)/.venv/bin/activate && pip install -U pip && pip install $(ROOT_PATH)
+	@. $(ROOT_PATH)/.venv/bin/activate && pip install -U pip && pip install -e $(ROOT_PATH)
 	@echo -e "\033[32m[[ Type '. $(ROOT_PATH).venv/bin/activate' to activate virtualenv ]]\033[0m"
 
 .PHONY: test
@@ -183,9 +183,9 @@ gke-seldon-install: ## Installing Seldon components
 	@docker exec gke-bastion \
 	  sh -c "helm repo add seldon https://storage.googleapis.com/seldon-charts \
 	         && helm repo update \
-	         && helm install seldon/seldon-core-operator --name seldon-core-operator --version $(SELDON_VERSION) \
+	         && helm install seldon/seldon-core-operator --name seldon-core --version $(SELDON_VERSION) \
 	         && kubectl create namespace seldon \
-	         && helm install seldon/seldon-core-oauth-gateway --name seldon-core \
+	         && helm install seldon/seldon-core-oauth-gateway --name seldon-gateway \
 	            --set serviceType=LoadBalancer \
 	            --version $(SELDON_VERSION) --namespace seldon \
 	         && helm install seldon/seldon-core-analytics --name seldon-core-analytics \

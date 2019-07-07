@@ -3,12 +3,12 @@ kind: SeldonDeployment
 metadata:
   labels:
     app: seldon
-  name: cartpole-router
+  name: router
 spec:
   annotations:
     project_name: Cartpole RL Router
     deployment_version: v1
-  name: cartpole-router
+  name: cartpole
   oauth_key: oauth-key
   oauth_secret: oauth-secret
   predictors:

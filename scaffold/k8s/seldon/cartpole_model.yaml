@@ -3,20 +3,20 @@ kind: SeldonDeployment
 metadata:
   labels:
     app: seldon
-  name: cartpole-model
+  name: model
 spec:
   annotations:
     project_name: "Cartpole RL"
     deployment_version: v1
-  name: cartpole-model
+  name: cartpole
   oauth_key: "oauth-key"
   oauth_secret: "oauth-secret"
   predictors:
   - componentSpecs:
       - spec:
           containers:
-          - image: "hypnosapos/cartpolerlremoteagent:max_score"
-            imagePullPolicy: IfNotPresent
+          - image: "hypnosapos/cartpolerlremoteagent:571aef6"
+            imagePullPolicy: Always
             name: cartpole
             resources:
               requests:

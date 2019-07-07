@@ -6,7 +6,7 @@ SHELL ?= /bin/bash
 GCP_ZONE            ?= my_zone
 GCP_PROJECT_ID      ?= my_project
 
-PLX_VERSION         ?= 0.4.4
+PLX_VERSION         ?= 0.5.0
 
 ZFS_VM              ?= polyaxon-nfs-vm
 
@@ -72,10 +72,9 @@ gke-polyaxon-cartpole-init:
 	   sh -c 'apk --upgrade add py-pip python-dev build-base linux-headers musl-dev && pip install -U pip && pip install -U polyaxon-cli \
 	          && export POLYAXON_IP="$$(kubectl get svc --namespace polyaxon polyaxon-polyaxon-api -o jsonpath="'"{.status.loadBalancer.ingress[0].ip}"'")" \
 	          && export POLYAXON_HTTP_PORT=80 \
-	          && export POLYAXON_WS_PORT=1337 \
 	          && echo http://$$POLYAXON_IP:$$POLYAXON_HTTP_PORT \
 	          && mkdir -p /polyaxon && cd /polyaxon \
-	          && polyaxon config set --host=$$POLYAXON_IP --http_port=$$POLYAXON_HTTP_PORT  --ws_port=$$POLYAXON_WS_PORT \
+	          && polyaxon config set --host=$$POLYAXON_IP --port=$$POLYAXON_HTTP_PORT \
 	          && polyaxon login --username root --password $$(kubectl get secret --namespace polyaxon polyaxon-polyaxon-secret -o jsonpath="'"{.data.POLYAXON_ADMIN_PASSWORD}"'" | base64 -d) \
 	          && polyaxon project create --name cartpole --description "Cartpole RL Remote Agent" --init'
 

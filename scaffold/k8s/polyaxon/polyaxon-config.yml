@@ -61,12 +61,15 @@ mountPaths:
     libcuda: ""
   docker: "/var/run/docker.sock"
 
-tolerations:
-  resourcesDeamon:
-  - key: "nvidia.com/gpu"
-    operator: "Equal"
-    value: "present"
-    effect: "NoSchedule"
+tolerations: []
+
+resourceDeamon:
+  enable: true
+  tolerations:
+    - key: "nvidia.com/gpu"
+      operator: "Equal"
+      value: "present"
+      effect: "NoSchedule"
 
 integrations:
   webhooks:

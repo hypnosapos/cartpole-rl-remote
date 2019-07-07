@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 
-from keras.models import Sequential
-from keras.layers import Dense
-from keras.optimizers import Adam
-from keras.callbacks import TensorBoard
+from tensorflow.keras import Sequential
+from tensorflow.keras.layers import Dense
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.callbacks import TensorBoard
 
 
 def get_model(model_type='keras', model_spec={}):

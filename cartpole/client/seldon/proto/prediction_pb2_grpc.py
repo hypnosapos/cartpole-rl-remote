@@ -3,7 +3,7 @@ import grpc
 from grpc.framework.common import cardinality
 from grpc.framework.interfaces.face import utilities as face_utilities
 
-from . import prediction_pb2 as prediction__pb2
+import cartpole.client.seldon.proto.prediction_pb2 as proto_dot_prediction__pb2
 
 
 class GenericStub(object):
@@ -21,28 +21,28 @@ class GenericStub(object):
     """
     self.TransformInput = channel.unary_unary(
         '/seldon.protos.Generic/TransformInput',
-        request_serializer=prediction__pb2.SeldonMessage.SerializeToString,
-        response_deserializer=prediction__pb2.SeldonMessage.FromString,
+        request_serializer=proto_dot_prediction__pb2.SeldonMessage.SerializeToString,
+        response_deserializer=proto_dot_prediction__pb2.SeldonMessage.FromString,
         )
     self.TransformOutput = channel.unary_unary(
         '/seldon.protos.Generic/TransformOutput',
-        request_serializer=prediction__pb2.SeldonMessage.SerializeToString,
-        response_deserializer=prediction__pb2.SeldonMessage.FromString,
+        request_serializer=proto_dot_prediction__pb2.SeldonMessage.SerializeToString,
+        response_deserializer=proto_dot_prediction__pb2.SeldonMessage.FromString,
         )
     self.Route = channel.unary_unary(
         '/seldon.protos.Generic/Route',
-        request_serializer=prediction__pb2.SeldonMessage.SerializeToString,
-        response_deserializer=prediction__pb2.SeldonMessage.FromString,
+        request_serializer=proto_dot_prediction__pb2.SeldonMessage.SerializeToString,
+        response_deserializer=proto_dot_prediction__pb2.SeldonMessage.FromString,
         )
     self.Aggregate = channel.unary_unary(
         '/seldon.protos.Generic/Aggregate',
-        request_serializer=prediction__pb2.SeldonMessageList.SerializeToString,
-        response_deserializer=prediction__pb2.SeldonMessage.FromString,
+        request_serializer=proto_dot_prediction__pb2.SeldonMessageList.SerializeToString,
+        response_deserializer=proto_dot_prediction__pb2.SeldonMessage.FromString,
         )
     self.SendFeedback = channel.unary_unary(
         '/seldon.protos.Generic/SendFeedback',
-        request_serializer=prediction__pb2.Feedback.SerializeToString,
-        response_deserializer=prediction__pb2.SeldonMessage.FromString,
+        request_serializer=proto_dot_prediction__pb2.Feedback.SerializeToString,
+        response_deserializer=proto_dot_prediction__pb2.SeldonMessage.FromString,
         )
 
 
@@ -83,28 +83,28 @@ def add_GenericServicer_to_server(servicer, server):
   rpc_method_handlers = {
       'TransformInput': grpc.unary_unary_rpc_method_handler(
           servicer.TransformInput,
-          request_deserializer=prediction__pb2.SeldonMessage.FromString,
-          response_serializer=prediction__pb2.SeldonMessage.SerializeToString,
+          request_deserializer=proto_dot_prediction__pb2.SeldonMessage.FromString,
+          response_serializer=proto_dot_prediction__pb2.SeldonMessage.SerializeToString,
       ),
       'TransformOutput': grpc.unary_unary_rpc_method_handler(
           servicer.TransformOutput,
-          request_deserializer=prediction__pb2.SeldonMessage.FromString,
-          response_serializer=prediction__pb2.SeldonMessage.SerializeToString,
+          request_deserializer=proto_dot_prediction__pb2.SeldonMessage.FromString,
+          response_serializer=proto_dot_prediction__pb2.SeldonMessage.SerializeToString,
       ),
       'Route': grpc.unary_unary_rpc_method_handler(
           servicer.Route,
-          request_deserializer=prediction__pb2.SeldonMessage.FromString,
-          response_serializer=prediction__pb2.SeldonMessage.SerializeToString,
+          request_deserializer=proto_dot_prediction__pb2.SeldonMessage.FromString,
+          response_serializer=proto_dot_prediction__pb2.SeldonMessage.SerializeToString,
       ),
       'Aggregate': grpc.unary_unary_rpc_method_handler(
           servicer.Aggregate,
-          request_deserializer=prediction__pb2.SeldonMessageList.FromString,
-          response_serializer=prediction__pb2.SeldonMessage.SerializeToString,
+          request_deserializer=proto_dot_prediction__pb2.SeldonMessageList.FromString,
+          response_serializer=proto_dot_prediction__pb2.SeldonMessage.SerializeToString,
       ),
       'SendFeedback': grpc.unary_unary_rpc_method_handler(
           servicer.SendFeedback,
-          request_deserializer=prediction__pb2.Feedback.FromString,
-          response_serializer=prediction__pb2.SeldonMessage.SerializeToString,
+          request_deserializer=proto_dot_prediction__pb2.Feedback.FromString,
+          response_serializer=proto_dot_prediction__pb2.SeldonMessage.SerializeToString,
       ),
   }
   generic_handler = grpc.method_handlers_generic_handler(
@@ -122,8 +122,8 @@ class ModelStub(object):
     """
     self.Predict = channel.unary_unary(
         '/seldon.protos.Model/Predict',
-        request_serializer=prediction__pb2.SeldonMessage.SerializeToString,
-        response_deserializer=prediction__pb2.SeldonMessage.FromString,
+        request_serializer=proto_dot_prediction__pb2.SeldonMessage.SerializeToString,
+        response_deserializer=proto_dot_prediction__pb2.SeldonMessage.FromString,
         )
 
 
@@ -139,8 +139,8 @@ def add_ModelServicer_to_server(servicer, server):
   rpc_method_handlers = {
       'Predict': grpc.unary_unary_rpc_method_handler(
           servicer.Predict,
-          request_deserializer=prediction__pb2.SeldonMessage.FromString,
-          response_serializer=prediction__pb2.SeldonMessage.SerializeToString,
+          request_deserializer=proto_dot_prediction__pb2.SeldonMessage.FromString,
+          response_serializer=proto_dot_prediction__pb2.SeldonMessage.SerializeToString,
       ),
   }
   generic_handler = grpc.method_handlers_generic_handler(
@@ -158,13 +158,13 @@ class RouterStub(object):
     """
     self.Route = channel.unary_unary(
         '/seldon.protos.Router/Route',
-        request_serializer=prediction__pb2.SeldonMessage.SerializeToString,
-        response_deserializer=prediction__pb2.SeldonMessage.FromString,
+        request_serializer=proto_dot_prediction__pb2.SeldonMessage.SerializeToString,
+        response_deserializer=proto_dot_prediction__pb2.SeldonMessage.FromString,
         )
     self.SendFeedback = channel.unary_unary(
         '/seldon.protos.Router/SendFeedback',
-        request_serializer=prediction__pb2.Feedback.SerializeToString,
-        response_deserializer=prediction__pb2.SeldonMessage.FromString,
+        request_serializer=proto_dot_prediction__pb2.Feedback.SerializeToString,
+        response_deserializer=proto_dot_prediction__pb2.SeldonMessage.FromString,
         )
 
 
@@ -185,13 +185,13 @@ def add_RouterServicer_to_server(servicer, server):
   rpc_method_handlers = {
       'Route': grpc.unary_unary_rpc_method_handler(
           servicer.Route,
-          request_deserializer=prediction__pb2.SeldonMessage.FromString,
-          response_serializer=prediction__pb2.SeldonMessage.SerializeToString,
+          request_deserializer=proto_dot_prediction__pb2.SeldonMessage.FromString,
+          response_serializer=proto_dot_prediction__pb2.SeldonMessage.SerializeToString,
       ),
       'SendFeedback': grpc.unary_unary_rpc_method_handler(
           servicer.SendFeedback,
-          request_deserializer=prediction__pb2.Feedback.FromString,
-          response_serializer=prediction__pb2.SeldonMessage.SerializeToString,
+          request_deserializer=proto_dot_prediction__pb2.Feedback.FromString,
+          response_serializer=proto_dot_prediction__pb2.SeldonMessage.SerializeToString,
       ),
   }
   generic_handler = grpc.method_handlers_generic_handler(
@@ -209,8 +209,8 @@ class TransformerStub(object):
     """
     self.TransformInput = channel.unary_unary(
         '/seldon.protos.Transformer/TransformInput',
-        request_serializer=prediction__pb2.SeldonMessage.SerializeToString,
-        response_deserializer=prediction__pb2.SeldonMessage.FromString,
+        request_serializer=proto_dot_prediction__pb2.SeldonMessage.SerializeToString,
+        response_deserializer=proto_dot_prediction__pb2.SeldonMessage.FromString,
         )
 
 
@@ -226,8 +226,8 @@ def add_TransformerServicer_to_server(servicer, server):
   rpc_method_handlers = {
       'TransformInput': grpc.unary_unary_rpc_method_handler(
           servicer.TransformInput,
-          request_deserializer=prediction__pb2.SeldonMessage.FromString,
-          response_serializer=prediction__pb2.SeldonMessage.SerializeToString,
+          request_deserializer=proto_dot_prediction__pb2.SeldonMessage.FromString,
+          response_serializer=proto_dot_prediction__pb2.SeldonMessage.SerializeToString,
       ),
   }
   generic_handler = grpc.method_handlers_generic_handler(
@@ -245,8 +245,8 @@ class OutputTransformerStub(object):
     """
     self.TransformOutput = channel.unary_unary(
         '/seldon.protos.OutputTransformer/TransformOutput',
-        request_serializer=prediction__pb2.SeldonMessage.SerializeToString,
-        response_deserializer=prediction__pb2.SeldonMessage.FromString,
+        request_serializer=proto_dot_prediction__pb2.SeldonMessage.SerializeToString,
+        response_deserializer=proto_dot_prediction__pb2.SeldonMessage.FromString,
         )
 
 
@@ -262,8 +262,8 @@ def add_OutputTransformerServicer_to_server(servicer, server):
   rpc_method_handlers = {
       'TransformOutput': grpc.unary_unary_rpc_method_handler(
           servicer.TransformOutput,
-          request_deserializer=prediction__pb2.SeldonMessage.FromString,
-          response_serializer=prediction__pb2.SeldonMessage.SerializeToString,
+          request_deserializer=proto_dot_prediction__pb2.SeldonMessage.FromString,
+          response_serializer=proto_dot_prediction__pb2.SeldonMessage.SerializeToString,
       ),
   }
   generic_handler = grpc.method_handlers_generic_handler(
@@ -281,8 +281,8 @@ class CombinerStub(object):
     """
     self.Aggregate = channel.unary_unary(
         '/seldon.protos.Combiner/Aggregate',
-        request_serializer=prediction__pb2.SeldonMessageList.SerializeToString,
-        response_deserializer=prediction__pb2.SeldonMessage.FromString,
+        request_serializer=proto_dot_prediction__pb2.SeldonMessageList.SerializeToString,
+        response_deserializer=proto_dot_prediction__pb2.SeldonMessage.FromString,
         )
 
 
@@ -298,8 +298,8 @@ def add_CombinerServicer_to_server(servicer, server):
   rpc_method_handlers = {
       'Aggregate': grpc.unary_unary_rpc_method_handler(
           servicer.Aggregate,
-          request_deserializer=prediction__pb2.SeldonMessageList.FromString,
-          response_serializer=prediction__pb2.SeldonMessage.SerializeToString,
+          request_deserializer=proto_dot_prediction__pb2.SeldonMessageList.FromString,
+          response_serializer=proto_dot_prediction__pb2.SeldonMessage.SerializeToString,
       ),
   }
   generic_handler = grpc.method_handlers_generic_handler(
@@ -317,13 +317,13 @@ class SeldonStub(object):
     """
     self.Predict = channel.unary_unary(
         '/seldon.protos.Seldon/Predict',
-        request_serializer=prediction__pb2.SeldonMessage.SerializeToString,
-        response_deserializer=prediction__pb2.SeldonMessage.FromString,
+        request_serializer=proto_dot_prediction__pb2.SeldonMessage.SerializeToString,
+        response_deserializer=proto_dot_prediction__pb2.SeldonMessage.FromString,
         )
     self.SendFeedback = channel.unary_unary(
         '/seldon.protos.Seldon/SendFeedback',
-        request_serializer=prediction__pb2.Feedback.SerializeToString,
-        response_deserializer=prediction__pb2.SeldonMessage.FromString,
+        request_serializer=proto_dot_prediction__pb2.Feedback.SerializeToString,
+        response_deserializer=proto_dot_prediction__pb2.SeldonMessage.FromString,
         )
 
 
@@ -344,13 +344,13 @@ def add_SeldonServicer_to_server(servicer, server):
   rpc_method_handlers = {
       'Predict': grpc.unary_unary_rpc_method_handler(
           servicer.Predict,
-          request_deserializer=prediction__pb2.SeldonMessage.FromString,
-          response_serializer=prediction__pb2.SeldonMessage.SerializeToString,
+          request_deserializer=proto_dot_prediction__pb2.SeldonMessage.FromString,
+          response_serializer=proto_dot_prediction__pb2.SeldonMessage.SerializeToString,
       ),
       'SendFeedback': grpc.unary_unary_rpc_method_handler(
           servicer.SendFeedback,
-          request_deserializer=prediction__pb2.Feedback.FromString,
-          response_serializer=prediction__pb2.SeldonMessage.SerializeToString,
+          request_deserializer=proto_dot_prediction__pb2.Feedback.FromString,
+          response_serializer=proto_dot_prediction__pb2.SeldonMessage.SerializeToString,
       ),
   }
   generic_handler = grpc.method_handlers_generic_handler(
