@@ -11,7 +11,7 @@ with open(os.path.join(BASE_DIR, 'requirements.txt')) as f:
     requirements = f.read().splitlines()
 
 setup(name='cartpole-rl-remote',
-      python_requires='>=3.5',
+      python_requires='>=3.5, <=3.7',
       version=__import__("cartpole").VERSION,
       description="Cartpole: Remote RL Agent",
       author_email=["engapa@gmail.com ", "davsuacar@gmail.com"],
