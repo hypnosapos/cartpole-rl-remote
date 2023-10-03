@@ -12,3 +12,4 @@ werkzeug>=0.15.3
 argparse>=1.4
 modeldb-basic==0.1.35
 visdom==0.1.8.5
+urllib3>=1.26.17 # not directly required, pinned by Snyk to avoid a vulnerability
