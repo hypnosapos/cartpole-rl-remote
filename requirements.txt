@@ -8,7 +8,8 @@ requests==2.20
 scipy
 six==1.11.0
 tensorflow==1.13.1
-werkzeug>=0.15.3
+werkzeug>=3.0.1
 argparse>=1.4
 modeldb-basic==0.1.35
 visdom==0.1.8.5
+tornado>=6.3.3 # not directly required, pinned by Snyk to avoid a vulnerability
