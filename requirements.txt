@@ -1,10 +1,10 @@
 future==0.16.0
 gym==0.12.5
-numpy>=1.13.3
-idna==2.6
+numpy>=1.22.2
+idna==3.7
 pyglet==1.3.1
 PyYAML==3.13
-requests==2.20
+requests==2.31.0
 scipy
 six==1.11.0
 tensorflow==1.13.1
@@ -12,3 +12,6 @@ werkzeug>=0.15.3
 argparse>=1.4
 modeldb-basic==0.1.35
 visdom==0.1.8.5
+pillow>=10.3.0 # not directly required, pinned by Snyk to avoid a vulnerability
+tornado>=6.3.3 # not directly required, pinned by Snyk to avoid a vulnerability
+urllib3>=1.26.18 # not directly required, pinned by Snyk to avoid a vulnerability
